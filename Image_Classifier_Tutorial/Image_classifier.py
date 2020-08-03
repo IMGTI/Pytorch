@@ -4,6 +4,19 @@ import torchvision.transforms as transforms
 
 ##### DATA MANAGEMENT #####
 
+### Define hyperparameters
+
+batch_size = 25#4
+num_epochs = 200#2
+
+### Define numworkers for ubuntu and windows
+os_system = 'windows'#'ubuntu'
+
+if os_system=='windows':
+    numworkers = 0
+else:
+    numworkers = 2
+
 ### Transforming/normalizing torchvision output datasets
 
 transform = transforms.Compose(
@@ -12,21 +25,15 @@ transform = transforms.Compose(
 
 trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
                                         download=True, transform=transform)
-# Ubuntu
-#trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
-#                                          shuffle=True, num_workers=2)
-# Windows
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
-                                          shuffle=True, num_workers=0)
+
+trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
+                                          shuffle=True, num_workers=numworkers)
 
 testset = torchvision.datasets.CIFAR10(root='./data', train=False,
                                        download=True, transform=transform)
-# Ubuntu
-#testloader = torch.utils.data.DataLoader(testset, batch_size=4,
-#                                         shuffle=False, num_workers=2)
-# Windows
-testloader = torch.utils.data.DataLoader(testset, batch_size=4,
-                                         shuffle=False, num_workers=0)
+
+testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
+                                         shuffle=False, num_workers=numworkers)
 
 classes = ('plane', 'car', 'bird', 'cat',
            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
@@ -54,7 +61,7 @@ images, labels = dataiter.next()
 # show images
 imshow(torchvision.utils.make_grid(images))
 # print labels
-print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
+print(' '.join('%5s' % classes[labels[j]] for j in range(batch_size)))
 
 ### DEFINE A CNN
 
@@ -65,9 +72,11 @@ import torch.nn.functional as F
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
+        # Increasing net width to test GPU speed in comparison to CPU
+        net_width = 6#6
+        self.conv1 = nn.Conv2d(3, net_width, 5)
         self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.conv2 = nn.Conv2d(net_width, 16, 5)
         self.fc1 = nn.Linear(16 * 5 * 5, 120)
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, 10)
@@ -81,8 +90,15 @@ class Net(nn.Module):
         x = self.fc3(x)
         return x
 
-
+### Initiliaze Net
 net = Net()
+
+### Load state dict of model
+try:
+    net.load_state_dict(torch.load('state_dict'))
+    net.eval()
+except:
+    print('No model state dict found')
 
 ### SEND NET TO GPU IF AVAILABLE
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -97,8 +113,6 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
 ### TRAIN THE NETWORK
-
-num_epochs = 2
 
 for epoch in range(num_epochs):  # loop over the dataset multiple times
 
@@ -134,7 +148,7 @@ images, labels = dataiter_next[0].to(device), dataiter_next[1].to(device)
 
 # print images
 imshow(torchvision.utils.make_grid(images).cpu())
-print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
+print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(batch_size)))
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
@@ -143,7 +157,7 @@ outputs = net(images).to(device)
 _, predicted = torch.max(outputs, 1)
 
 print('Predicted: ', ' '.join('%5s' % classes[predicted[j]]
-                              for j in range(4)))
+                              for j in range(batch_size)))
 
 ### PERFORMANCE ON WHOLE DATASET
 
@@ -159,3 +173,6 @@ with torch.no_grad():
 
 print('Accuracy of the network on the 10000 test images: %d %%' % (
     100 * correct / total))
+
+### Save state dict of model
+torch.save(net.state_dict(), 'state_dict')
