@@ -1,13 +1,18 @@
 import torch
 import torchvision
 import torchvision.transforms as transforms
+from tqdm import tqdm
 
 ##### DATA MANAGEMENT #####
 
 ### Define hyperparameters
 
 batch_size = 25#4
-num_epochs = 200#2
+num_epochs = 20#200#2
+learning_rate = 0.001#0.001
+momentum = 0.9#0.9
+initial_net_width = 512#6  # Precision increases drastically with this
+two_thirds_of_inw = int(initial_net_width/3) * 2
 
 ### Define numworkers for ubuntu and windows
 os_system = 'windows'#'ubuntu'
@@ -72,19 +77,18 @@ import torch.nn.functional as F
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        # Increasing net width to test GPU speed in comparison to CPU
-        net_width = 6#6
-        self.conv1 = nn.Conv2d(3, net_width, 5)
+        self.conv1 = nn.Conv2d(3, initial_net_width, 5)   # kernel size 5 <=> filter 5x5
         self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(net_width, 16, 5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
+        self.conv2 = nn.Conv2d(initial_net_width, two_thirds_of_inw, 5)  # net_width (#nodes) == 2/3 prev layer
+        self.fc1 = nn.Linear(two_thirds_of_inw * 5 * 5, 120)  # Number of input features is 16*5*5 due to con and pool
+                                               # applied to images of 3*32*32 (RGB of 32x32 pixels)
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, 10)
 
     def forward(self, x):
         x = self.pool(F.relu(self.conv1(x)))
         x = self.pool(F.relu(self.conv2(x)))
-        x = x.view(-1, 16 * 5 * 5)
+        x = x.view(-1, two_thirds_of_inw * 5 * 5)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
@@ -110,11 +114,13 @@ net.to(device)
 import torch.optim as optim
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+optimizer = optim.SGD(net.parameters(), lr=learning_rate, momentum=momentum)
 
 ### TRAIN THE NETWORK
 
-for epoch in range(num_epochs):  # loop over the dataset multiple times
+print('Beginning trainning...')
+
+for epoch in tqdm(range(num_epochs), total=num_epochs):  # loop over the dataset multiple times
 
     running_loss = 0.0
     for i, data in enumerate(trainloader, 0):
@@ -158,7 +164,7 @@ imshow(torchvision.utils.make_grid(images).cpu())
 print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(batch_size)))
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+optimizer = optim.SGD(net.parameters(), lr=learning_rate, momentum=momentum)
 
 outputs = net(images).to(device)
 _, predicted = torch.max(outputs, 1)
