@@ -7,11 +7,11 @@ from tqdm import tqdm
 
 ### Define hyperparameters
 
-batch_size = 25#4
-num_epochs = 20#200#2
+batch_size = 25#25#4
+num_epochs = 4#200#2  # Aumentar numero de nodos (con 50 epochs hizo lo mismo)
 learning_rate = 0.001#0.001
 momentum = 0.9#0.9
-initial_net_width = 512#6  # Precision increases drastically with this
+initial_net_width = 1024#1024#512#6  # Precision increases drastically with this
 two_thirds_of_inw = int(initial_net_width/3) * 2
 
 ### Define numworkers for ubuntu and windows
@@ -24,8 +24,20 @@ else:
 
 ### Transforming/normalizing torchvision output datasets
 
+# Original
+#transform = transforms.Compose(
+#    [transforms.ToTensor(),
+#     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+
+# Data augmentation
 transform = transforms.Compose(
     [transforms.ToTensor(),
+     transforms.RandomHorizontalFlip(p=0.5),
+     transforms.RandomVerticalFlip(p=0.05),
+     transforms.RandomRotation(degrees=45),
+     transforms.RandomCrop(24,24),
+     transforms.ColorJitter(brightness=0.5),
+     transforms.RandomGrayScale(p=0.2),
      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
 trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
@@ -149,7 +161,10 @@ for epoch in tqdm(range(num_epochs), total=num_epochs):  # loop over the dataset
             running_loss = 0.0
 
 # Print final statistics
-print('Final Mean Running Loss = ', final_mean_running_loss)
+try:
+    print('Final Mean Running Loss = ', final_mean_running_loss)
+except:
+    print('Too low number of mini-batches to show Final Mean Running Loss')
 
 print('Finished Training')
 
