@@ -7,12 +7,14 @@ from tqdm import tqdm
 
 ### Define hyperparameters
 
-batch_size = 25#25#4
-num_epochs = 4#200#2  # Aumentar numero de nodos (con 50 epochs hizo lo mismo)
+batch_size = 25#4
+num_epochs = 4#20#2  # Aumentar numero de nodos (con 50 epochs hizo lo mismo)
 learning_rate = 0.001#0.001
 momentum = 0.9#0.9
-initial_net_width = 1024#1024#512#6  # Precision increases drastically with this
-two_thirds_of_inw = int(initial_net_width/3) * 2
+num_filters_conv1 = 1024#512#6  # Precision increases drastically with this
+num_filters_conv2 = int(num_filters_conv1/3) * 2
+
+#two_thirds_of_input_number_nodes = int(input_number_nodes/3) * 2  # (#nodes) == 2/3 prev layer
 
 ### Define numworkers for ubuntu and windows
 os_system = 'windows'#'ubuntu'
@@ -24,21 +26,21 @@ else:
 
 ### Transforming/normalizing torchvision output datasets
 
-# Original
-#transform = transforms.Compose(
-#    [transforms.ToTensor(),
-#     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-
-# Data augmentation
+# Original transformation
 transform = transforms.Compose(
     [transforms.ToTensor(),
-     transforms.RandomHorizontalFlip(p=0.5),
-     transforms.RandomVerticalFlip(p=0.05),
-     transforms.RandomRotation(degrees=45),
-     transforms.RandomCrop(24,24),
-     transforms.ColorJitter(brightness=0.5),
-     transforms.RandomGrayScale(p=0.2),
      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+
+# Data augmentation  (20 epochs => 68%)
+#transform = transforms.Compose(
+#    [transforms.RandomHorizontalFlip(p=0.5),
+#     transforms.RandomVerticalFlip(p=0.05),
+#     transforms.RandomRotation(degrees=45),
+#     #transforms.RandomCrop(24,24),
+#     transforms.ColorJitter(brightness=0.5),
+#     transforms.RandomGrayscale(p=0.2),
+#     transforms.ToTensor(),
+#     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
 trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
                                         download=True, transform=transform)
@@ -89,18 +91,27 @@ import torch.nn.functional as F
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(3, initial_net_width, 5)   # kernel size 5 <=> filter 5x5
+        # conv2d(input_channels, output_channels, kernel_size)
+        # input_channels in input layer is 3 (RGB) != (#nodes)
+        # apparently (#nodes in hidden layers) == (#filters/kernels in hidden layers)
+        self.conv1 = nn.Conv2d(3, num_filters_conv1, 5)   # kernel size 5 <=> filter 5x5
         self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(initial_net_width, two_thirds_of_inw, 5)  # net_width (#nodes) == 2/3 prev layer
-        self.fc1 = nn.Linear(two_thirds_of_inw * 5 * 5, 120)  # Number of input features is 16*5*5 due to con and pool
-                                               # applied to images of 3*32*32 (RGB of 32x32 pixels)
+        self.conv2 = nn.Conv2d(num_filters_conv1, num_filters_conv2, 5)
+        # linear(input_features, output_features)
+        self.fc1 = nn.Linear(num_filters_conv2 * 5 * 5, 120)  # Number of input features
+                                                              # is num_filters_conv2*5*5 due to con and pool
+                                                              # applied to images of 3*32*32 (RGB of 32x32 pixels)
+                                                              # 32*32 -- kernel 5*5 -> 28*28 -- maxpool 2*2 -> 14*14
+                                                              # -- kernel 5x5 -> 10*10 -- maxpool 2*2 -> 5*5 pixel image
+                                                              # and there are num_filters_conv2 number of 5*5
+                                                              # tensors
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, 10)
 
     def forward(self, x):
         x = self.pool(F.relu(self.conv1(x)))
         x = self.pool(F.relu(self.conv2(x)))
-        x = x.view(-1, two_thirds_of_inw * 5 * 5)
+        x = x.view(-1, num_filters_conv2 * 5 * 5)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
@@ -120,6 +131,13 @@ except:
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 net.to(device)
+
+### PRINT NUMBER OF TOTAL PARAMETERS AND TOTAL LEARNABLE PARAMETERS
+pytorch_total_params = sum(p.numel() for p in net.parameters())
+pytorch_learn_params = sum(p.numel() for p in net.parameters() if p.requires_grad)
+
+print("Number of Learnable parameters: ", pytorch_learn_params,
+      "Number of Total parameters: ", pytorch_total_params)
 
 ### DEFINE LOSS FUNCTION AND OPTIMIZER
 
@@ -159,6 +177,9 @@ for epoch in tqdm(range(num_epochs), total=num_epochs):  # loop over the dataset
             final_mean_running_loss = running_loss / 2000
 
             running_loss = 0.0
+
+    ### Save state dict of model
+    torch.save(net.state_dict(), 'state_dict')
 
 # Print final statistics
 try:
@@ -201,6 +222,3 @@ with torch.no_grad():
 
 print('Accuracy of the network on the 10000 test images: %d %%' % (
     100 * correct / total))
-
-### Save state dict of model
-torch.save(net.state_dict(), 'state_dict')
