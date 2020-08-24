@@ -69,8 +69,10 @@ import numpy as np
 def imshow(img):
     img = img / 2 + 0.5     # unnormalize
     npimg = img.numpy()
+    fig = plt.figure(1)
+    fig.clf()
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
-    plt.show()
+    fig.show()
 
 
 # get some random training images
@@ -150,6 +152,8 @@ optimizer = optim.SGD(net.parameters(), lr=learning_rate, momentum=momentum)
 
 print('Beginning trainning...')
 
+loss4plot = []
+
 for epoch in tqdm(range(num_epochs), total=num_epochs):  # loop over the dataset multiple times
 
     running_loss = 0.0
@@ -169,17 +173,36 @@ for epoch in tqdm(range(num_epochs), total=num_epochs):  # loop over the dataset
 
         # print statistics
         running_loss += loss.item()
-        if i % 2000 == 1999:    # print every 2000 mini-batches
+        #if i % 2000 == 1999:    # print every 2000 mini-batches
             #print('[%d, %5d] loss: %.3f' %
             #      (epoch + 1, i + 1, running_loss / 2000))
 
             # Store mean running loss of 2000 mini-batches
-            final_mean_running_loss = running_loss / 2000
+        #    mean_running_loss = running_loss / 2000
 
-            running_loss = 0.0
+        #    running_loss = 0.0
+
+    # Store mean running loss of # mini-batches
+
+    mean_running_loss = running_loss / len(trainloader)
+
+    loss4plot.append(mean_running_loss)
 
     ### Save state dict of model
     torch.save(net.state_dict(), 'state_dict')
+
+fig_mean_loss = plt.figure(2)
+fig_mean_loss.clf()
+plt.plot(range(num_epochs), loss4plot, 'g-')
+plt.title("Mean running loss vs epoch")
+plt.xlabel("Epoch (units)")
+plt.ylabel("Running loss")
+fig_mean_loss.show()
+fig_mean_loss.savefig("loss_vs_epoch.jpg")
+
+fig_mean_loss.savefig("loss_vs_epoch.jpg")
+
+final_mean_running_loss = mean_running_loss
 
 # Print final statistics
 try:
