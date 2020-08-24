@@ -152,9 +152,11 @@ optimizer = optim.SGD(net.parameters(), lr=learning_rate, momentum=momentum)
 
 print('Beginning trainning...')
 
+# For plotting loss vs epoch
+fig_mean_loss = plt.figure(2)
 loss4plot = []
 
-for epoch in tqdm(range(num_epochs), total=num_epochs):  # loop over the dataset multiple times
+for ind_epoch, epoch in tqdm(enumerate(range(num_epochs)), total=num_epochs):  # loop over the dataset multiple times
 
     running_loss = 0.0
     for i, data in enumerate(trainloader, 0):
@@ -191,16 +193,12 @@ for epoch in tqdm(range(num_epochs), total=num_epochs):  # loop over the dataset
     ### Save state dict of model
     torch.save(net.state_dict(), 'state_dict')
 
-fig_mean_loss = plt.figure(2)
-fig_mean_loss.clf()
-plt.plot(range(num_epochs), loss4plot, 'g-')
-plt.title("Mean running loss vs epoch")
-plt.xlabel("Epoch (units)")
-plt.ylabel("Running loss")
-fig_mean_loss.show()
-fig_mean_loss.savefig("loss_vs_epoch.jpg")
-
-fig_mean_loss.savefig("loss_vs_epoch.jpg")
+    fig_mean_loss.clf()
+    plt.plot(range(num_epochs)[0:ind_epoch+1], loss4plot, 'g-')
+    plt.title("Mean running loss vs epoch")
+    plt.xlabel("Epoch (units)")
+    plt.ylabel("Running loss")
+    fig_mean_loss.savefig("loss_vs_epoch.jpg")
 
 final_mean_running_loss = mean_running_loss
 
