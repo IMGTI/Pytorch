@@ -68,7 +68,7 @@ except:
     print('No model state dict found')
 
 ### Test image
-image_name = 'prueba_pajaro.jpg'
+image_name = 'prueba_perro.jpg'
 image_resize = (32,32)
 img = Image.open(image_name).convert('RGB')
 img.show()
@@ -79,9 +79,14 @@ std = data.std(axis=(0,1))  # Std in each RGB-channel
 
 Loader = transforms.Compose([transforms.Resize(image_resize, interpolation=Image.NEAREST),
                              transforms.ToTensor()])
-Normalize = transforms.Compose([transforms.Normalize(mean=mean,
-                                                     std=std)])
-img = Normalize(Loader(img)).to(device)
+#Normalize = transforms.Compose([transforms.Normalize(mean=mean,
+#                                                     std=std)])
+#img = Normalize(Loader(img)).to(device)
+
+img = Loader(img).to(device)
+
+show_img_tensor = transforms.Compose([transforms.ToPILImage()])(img.cpu()).show()
+
 try:
     result = test_one_image(img, net)
     print('Resultado : ', result)
