@@ -69,7 +69,7 @@ except:
 
 ### Test image
 num_tests = 100
-image_name = 'prueba_perro2.jpg'
+image_name = 'prueba_perro5.jpg'
 image_resize = (32,32)
 img = Image.open(image_name).convert('RGB')
 img.show()
