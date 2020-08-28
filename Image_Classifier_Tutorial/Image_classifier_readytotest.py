@@ -4,6 +4,7 @@ import torch
 import torchvision.transforms as transforms
 import torch.nn as nn
 import torch.nn.functional as F
+from tqdm import tqdm
 
 # GPU or CPU device
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -40,11 +41,8 @@ def test_one_image(img, net):
     img - Image tensor
     '''
 
-    # test phase
-    net.eval()
-
     # convert image to torch tensor and add batch dim
-    batch = img.clone().detach().unsqueeze(0)
+    batch = (img).clone().detach().unsqueeze(0)  # Not sure to use img or img/255
 
     # We don't need gradients for test, so wrap in
     # no_grad to save memory
@@ -64,31 +62,43 @@ net = Net().to(device)
 ### Load state dict of model
 try:
     net.load_state_dict(torch.load('state_dict'))
+    net.eval()
+    #print('State dict: ', net.state_dict())
 except:
     print('No model state dict found')
 
 ### Test image
-image_name = 'prueba_perro.jpg'
+num_tests = 100
+image_name = 'prueba_perro2.jpg'
 image_resize = (32,32)
 img = Image.open(image_name).convert('RGB')
 img.show()
 # Convert PIL image to numpy array
 data = np.asarray(img)
-mean = data.mean(axis=(0,1))  # Mean in each RGB-channel
-std = data.std(axis=(0,1))  # Std in each RGB-channel
+# Obtain mean and std for each RGB channel, and convert them to
+# range 0-1 (as same as .ToTensor does)
+mean = data.mean(axis=(0,1))/255  # Mean in each RGB-channel
+std = data.std(axis=(0,1))/255  # Std in each RGB-channel
 
 Loader = transforms.Compose([transforms.Resize(image_resize, interpolation=Image.NEAREST),
                              transforms.ToTensor()])
-#Normalize = transforms.Compose([transforms.Normalize(mean=mean,
-#                                                     std=std)])
-#img = Normalize(Loader(img)).to(device)
-
-img = Loader(img).to(device)
+Normalize = transforms.Compose([transforms.Normalize(mean=mean,
+                                                     std=std)])
+img = Normalize(Loader(img)).to(device)
 
 show_img_tensor = transforms.Compose([transforms.ToPILImage()])(img.cpu()).show()
+probs_dict = {}
 
 try:
-    result = test_one_image(img, net)
-    print('Resultado : ', result)
+    for i in tqdm(range(num_tests), total=num_tests):
+        result = test_one_image(img, net)
+        if not result in probs_dict.keys():
+            probs_dict[result] = 1
+        else:
+            probs_dict[result] += 1
+    most_prob = list(probs_dict.keys())[np.argmax(probs_dict.values())]
+
+    print('Resultado: ', most_prob, '\nProbability: ',
+          probs_dict[most_prob] * 100 / num_tests)
 except:
     print('ERROR')
