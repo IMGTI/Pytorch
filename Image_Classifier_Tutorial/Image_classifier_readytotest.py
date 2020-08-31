@@ -69,7 +69,7 @@ except:
 
 ### Test image
 num_tests = 100
-image_name = 'prueba_perro5.jpg'
+image_name = 'prueba_perro2.jpg'
 image_resize = (32,32)
 img = Image.open(image_name).convert('RGB')
 img.show()
@@ -82,8 +82,14 @@ std = data.std(axis=(0,1))/255  # Std in each RGB-channel
 
 Loader = transforms.Compose([transforms.Resize(image_resize, interpolation=Image.NEAREST),
                              transforms.ToTensor()])
-Normalize = transforms.Compose([transforms.Normalize(mean=mean,
-                                                     std=std)])
+# Normalize with image mean and std
+#Normalize = transforms.Compose([transforms.Normalize(mean=mean,
+#                                                     std=std)])
+
+# Normalize with model mean and std
+Normalize = transforms.Compose([transforms.Normalize(mean=(0.5,0.5,0.5),
+                                                     std=(0.5,0.5,0.5))])
+
 img = Normalize(Loader(img)).to(device)
 
 show_img_tensor = transforms.Compose([transforms.ToPILImage()])(img.cpu()).show()
