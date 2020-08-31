@@ -4,17 +4,18 @@ model = torch.hub.load('pytorch/vision:v0.6.0', 'deeplabv3_resnet101', pretraine
 model.eval()
 
 # Download an example image from the pytorch website
-import urllib
-url, filename = ("https://github.com/pytorch/hub/raw/master/dog.jpg", "dog.jpg")
-try: urllib.URLopener().retrieve(url, filename)
-except: urllib.request.urlretrieve(url, filename)
+#import urllib
+#url, filename = ("https://github.com/pytorch/hub/raw/master/dog.jpg", "dog.jpg")
+#try: urllib.URLopener().retrieve(url, filename)
+#except: urllib.request.urlretrieve(url, filename)
+filename = 'prueba_deep.jpg'
 
 # sample execution (requires torchvision)
 from PIL import Image
 from torchvision import transforms
 input_image = Image.open(filename)
 preprocess = transforms.Compose([
-    transforms.ToTensor(),
+    transforms.ToTensor(),  # Range [0,1]
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
 
