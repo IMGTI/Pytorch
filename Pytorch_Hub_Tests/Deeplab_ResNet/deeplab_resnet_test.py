@@ -8,7 +8,7 @@ model.eval()
 #url, filename = ("https://github.com/pytorch/hub/raw/master/dog.jpg", "dog.jpg")
 #try: urllib.URLopener().retrieve(url, filename)
 #except: urllib.request.urlretrieve(url, filename)
-filename = 'prueba_deep.jpg'
+filename = 'prueba_deep.jpg'  # 'dog.jpg'
 
 # sample execution (requires torchvision)
 from PIL import Image

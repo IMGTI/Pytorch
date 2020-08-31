@@ -83,12 +83,12 @@ std = data.std(axis=(0,1))/255  # Std in each RGB-channel
 Loader = transforms.Compose([transforms.Resize(image_resize, interpolation=Image.NEAREST),
                              transforms.ToTensor()])
 # Normalize with image mean and std
-#Normalize = transforms.Compose([transforms.Normalize(mean=mean,
-#                                                     std=std)])
+Normalize = transforms.Compose([transforms.Normalize(mean=mean,
+                                                     std=std)])
 
 # Normalize with model mean and std
-Normalize = transforms.Compose([transforms.Normalize(mean=(0.5,0.5,0.5),
-                                                     std=(0.5,0.5,0.5))])
+#Normalize = transforms.Compose([transforms.Normalize(mean=(0.5,0.5,0.5),
+#                                                     std=(0.5,0.5,0.5))])
 
 img = Normalize(Loader(img)).to(device)
 
