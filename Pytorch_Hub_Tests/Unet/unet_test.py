@@ -31,7 +31,7 @@ with torch.no_grad():
 
 print(torch.round(output[0]))
 
-# plot the semantic segmentation predictions of 21 classes in each color
+# plot the probabilities mask (model output) in original image
 r = input_image.convert('RGB')
 
 import matplotlib.pyplot as plt
