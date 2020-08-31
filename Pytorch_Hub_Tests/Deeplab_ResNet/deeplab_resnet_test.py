@@ -28,7 +28,9 @@ if torch.cuda.is_available():
 
 with torch.no_grad():
     output = model(input_batch)['out'][0]
-output_predictions = output.argmax(0)
+output_predictions = output.argmax(0)  # Gets the index of all 21 matrix
+                                       # (1 per each class) where it has
+                                       # the highest probability
 
 # create a color pallette, selecting a color for each class
 palette = torch.tensor([2 ** 25 - 1, 2 ** 15 - 1, 2 ** 21 - 1])
@@ -42,3 +44,32 @@ r.putpalette(colors)
 import matplotlib.pyplot as plt
 plt.imshow(r)
 plt.show()
+
+import scipy as sp
+COCO_INSTANCE_CATEGORY_NAMES = sp.array([
+    '__background__', 'person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
+    'train', 'truck', 'boat', 'traffic light', 'fire hydrant', 'N/A', 'stop sign',
+    'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow',
+    'elephant', 'bear', 'zebra', 'giraffe', 'N/A', 'backpack', 'umbrella', 'N/A', 'N/A',
+    'handbag', 'tie', 'suitcase', 'frisbee', 'skis', 'snowboard', 'sports ball',
+    'kite', 'baseball bat', 'baseball glove', 'skateboard', 'surfboard', 'tennis racket',
+    'bottle', 'N/A', 'wine glass', 'cup', 'fork', 'knife', 'spoon', 'bowl',
+    'banana', 'apple', 'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza',
+    'donut', 'cake', 'chair', 'couch', 'potted plant', 'bed', 'N/A', 'dining table',
+    'N/A', 'N/A', 'toilet', 'N/A', 'tv', 'laptop', 'mouse', 'remote', 'keyboard', 'cell phone',
+    'microwave', 'oven', 'toaster', 'sink', 'refrigerator', 'N/A', 'book',
+    'clock', 'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush'
+])
+# Get all the classes showed in image
+classes = {}
+for row in output_predictions.cpu():
+    for col in row:
+        if not col in list(classes.keys()):
+            classes[int(col)] = 1
+        else:
+            classes[int(col)] += 1
+
+ind_pred_labels = list(classes.keys())
+pred_labels = COCO_INSTANCE_CATEGORY_NAMES[ind_pred_labels]
+
+print('Predicted label/s: ', pred_labels)
