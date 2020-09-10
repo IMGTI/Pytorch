@@ -1,47 +1,55 @@
 import torch
 import torch.nn as nn
-
 import seaborn as sns
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-%matplotlib inline
+import datetime as dt
+from tqdm import tqdm
 
 # Hyperparameters
 learning_rate = 0.001
-epochs = 150
+epochs = 150#2#10#150
+
+test_data_size = 12#100  # 1 refers to -1 index of dataset, ie.,
+                         # whole dataset is training
+
+train_window = 12#12  # Ventanas de tiempo usadas para crear las secuencias
+
+fut_pred = 12#100#12
+
 
 # Get flight dataset from seaborn
-flight_data = sns.load_dataset("flights")
-flight_data.head()
+#flight_data = sns.load_dataset("flights")
+#flight_data.head()
 
-print(flight_data.columns)
+#print(flight_data.columns)
 
-# Plot passengers per month
-fig_size = plt.rcParams["figure.figsize"]
-fig_size[0] = 15
-fig_size[1] = 5
-plt.rcParams["figure.figsize"] = fig_size
-plt.title('Month vs Passenger')
-plt.ylabel('Total Passengers')
-plt.xlabel('Months')
-plt.grid(True)
-plt.autoscale(axis='x',tight=True)
-plt.plot(flight_data['passengers'])
+file = 'Figura de Control.xlsx'
+fig_name = 'F6'
+
+data = pd.read_excel(file, fig_name, usecols=[0,1], names=['times', 'defs'])
+
+times = np.array([dt.datetime.timestamp(x) for x in data['times']])
+defs = np.array(data['defs'])
 
 ### Data processing
 
 # Change data to float
-all_data = flight_data['passengers'].values.astype(float)
+#all_data = flight_data['passengers'].values.astype(float)
+times = times.astype(float)
+defs = defs.astype(float)
 
 # Divide data in train and test set
-test_data_size = 12
+#test_data_size = 12
 
-train_data = all_data[:-test_data_size]
-test_data = all_data[-test_data_size:]
+#train_data = all_data[:-test_data_size]
+#test_data = all_data[-test_data_size:]
+train_data = defs[:-test_data_size]
+test_data = defs[-test_data_size:]
 
-print(len(train_data))
-print(len(test_data))
+#print(len(train_data))
+#print(len(test_data))
 
 # Normalize the data
 from sklearn.preprocessing import MinMaxScaler
@@ -49,13 +57,13 @@ from sklearn.preprocessing import MinMaxScaler
 scaler = MinMaxScaler(feature_range=(-1, 1))
 train_data_normalized = scaler.fit_transform(train_data .reshape(-1, 1))
 
-print(train_data_normalized[:5])
-print(train_data_normalized[-5:])
+#print(train_data_normalized[:5])
+#print(train_data_normalized[-5:])
 
 # Convert data into tensors
 train_data_normalized = torch.FloatTensor(train_data_normalized).view(-1)
 
-train_window = 12
+#train_window = 12  # Ventanas de tiempo usadas para crear las secuencias
 
 # Create sequences
 def create_inout_sequences(input_data, tw):
@@ -63,7 +71,11 @@ def create_inout_sequences(input_data, tw):
     L = len(input_data)
     for i in range(L-tw):
         train_seq = input_data[i:i+tw]
-        train_label = input_data[i+tw:i+tw+1]
+        train_label = input_data[i+tw:i+tw+1]  # Usa como label de la secuencia
+                                               # el siguiente
+                                               # valor de la serie de tiempo,
+                                               # ie, el valor a predecir de
+                                               # esa secuencia
         inout_seq.append((train_seq ,train_label))
     return inout_seq
 
@@ -93,68 +105,127 @@ class LSTM(nn.Module):
 
 # Initiate the model
 model = LSTM()
+
+# Load state dict of model
+try:
+    model.load_state_dict(torch.load('state_dict_2'))
+    model.eval()
+except:
+    print('No model state dict found')
+
+# Send net to GPU if possible
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+model.to(device)
+
 loss_function = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-for i in range(epochs):
+fig_loss = plt.figure(3)
+loss4plot = []
+
+for i in tqdm(range(epochs), total=epochs):
+    running_loss = 0.0
     for seq, labels in train_inout_seq:
+        seq, labels = seq.to(device), labels.to(device)
+
         optimizer.zero_grad()
-        model.hidden_cell = (torch.zeros(1, 1, model.hidden_layer_size),
-                        torch.zeros(1, 1, model.hidden_layer_size))
+        model.hidden_cell = (torch.zeros(1, 1, model.hidden_layer_size).to(device),
+                             torch.zeros(1, 1, model.hidden_layer_size).to(device))
 
         y_pred = model(seq)
 
         single_loss = loss_function(y_pred, labels)
         single_loss.backward()
+
+        running_loss += single_loss.item()
+
         optimizer.step()
 
     if i%25 == 1:
         print(f'epoch: {i:3} loss: {single_loss.item():10.8f}')
 
-print(f'epoch: {i:3} loss: {single_loss.item():10.10f}')
+    # Save state dict of model
+    torch.save(model.state_dict(), 'state_dict_2')
+
+    # Plot loss vs epoch
+    mean_loss = running_loss/len(train_inout_seq)
+
+    loss4plot.append(mean_loss)
+
+    fig_loss.clf()
+    plt.plot(range(epochs)[0:i+1], loss4plot, 'g-')
+    plt.title("Mean running loss vs epoch")
+    plt.xlabel("Epoch (units)")
+    plt.ylabel("Running loss")
+    fig_loss.savefig("loss_vs_epoch_2.jpg")
+
+#print(f'epoch: {i:3} loss: {single_loss.item():10.10f}')
 
 ### Test
 
 # Prediction
-fut_pred = 12
 
-test_inputs = train_data_normalized[-train_window:].tolist()
-print(test_inputs)
+# Use last #"train_window" elements from train_data as input
+test_inputs = train_data_normalized[-train_window:].tolist()  # Number of inputs
+                                                              # used, should be
+                                                              # same as number
+                                                              # of elements used
+                                                              # for train window
+#print(test_inputs)
 
 model.eval()
 
 for i in range(fut_pred):
-    seq = torch.FloatTensor(test_inputs[-train_window:])
+    seq = torch.FloatTensor(test_inputs[-train_window:]).to(device)
     with torch.no_grad():
         model.hidden = (torch.zeros(1, 1, model.hidden_layer_size),
                         torch.zeros(1, 1, model.hidden_layer_size))
         test_inputs.append(model(seq).item())
 
-print(test_inputs[fut_pred:])
+#print(test_inputs[fut_pred:])
 
 # Unnormalize the predictions
 actual_predictions = scaler.inverse_transform(np.array(test_inputs[train_window:] ).reshape(-1, 1))
-print(actual_predictions)
+#print(actual_predictions)
 
 ### Plot predictions
 
 # All test input
-x = np.arange(132, 144, 1)
-print(x)
-plt.title('Month vs Passenger')
-plt.ylabel('Total Passengers')
+#x = np.arange(132, 144, 1)
+#print(x)
+
+times = (times/(3600*24) -
+        (times/(3600*24))[0])
+
+time_step = np.absolute(times[0] - times[1])
+
+times_predictions = (np.arange(0, fut_pred*time_step, time_step) +
+                     times[-test_data_size])
+
+fig1 = plt.figure(1)
+fig1.clf()
+plt.title('Deformation vs Time')
+plt.ylabel('Defs')
+plt.xlabel('Time(d)')
 plt.grid(True)
 plt.autoscale(axis='x', tight=True)
-plt.plot(flight_data['passengers'])
-plt.plot(x,actual_predictions)
-plt.show()
+#plt.plot(flight_data['passengers'])
+plt.plot(times[-200:], defs[-200:])
+#plt.plot(x,actual_predictions)
+plt.plot(times_predictions,actual_predictions)
+fig1.savefig('defs_vs_times.jpg')
 
 # Last 12 months
-plt.title('Month vs Passenger')
-plt.ylabel('Total Passengers')
+fig2 = plt.figure(2)
+fig2.clf()
+plt.title('Deformation vs Time')
+plt.ylabel('Defs')
+plt.xlabel('Time')
 plt.grid(True)
 plt.autoscale(axis='x', tight=True)
-
-plt.plot(flight_data['passengers'][-train_window:])
-plt.plot(x,actual_predictions)
-plt.show()
+#plt.plot(flight_data['passengers'][-train_window:])
+plt.plot(times[-test_data_size:], defs[-test_data_size:])
+#plt.plot(x,actual_predictions)
+plt.plot(times_predictions,actual_predictions)
+fig2.savefig('defs_vs_times_12times.jpg')
