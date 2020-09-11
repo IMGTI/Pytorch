@@ -9,14 +9,14 @@ from tqdm import tqdm
 
 # Hyperparameters
 learning_rate = 0.001
-epochs = 150#2#10#150
+epochs = 20#150#2#10#150
 
-test_data_size = 12#100  # 1 refers to -1 index of dataset, ie.,
+test_data_size = 1000#12#100  # 1 refers to -1 index of dataset, ie.,
                          # whole dataset is training
 
-train_window = 12#12  # Ventanas de tiempo usadas para crear las secuencias
+train_window = 1000#12  # Ventanas de tiempo usadas para crear las secuencias
 
-fut_pred = 12#100#12
+fut_pred = 1000#100#12
 
 
 # Get flight dataset from seaborn
@@ -25,12 +25,15 @@ fut_pred = 12#100#12
 
 #print(flight_data.columns)
 
-file = 'Figura de Control.xlsx'
-fig_name = 'F6'
+file = 'prueba_serie.xlsx'
+fig_name = 'Sheet1'
 
 data = pd.read_excel(file, fig_name, usecols=[0,1], names=['times', 'defs'])
 
-times = np.array([dt.datetime.timestamp(x) for x in data['times']])
+try:
+    times = np.array([dt.datetime.timestamp(x) for x in data['times']])
+except:
+    times = np.array(data['times'])
 defs = np.array(data['defs'])
 
 ### Data processing
@@ -146,7 +149,7 @@ for i in tqdm(range(epochs), total=epochs):
         print(f'epoch: {i:3} loss: {single_loss.item():10.8f}')
 
     # Save state dict of model
-    torch.save(model.state_dict(), 'state_dict_2')
+    #torch.save(model.state_dict(), 'state_dict_2')
 
     # Plot loss vs epoch
     mean_loss = running_loss/len(train_inout_seq)
