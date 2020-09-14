@@ -26,7 +26,7 @@ def noise(time, noise_level=1, seed=None):
     rnd = np.random.RandomState(seed)
     return rnd.randn(len(time)) * noise_level
 
-time = np.arange(100 * 365 + 1, dtype="float32")
+time = np.arange(300 * 365 + 1, dtype="float32")
 baseline = 10
 series = trend(time, 0.1)
 baseline = 10
