@@ -16,21 +16,21 @@ def smooth(data, N_avg):
 
 # Hyperparameters
 learning_rate = 0.1#0.001
-epochs = 4#10#20#150#2#10#150
+epochs = 2#10#20#150#2#10#150
 
-batch_size = 1
-input_size = 1
-num_layers = 10
-hidden_layer_size = 1#100
-output_size = 1
+batch_size = 1#1
+input_size = 1#1
+num_layers = 3#10
+hidden_layer_size = 6#100
+output_size = 1#1
 
-test_data_size = 12#1000#12#100  # 1 refers to -1 index of dataset, ie.,
+test_data_size = 100#1000#12#100  # 1 refers to -1 index of dataset, ie.,
                          # whole dataset is training
 
-train_window = 12#100#1000#12  # Ventanas de tiempo usadas para crear las secuencias
+train_window = 1000#100#1000#12  # Ventanas de tiempo usadas para crear las secuencias
 
                                # 12 datos equivalen a 1 hora
-fut_pred = 12#1000#100#12
+fut_pred = 100#1000#100#12
 
 
 # Get flight dataset from seaborn
@@ -111,7 +111,7 @@ train_inout_seq = create_inout_sequences(train_data_normalized, train_window)
 
 class LSTM(nn.Module):
     def __init__(self, input_size=input_size, hidden_layer_size=hidden_layer_size,
-                 output_size=output_size, num_layers=num_layers):
+                 output_size=output_size, num_layers=num_layers, batch_size=batch_size):
         super().__init__()
         self.hidden_layer_size = hidden_layer_size
 
@@ -119,8 +119,8 @@ class LSTM(nn.Module):
 
         self.linear = nn.Linear(hidden_layer_size, output_size)
 
-        self.hidden_cell = (torch.zeros(1,1,self.hidden_layer_size),
-                            torch.zeros(1,1,self.hidden_layer_size))
+        self.hidden_cell = (torch.zeros(num_layers, batch_size, self.hidden_layer_size),
+                            torch.zeros(num_layers, batch_size, self.hidden_layer_size))
 
     def forward(self, input_seq):
         lstm_out, self.hidden_cell = self.lstm(input_seq.view(len(input_seq) ,1, -1), self.hidden_cell)
