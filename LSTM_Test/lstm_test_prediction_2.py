@@ -7,20 +7,30 @@ import matplotlib.pyplot as plt
 import datetime as dt
 from tqdm import tqdm
 
-# Hyperparameters
-learning_rate = 0.001
-epochs = 4#20#150#2#10#150
+# Moving average
+def smooth(data, N_avg):
+    def mov_avg(x, N):
+        cumsum = np.cumsum(np.insert(x, 0, 0))
+        return (cumsum[N:] - cumsum[:-N]) / float(N)
+    return mov_avg(data, N_avg)
 
+# Hyperparameters
+learning_rate = 0.1#0.001
+epochs = 4#10#20#150#2#10#150
+
+batch_size = 1
 input_size = 1
-hidden_layer_size = 100#100
+num_layers = 10
+hidden_layer_size = 1#100
 output_size = 1
 
-test_data_size = 100#1000#12#100  # 1 refers to -1 index of dataset, ie.,
+test_data_size = 12#1000#12#100  # 1 refers to -1 index of dataset, ie.,
                          # whole dataset is training
 
-train_window = 8000#100#1000#12  # Ventanas de tiempo usadas para crear las secuencias
+train_window = 12#100#1000#12  # Ventanas de tiempo usadas para crear las secuencias
 
-fut_pred = 100#1000#100#12
+                               # 12 datos equivalen a 1 hora
+fut_pred = 12#1000#100#12
 
 
 # Get flight dataset from seaborn
@@ -41,6 +51,12 @@ try:
 except:
     times = np.array(data['times'])
 defs = np.array(data['defs'])
+
+N_avg = 2#5#2  # 2 para hacer una linea recta (tendencia) y al menos
+               # 5 puntos para tendencia valida (entonces con N_avg=2
+               # se logran 2-3 smooth ptos por cada 5)
+times = smooth(times, N_avg)
+defs = smooth(defs, N_avg)
 
 ### Data processing
 
@@ -95,11 +111,11 @@ train_inout_seq = create_inout_sequences(train_data_normalized, train_window)
 
 class LSTM(nn.Module):
     def __init__(self, input_size=input_size, hidden_layer_size=hidden_layer_size,
-                 output_size=output_size):
+                 output_size=output_size, num_layers=num_layers):
         super().__init__()
         self.hidden_layer_size = hidden_layer_size
 
-        self.lstm = nn.LSTM(input_size, hidden_layer_size)
+        self.lstm = nn.LSTM(input_size, hidden_layer_size, num_layers)
 
         self.linear = nn.Linear(hidden_layer_size, output_size)
 
@@ -140,8 +156,8 @@ for i in tqdm(range(epochs), total=epochs):
         seq, labels = seq.to(device), labels.to(device)
 
         optimizer.zero_grad()
-        model.hidden_cell = (torch.zeros(1, 1, model.hidden_layer_size).to(device),
-                             torch.zeros(1, 1, model.hidden_layer_size).to(device))
+        model.hidden_cell = (torch.zeros(num_layers, batch_size, model.hidden_layer_size).to(device),
+                             torch.zeros(num_layers, batch_size, model.hidden_layer_size).to(device))
 
         y_pred = model(seq)
 
