@@ -122,7 +122,7 @@ for ind_epoch, t in tqdm(enumerate(range(num_epochs)), total=num_epochs):
     optimiser.step()
 
     ### Save state dict of model
-    torch.save(model.state_dict(), 'state_dict')
+    #torch.save(model.state_dict(), 'state_dict')
 
     loss4plot.append(loss)
 

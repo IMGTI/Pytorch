@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import datetime as dt
+import os
 from tqdm import tqdm
 
 # Moving average
@@ -15,23 +16,47 @@ def smooth(data, N_avg):
     return mov_avg(data, N_avg)
 
 # Hyperparameters
-learning_rate = 0.1#0.001
-epochs = 2#10#20#150#2#10#150
+learning_rate = 0.001#0.001
+epochs = 150#10#20#150#2#10#150
 
 batch_size = 1#1
 input_size = 1#1
-num_layers = 3#10
-hidden_layer_size = 6#100
+num_layers = 2#10
+hidden_layer_size = 100#6#100
 output_size = 1#1
 
 test_data_size = 100#1000#12#100  # 1 refers to -1 index of dataset, ie.,
-                         # whole dataset is training
+                                  # whole dataset is training
 
-train_window = 1000#100#1000#12  # Ventanas de tiempo usadas para crear las secuencias
+train_window = 100#100#1000#12  # Ventanas de tiempo usadas para crear las secuencias
+                                # 12 datos equivalen a 1 hora
 
-                               # 12 datos equivalen a 1 hora
 fut_pred = 100#1000#100#12
 
+params_name = ('_e' + str(epochs) +
+               '_lr' + str(learning_rate) +
+               '_b' + str(batch_size) +
+               '_i' + str(input_size) +
+               '_n' + str(num_layers) +
+               '_h' + str(hidden_layer_size) +
+               '_o' + str(output_size) +
+               '_trw' + str(train_window))
+
+# Create directory for each run and different hyperparameters
+
+current = dt.datetime.now().strftime("%d_%m_%Y") + '/' + dt.datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
+
+# Create new directory for each run
+
+# Create directory
+try:
+    os.mkdir(dt.datetime.now().strftime("%d_%m_%Y"))
+    os.mkdir(current)
+except:
+    try:
+        os.mkdir(current)
+    except:
+        pass
 
 # Get flight dataset from seaborn
 #flight_data = sns.load_dataset("flights")
@@ -39,10 +64,12 @@ fut_pred = 100#1000#100#12
 
 #print(flight_data.columns)
 
+file = 'Figura de Control.xlsx'
+fig_name = 'F6'
 #file = 'prueba_serie.xlsx'
 #fig_name = 'Sheet1'
-file = 'Figura_de_control_desde_feb.xlsx'
-fig_name = 'Datos'
+#file = 'Figura_de_control_desde_feb.xlsx'
+#fig_name = 'Datos'
 
 data = pd.read_excel(file, fig_name, usecols=[0,1], names=['times', 'defs'])
 
@@ -52,11 +79,11 @@ except:
     times = np.array(data['times'])
 defs = np.array(data['defs'])
 
-N_avg = 2#5#2  # 2 para hacer una linea recta (tendencia) y al menos
+#N_avg = 2#5#2  # 2 para hacer una linea recta (tendencia) y al menos
                # 5 puntos para tendencia valida (entonces con N_avg=2
                # se logran 2-3 smooth ptos por cada 5)
-times = smooth(times, N_avg)
-defs = smooth(defs, N_avg)
+#times = smooth(times, N_avg)
+#defs = smooth(defs, N_avg)
 
 ### Data processing
 
@@ -106,6 +133,9 @@ def create_inout_sequences(input_data, tw):
 
 # Create data sequences with corresponding labels
 train_inout_seq = create_inout_sequences(train_data_normalized, train_window)
+# train_inout_seq dimensions are (batch_size, num_time_steps, train_window)
+# num_time_steps are the tot_data_len - train_window
+# train_window defines the number of inputs per time step
 
 ### Create LSTM
 
@@ -123,7 +153,7 @@ class LSTM(nn.Module):
                             torch.zeros(num_layers, batch_size, self.hidden_layer_size))
 
     def forward(self, input_seq):
-        lstm_out, self.hidden_cell = self.lstm(input_seq.view(len(input_seq) ,1, -1), self.hidden_cell)
+        lstm_out, self.hidden_cell = self.lstm(input_seq.view(len(input_seq), 1, -1), self.hidden_cell)
         predictions = self.linear(lstm_out.view(len(input_seq), -1))
         return predictions[-1]
 
@@ -184,7 +214,7 @@ for i in tqdm(range(epochs), total=epochs):
     plt.title("Mean running loss vs epoch")
     plt.xlabel("Epoch (units)")
     plt.ylabel("Running loss")
-    fig_loss.savefig("loss_vs_epoch_2.jpg")
+    fig_loss.savefig(current + "/loss_vs_epoch_2" + params_name + ".jpg")
 
 #print(f'epoch: {i:3} loss: {single_loss.item():10.10f}')
 
@@ -203,16 +233,16 @@ test_inputs = train_data_normalized[-train_window:].tolist()  # Number of inputs
 model.eval()
 
 for i in range(fut_pred):
-    seq = torch.FloatTensor(test_inputs[-train_window:]).to(device)
+    seq_2 = torch.FloatTensor(test_inputs[-train_window:]).to(device)
     with torch.no_grad():
-        model.hidden = (torch.zeros(1, 1, model.hidden_layer_size),
-                        torch.zeros(1, 1, model.hidden_layer_size))
-        test_inputs.append(model(seq).item())
+        model.hidden = (torch.zeros(num_layers, batch_size, model.hidden_layer_size),
+                        torch.zeros(num_layers, batch_size, model.hidden_layer_size))
+        test_inputs.append(model(seq_2).item())
 
 #print(test_inputs[fut_pred:])
 
 # Unnormalize the predictions
-actual_predictions = scaler.inverse_transform(np.array(test_inputs[train_window:] ).reshape(-1, 1))
+actual_predictions = scaler.inverse_transform(np.array(test_inputs[-fut_pred:] ).reshape(-1, 1))
 #print(actual_predictions)
 
 ### Plot predictions
@@ -240,7 +270,7 @@ plt.autoscale(axis='x', tight=True)
 plt.plot(times[-200:], defs[-200:])
 #plt.plot(x,actual_predictions)
 plt.plot(times_predictions,actual_predictions)
-fig1.savefig('defs_vs_times.jpg')
+fig1.savefig(current + '/defs_vs_times' + params_name + '.jpg')
 
 # Last 12 months
 fig2 = plt.figure(2)
@@ -254,4 +284,4 @@ plt.autoscale(axis='x', tight=True)
 plt.plot(times[-test_data_size:], defs[-test_data_size:])
 #plt.plot(x,actual_predictions)
 plt.plot(times_predictions,actual_predictions)
-fig2.savefig('defs_vs_times_12times.jpg')
+fig2.savefig(current + '/defs_vs_times_only_pred_times' + params_name + '.jpg')
