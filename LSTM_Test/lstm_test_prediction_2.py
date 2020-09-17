@@ -17,12 +17,12 @@ def smooth(data, N_avg):
 
 # Hyperparameters
 learning_rate = 0.001#0.001
-epochs = 150#10#20#150#2#10#150
+epochs = 2#100#10#20#150#2#10#150
 
 batch_size = 1#1
 input_size = 1#1
 num_layers = 2#10
-hidden_layer_size = 100#6#100
+hidden_layer_size = 50#6#100
 output_size = 1#1
 
 test_data_size = 100#1000#12#100  # 1 refers to -1 index of dataset, ie.,
@@ -106,7 +106,7 @@ test_data = defs[-test_data_size:]
 # Normalize the data
 from sklearn.preprocessing import MinMaxScaler
 
-scaler = MinMaxScaler(feature_range=(-1, 1))
+scaler = MinMaxScaler(feature_range=(-1,1))#(-1, 1))
 train_data_normalized = scaler.fit_transform(train_data.reshape(-1, 1))
 
 #print(train_data_normalized[:5])
@@ -142,7 +142,7 @@ train_inout_seq = create_inout_sequences(train_data_normalized, train_window)
 class LSTM(nn.Module):
     def __init__(self, input_size=input_size, hidden_layer_size=hidden_layer_size,
                  output_size=output_size, num_layers=num_layers, batch_size=batch_size):
-        super().__init__()
+        super(LSTM, self).__init__()
         self.hidden_layer_size = hidden_layer_size
 
         self.lstm = nn.LSTM(input_size, hidden_layer_size, num_layers)
@@ -153,8 +153,13 @@ class LSTM(nn.Module):
                             torch.zeros(num_layers, batch_size, self.hidden_layer_size))
 
     def forward(self, input_seq):
-        lstm_out, self.hidden_cell = self.lstm(input_seq.view(len(input_seq), 1, -1), self.hidden_cell)
+        lstm_out, self.hidden_cell = self.lstm(input_seq.view(len(input_seq), batch_size, -1), self.hidden_cell)
+        #print('UNO',lstm_out.size())
+        # Relu (F(X)) does nothing because the Rec(F(X))->[0,1] and Dom(F(x))->[0,1]
+        #print('DOS',lstm_out.view(len(input_seq), -1).size())
         predictions = self.linear(lstm_out.view(len(input_seq), -1))
+        #print('TRES',predictions.size())
+        #print(predictions[-1])
         return predictions[-1]
 
 ### Trainning
@@ -185,7 +190,7 @@ for i in tqdm(range(epochs), total=epochs):
     for seq, labels in train_inout_seq:
         seq, labels = seq.to(device), labels.to(device)
 
-        optimizer.zero_grad()
+        #optimizer.zero_grad()
         model.hidden_cell = (torch.zeros(num_layers, batch_size, model.hidden_layer_size).to(device),
                              torch.zeros(num_layers, batch_size, model.hidden_layer_size).to(device))
 
@@ -197,6 +202,9 @@ for i in tqdm(range(epochs), total=epochs):
         running_loss += single_loss.item()
 
         optimizer.step()
+
+    optimizer.zero_grad()
+
 
     if i%25 == 1:
         print(f'epoch: {i:3} loss: {single_loss.item():10.8f}')
