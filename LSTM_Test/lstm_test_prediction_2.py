@@ -16,7 +16,7 @@ def smooth(data, N_avg):
     return mov_avg(data, N_avg)
 
 # Hyperparameters
-learning_rate = 0.001#0.001
+learning_rate = 0.1#0.001
 epochs = 2#100#10#20#150#2#10#150
 
 batch_size = 1#1
@@ -25,13 +25,13 @@ num_layers = 2#10
 hidden_layer_size = 50#6#100
 output_size = 1#1
 
-test_data_size = 100#1000#12#100  # 1 refers to -1 index of dataset, ie.,
+test_data_size = 10#1000#12#100  # 1 refers to -1 index of dataset, ie.,
                                   # whole dataset is training
 
-train_window = 100#100#1000#12  # Ventanas de tiempo usadas para crear las secuencias
+train_window = 10#100#1000#12  # Ventanas de tiempo usadas para crear las secuencias
                                 # 12 datos equivalen a 1 hora
 
-fut_pred = 100#1000#100#12
+fut_pred = 10#1000#100#12
 
 params_name = ('_e' + str(epochs) +
                '_lr' + str(learning_rate) +
@@ -190,7 +190,8 @@ for i in tqdm(range(epochs), total=epochs):
     for seq, labels in train_inout_seq:
         seq, labels = seq.to(device), labels.to(device)
 
-        #optimizer.zero_grad()
+        optimizer.zero_grad()
+        
         model.hidden_cell = (torch.zeros(num_layers, batch_size, model.hidden_layer_size).to(device),
                              torch.zeros(num_layers, batch_size, model.hidden_layer_size).to(device))
 
@@ -202,8 +203,6 @@ for i in tqdm(range(epochs), total=epochs):
         running_loss += single_loss.item()
 
         optimizer.step()
-
-    optimizer.zero_grad()
 
 
     if i%25 == 1:
