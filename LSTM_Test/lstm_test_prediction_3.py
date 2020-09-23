@@ -12,23 +12,24 @@ from tqdm import tqdm
 ### HYPERPARAMETERS ###
 
 # Net parameters
-num_epochs = 2000#2000#300#2000
+num_epochs = 200#300#2000
 learning_rate = 0.001#0.001#0.01
 
 input_size = 1
 batch_size = 1  # Unused variable
-hidden_size = 2
+hidden_size = 10#2
 num_layers = 1
 
 num_classes = 1
 
 
 # Data parameters
-seq_length = 100#4  # Train Window
+seq_length = 1000#4  # Train Window
 
 train_size = -1000#int(len(y) * 0.67)
 test_size = -1000#len(y) - train_size  # Unused variable
 
+fut_pred = 100#5#100  # Number of predictions
 
 # Parameters in name for .jpg files
 params_name = ('_e' + str(num_epochs) +
@@ -195,14 +196,68 @@ for epoch in tqdm(range(num_epochs), total=num_epochs):
 ### TESTING ###
 
 lstm.eval()
-train_predict = lstm(dataX.to(device))
+'''
+train_predict = lstm(dataX.to(device))  # Should be the same length as dataX
+                                        # but in a delayed window by 1 time
+                                        # (prediction) ==> last value
 
 data_predict = train_predict.data.cpu().numpy()
 dataY_plot = dataY.data.cpu().numpy()
 
 data_predict = sc.inverse_transform(data_predict)
 dataY_plot = sc.inverse_transform(dataY_plot)
+'''
 
+test_inputs = np.zeros([fut_pred + 1, 1, seq_length, 1])
+
+test_inputs[0] = dataX[-1].reshape(-1,seq_length,1).data.numpy()
+
+times = (times/(3600*24) -
+        (times/(3600*24))[0])
+
+time_step = np.absolute(times[0] - times[1])
+
+times_predictions = (np.arange(0, fut_pred*time_step, time_step) +
+                     times[-test_size])
+
+for i in range(fut_pred):
+    seq = torch.FloatTensor(test_inputs[i]).to(device)
+    print(seq)
+    with torch.no_grad():
+        prediction = lstm(seq).data.cpu().numpy().item()
+        test_inputs[i+1] = np.append(test_inputs[i][0][1:], prediction).reshape([1,seq_length,1])
+
+'''REVISAR PORQUE LSTM(SEQ) ES UN NUM CON LA PREDICCION DE SEQ,
+POR LO QUE AL APPENDEAR AL FINAL DE TEST_INPUT, LUEGO NO LE ESTOY DANDO UNA
+SECUENCIA (SEQ) A LA PROXIMA ITERACION, SINO UN NUMERO, Y EL TORCH.FLOATTENSOR
+GENERA UN TENSOR CON EL MISMO VALOR EN TODOS LOS INDICES SI SE LE DA COMO ARGUMENTO
+UN SOLO VALOR (DONE)'''
+
+#print(test_inputs)
+
+data_predict = [x.reshape(seq_length,1) for x in test_inputs]
+dataY_plot = dataY.data.cpu().numpy()
+
+data_predict = [sc.inverse_transform(x) for x in data_predict]
+dataY_plot = sc.inverse_transform(dataY_plot)
+
+#print(data_predict)
+
+fig2 = plt.figure(2)
+fig2.clf()
+
+vline_substraction = np.absolute(train_size) - (seq_length + 1)
+plt.axvline(x=len(y) - vline_substraction, c='r', linestyle='--')
+plt.plot(dataY_plot, 'r-', label = 'Raw Data')
+for val in data_predict:
+    plt.plot(val, 'g-')
+plt.title('Deformation vs Time')
+plt.ylabel('Defs(cm)')
+plt.xlabel('Time(d)')
+plt.grid(True)
+plt.legend()
+fig2.savefig(current + "/defs_vs_times_pred" + params_name + ".jpg")
+'''
 fig2 = plt.figure(2)
 fig2.clf()
 
@@ -217,3 +272,4 @@ plt.xlabel('Time(d)')
 plt.grid(True)
 plt.legend()
 fig2.savefig(current + "/defs_vs_times_pred" + params_name + ".jpg")
+'''
