@@ -241,7 +241,7 @@ model.eval()
 
 for i in range(fut_pred):
     seq_2 = torch.FloatTensor(test_inputs[-train_window:]).to(device)
-    print(seq_2)
+    #print(seq_2)
     with torch.no_grad():
         model.hidden = (torch.zeros(num_layers, batch_size, model.hidden_layer_size),
                         torch.zeros(num_layers, batch_size, model.hidden_layer_size))

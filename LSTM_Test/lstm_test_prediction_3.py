@@ -17,7 +17,7 @@ learning_rate = 0.001#0.001#0.01
 
 input_size = 1
 batch_size = 1  # Unused variable
-hidden_size = 10#2
+hidden_size = 10#10#2
 num_layers = 1
 
 num_classes = 1
@@ -26,10 +26,10 @@ num_classes = 1
 # Data parameters
 seq_length = 1000#4  # Train Window
 
-train_size = -1000#int(len(y) * 0.67)
-test_size = -1000#len(y) - train_size  # Unused variable
+train_size = -100#int(len(y) * 0.67)
+test_size = -100#len(y) - train_size  # Unused variable
 
-fut_pred = 100#5#100  # Number of predictions
+fut_pred = 5#5#100  # Number of predictions
 
 # Parameters in name for .jpg files
 params_name = ('_e' + str(num_epochs) +
@@ -66,6 +66,10 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 file = 'Figura de Control.xlsx'
 fig_name = 'F6'
+#file = 'prueba_serie.xlsx'
+#fig_name = 'Sheet1'
+#file = 'Figura_de_control_desde_feb.xlsx'
+#fig_name = 'Datos'
 
 data = pd.read_excel(file, fig_name, usecols=[0,1], names=['times', 'defs'])
 
@@ -195,22 +199,14 @@ for epoch in tqdm(range(num_epochs), total=num_epochs):
 
 ### TESTING ###
 
+# Test predctions over time
+
 lstm.eval()
-'''
-train_predict = lstm(dataX.to(device))  # Should be the same length as dataX
-                                        # but in a delayed window by 1 time
-                                        # (prediction) ==> last value
-
-data_predict = train_predict.data.cpu().numpy()
-dataY_plot = dataY.data.cpu().numpy()
-
-data_predict = sc.inverse_transform(data_predict)
-dataY_plot = sc.inverse_transform(dataY_plot)
-'''
 
 test_inputs = np.zeros([fut_pred + 1, 1, seq_length, 1])
 
-test_inputs[0] = dataX[-1].reshape(-1,seq_length,1).data.numpy()
+#test_inputs[0] = dataX[-1].reshape(-1,seq_length,1).data.numpy()
+test_inputs[0] = trainX[-1].reshape(-1,seq_length,1).data.numpy()
 
 times = (times/(3600*24) -
         (times/(3600*24))[0])
@@ -222,7 +218,7 @@ times_predictions = (np.arange(0, fut_pred*time_step, time_step) +
 
 for i in range(fut_pred):
     seq = torch.FloatTensor(test_inputs[i]).to(device)
-    print(seq)
+    #print(seq)
     with torch.no_grad():
         prediction = lstm(seq).data.cpu().numpy().item()
         test_inputs[i+1] = np.append(test_inputs[i][0][1:], prediction).reshape([1,seq_length,1])
@@ -235,10 +231,10 @@ UN SOLO VALOR (DONE)'''
 
 #print(test_inputs)
 
-data_predict = [x.reshape(seq_length,1) for x in test_inputs]
+data_predict = np.array([x.reshape(seq_length)[-1] for x in test_inputs]).reshape([-1,1])
 dataY_plot = dataY.data.cpu().numpy()
 
-data_predict = [sc.inverse_transform(x) for x in data_predict]
+data_predict = sc.inverse_transform(data_predict)
 dataY_plot = sc.inverse_transform(dataY_plot)
 
 #print(data_predict)
@@ -246,22 +242,33 @@ dataY_plot = sc.inverse_transform(dataY_plot)
 fig2 = plt.figure(2)
 fig2.clf()
 
-vline_substraction = np.absolute(train_size) - (seq_length + 1)
-plt.axvline(x=len(y) - vline_substraction, c='r', linestyle='--')
-plt.plot(dataY_plot, 'r-', label = 'Raw Data')
-for val in data_predict:
-    plt.plot(val, 'g-')
+plt.plot(range(-train_size), dataY_plot[train_size:], 'r-', label = 'Raw Data')
+plt.plot(range(len(data_predict)), data_predict, 'g-', label = 'Predicted Data')
 plt.title('Deformation vs Time')
 plt.ylabel('Defs(cm)')
 plt.xlabel('Time(d)')
 plt.grid(True)
 plt.legend()
 fig2.savefig(current + "/defs_vs_times_pred" + params_name + ".jpg")
-'''
-fig2 = plt.figure(2)
-fig2.clf()
 
-vline_substraction = np.absolute(train_size) - (seq_length + 1)
+# Test fitting model
+
+lstm.eval()
+
+train_predict = lstm(dataX.to(device))  # Should be the same length as dataX
+                                        # but in a delayed window by 1 time
+                                        # (prediction) ==> last value
+
+data_predict = train_predict.data.cpu().numpy()
+dataY_plot = dataY.data.cpu().numpy()
+
+data_predict = sc.inverse_transform(data_predict)
+dataY_plot = sc.inverse_transform(dataY_plot)
+
+fig3 = plt.figure(3)
+fig3.clf()
+
+vline_substraction = np.absolute(train_size)# - (seq_length + 1)
 plt.axvline(x=len(y) - vline_substraction, c='r', linestyle='--')
 
 plt.plot(dataY_plot, 'r-', label = 'Raw Data')
@@ -271,5 +278,4 @@ plt.ylabel('Defs(cm)')
 plt.xlabel('Time(d)')
 plt.grid(True)
 plt.legend()
-fig2.savefig(current + "/defs_vs_times_pred" + params_name + ".jpg")
-'''
+fig3.savefig(current + "/defs_vs_times_pred_fitting" + params_name + ".jpg")

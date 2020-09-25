@@ -1,0 +1,8 @@
+-Resultados cnn:
+batch_size=25
+epochs=4
+lr=0.001
+momentum=0.9
+net_width=1024
+
+precision=67%
