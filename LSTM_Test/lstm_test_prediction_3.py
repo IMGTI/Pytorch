@@ -9,10 +9,17 @@ import datetime as dt
 import os
 from tqdm import tqdm
 
+# Moving average
+def smooth(data, N_avg):
+    def mov_avg(x, N):
+        cumsum = np.cumsum(np.insert(x, 0, 0))
+        return (cumsum[N:] - cumsum[:-N]) / float(N)
+    return mov_avg(data, N_avg)
+
 ### HYPERPARAMETERS ###
 
 # Net parameters
-num_epochs = 2#200#300#2000
+num_epochs = 2000#200#300#2000
 learning_rate = 0.001#0.001#0.01
 
 input_size = 1
@@ -29,7 +36,7 @@ seq_length = 1000#4  # Train Window
 train_size = -100#int(len(y) * 0.67)
 test_size = -100#len(y) - train_size  # Unused variable
 
-fut_pred = 5#100  # Number of predictions
+fut_pred = 100#5#100  # Number of predictions
 
 # Parameters in name for .jpg files
 params_name = ('_e' + str(num_epochs) +
@@ -84,9 +91,15 @@ times = (times/(3600*24) -
 
 defs = np.array(data['defs'])
 
+# Apply smooth
+#N_avg = 2#5#2    # 2 para hacer una linea recta (tendencia) y al menos
+               # 5 puntos para tendencia valida (entonces con N_avg=2
+               # se logran 2-3 smooth ptos por cada 5)
+#times = smooth(times, N_avg)
+#defs = smooth(defs, N_avg)
+
 # Reshape data array from 1D to 2D
 defs = defs.reshape(-1, 1)
-
 
 ### DATA PLOT ###
 
