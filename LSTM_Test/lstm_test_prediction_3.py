@@ -12,7 +12,7 @@ from tqdm import tqdm
 ### HYPERPARAMETERS ###
 
 # Net parameters
-num_epochs = 200#300#2000
+num_epochs = 2#200#300#2000
 learning_rate = 0.001#0.001#0.01
 
 input_size = 1
@@ -29,7 +29,7 @@ seq_length = 1000#4  # Train Window
 train_size = -100#int(len(y) * 0.67)
 test_size = -100#len(y) - train_size  # Unused variable
 
-fut_pred = 5#5#100  # Number of predictions
+fut_pred = 5#100  # Number of predictions
 
 # Parameters in name for .jpg files
 params_name = ('_e' + str(num_epochs) +
@@ -77,6 +77,11 @@ try:
     times = np.array([dt.datetime.timestamp(x) for x in data['times']])
 except:
     times = np.array(data['times'])
+
+# Convert times from seconds to days
+times = (times/(3600*24) -
+        (times/(3600*24))[0])
+
 defs = np.array(data['defs'])
 
 # Reshape data array from 1D to 2D
@@ -89,7 +94,7 @@ training_set = defs
 
 fig1 = plt.figure(1)
 fig1.clf()
-plt.plot(training_set, 'r-', label = 'Raw Data')
+plt.plot(times, training_set, 'r-', label = 'Raw Data')
 plt.title('Deformation vs Time')
 plt.ylabel('Defs(cm)')
 plt.xlabel('Time(d)')
@@ -206,15 +211,15 @@ lstm.eval()
 test_inputs = np.zeros([fut_pred + 1, 1, seq_length, 1])
 
 #test_inputs[0] = dataX[-1].reshape(-1,seq_length,1).data.numpy()
-test_inputs[0] = trainX[-1].reshape(-1,seq_length,1).data.numpy()
-
-times = (times/(3600*24) -
-        (times/(3600*24))[0])
+ind_test = 1000
+test_inputs[0] = dataX[ind_test].reshape(-1,seq_length,1).data.numpy()
 
 time_step = np.absolute(times[0] - times[1])
 
+times_dataY = (times + (seq_length*time_step))[:-seq_length-1]  # Times according with dataX and dataY dimensions
+
 times_predictions = (np.arange(0, fut_pred*time_step, time_step) +
-                     times[-test_size])
+                     times_dataY[ind_test])
 
 for i in range(fut_pred):
     seq = torch.FloatTensor(test_inputs[i]).to(device)
@@ -242,8 +247,10 @@ dataY_plot = sc.inverse_transform(dataY_plot)
 fig2 = plt.figure(2)
 fig2.clf()
 
-plt.plot(range(-train_size), dataY_plot[train_size:], 'r-', label = 'Raw Data')
-plt.plot(range(len(data_predict)), data_predict, 'g-', label = 'Predicted Data')
+#plt.plot(range(-train_size), dataY_plot[train_size:], 'r-', label = 'Raw Data')
+plt.plot(times_dataY[ind_test:ind_test+(fut_pred+1)], dataY_plot[ind_test:ind_test+(fut_pred+1)], 'r-', label = 'Raw Data')
+#plt.plot(range(len(data_predict)), data_predict, 'g-', label = 'Predicted Data')
+plt.plot(times_dataY[ind_test:ind_test+(fut_pred+1)], data_predict, 'g-', label = 'Predicted Data')
 plt.title('Deformation vs Time')
 plt.ylabel('Defs(cm)')
 plt.xlabel('Time(d)')
@@ -268,11 +275,12 @@ dataY_plot = sc.inverse_transform(dataY_plot)
 fig3 = plt.figure(3)
 fig3.clf()
 
-vline_substraction = np.absolute(train_size)# - (seq_length + 1)
-plt.axvline(x=len(y) - vline_substraction, c='r', linestyle='--')
+#vline_substraction = np.absolute(train_size)# - (seq_length + 1)
+vline_substraction = times_dataY[ind_test]
+plt.axvline(x=vline_substraction, c='r', linestyle='--')
 
-plt.plot(dataY_plot, 'r-', label = 'Raw Data')
-plt.plot(data_predict, 'g-', label = 'Predicted Data')
+plt.plot(times_dataY, dataY_plot, 'r-', label = 'Raw Data')
+plt.plot(times_dataY, data_predict, 'g-', label = 'Predicted Data')
 plt.title('Deformation vs Time')
 plt.ylabel('Defs(cm)')
 plt.xlabel('Time(d)')
