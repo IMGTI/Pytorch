@@ -170,6 +170,14 @@ class LSTM(nn.Module):
 # Initiate model
 
 lstm = LSTM(num_classes, input_size, hidden_size, num_layers)
+
+# Load state dict of model
+#try:
+#    lstm.load_state_dict(torch.load('state_dict'))
+#    lstm.eval()
+#except:
+#    print('No model state dict found')
+
 lstm.to(device)
 
 criterion = torch.nn.MSELoss()    # mean-squared error for regression
@@ -202,6 +210,9 @@ for epoch in tqdm(range(num_epochs), total=num_epochs):
     plt.ylabel("Running loss")
     fig_loss.savefig(current + "/loss_vs_epoch" + params_name + ".jpg")
 
+    # Save state dict of model
+    torch.save(lstm.state_dict(), 'state_dict')
+
 ### TESTING ###
 
 # Test predctions over time
@@ -210,15 +221,16 @@ lstm.eval()
 
 test_inputs = np.zeros([fut_pred + 1, 1, seq_length, 1])
 
+ind_test = 1000 #len(dataX)-1
 #test_inputs[0] = dataX[-1].reshape(-1,seq_length,1).data.numpy()
-ind_test = 1000
+
 test_inputs[0] = dataX[ind_test].reshape(-1,seq_length,1).data.numpy()
 
 time_step = np.absolute(times[0] - times[1])
 
 times_dataY = (times + (seq_length*time_step))[:-seq_length-1]  # Times according with dataX and dataY dimensions
 
-times_predictions = (np.arange(0, fut_pred*time_step, time_step) +
+times_predictions = (np.arange(0, (fut_pred+1)*time_step, time_step) +
                      times_dataY[ind_test])
 
 for i in range(fut_pred):
@@ -248,16 +260,16 @@ fig2 = plt.figure(2)
 fig2.clf()
 
 #plt.plot(range(-train_size), dataY_plot[train_size:], 'r-', label = 'Raw Data')
-plt.plot(times_dataY[ind_test:ind_test+(fut_pred+1)], dataY_plot[ind_test:ind_test+(fut_pred+1)], 'r-', label = 'Raw Data')
+plt.plot(times_dataY[ind_test:ind_test+(fut_pred+1)], dataY_plot[ind_test-1:ind_test-1+(fut_pred+1)], 'r-', label = 'Raw Data')
 #plt.plot(range(len(data_predict)), data_predict, 'g-', label = 'Predicted Data')
-plt.plot(times_dataY[ind_test:ind_test+(fut_pred+1)], data_predict, 'g-', label = 'Predicted Data')
+plt.plot(times_predictions, data_predict, 'g-', label = 'Predicted Data')
 plt.title('Deformation vs Time')
 plt.ylabel('Defs(cm)')
 plt.xlabel('Time(d)')
 plt.grid(True)
 plt.legend()
 fig2.savefig(current + "/defs_vs_times_pred" + params_name + ".jpg")
-
+data_predict2 = data_predict
 # Test fitting model
 
 lstm.eval()
