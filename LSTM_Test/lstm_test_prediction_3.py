@@ -24,19 +24,23 @@ learning_rate = 0.001#0.001#0.01
 
 input_size = 1
 batch_size = 1  # Unused variable
-hidden_size = 10#10#2
+hidden_size = 100#10#2
 num_layers = 1
 
 num_classes = 1
 
 
 # Data parameters
-seq_length = 1000#4  # Train Window
+seq_length = 12#1000#4  # Train Window
+                        # 1h = 12
+                        # 5min = 1
 
 train_size = -100#int(len(y) * 0.67)
 test_size = -100#len(y) - train_size  # Unused variable
 
-fut_pred = 100#5#100  # Number of predictions
+fut_pred = 12#100  # Number of predictions
+
+drop = 0.05#0.05
 
 # Parameters in name for .jpg files
 params_name = ('_e' + str(num_epochs) +
@@ -46,7 +50,8 @@ params_name = ('_e' + str(num_epochs) +
                '_n' + str(num_layers) +
                '_h' + str(hidden_size) +
                '_o' + str(num_classes) +
-               '_trw' + str(seq_length))
+               '_trw' + str(seq_length) +
+               '_drp' + str(drop))
 
 # Create directory for each run and different hyperparameters
 
@@ -71,12 +76,12 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 ### DATA EXTRACT ###
 
-file = 'Figura de Control.xlsx'
-fig_name = 'F6'
+#file = 'Figura de Control.xlsx'
+#fig_name = 'F6'
 #file = 'prueba_serie.xlsx'
 #fig_name = 'Sheet1'
-#file = 'Figura_de_control_desde_feb.xlsx'
-#fig_name = 'Datos'
+file = 'Figura_de_control_desde_feb.xlsx'
+fig_name = 'Datos'
 
 data = pd.read_excel(file, fig_name, usecols=[0,1], names=['times', 'defs'])
 
@@ -157,7 +162,8 @@ class LSTM(nn.Module):
         self.seq_length = seq_length
 
         self.lstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size,
-                            num_layers=num_layers, batch_first=True)
+                            num_layers=num_layers, batch_first=True,
+                            dropout=drop)
 
         self.fc = nn.Linear(hidden_size, num_classes)
 
@@ -234,7 +240,7 @@ lstm.eval()
 
 test_inputs = np.zeros([fut_pred + 1, 1, seq_length, 1])
 
-ind_test = 1000 #len(dataX)-1
+ind_test = -100#5000#1000#len(dataX)-1
 #test_inputs[0] = dataX[-1].reshape(-1,seq_length,1).data.numpy()
 
 test_inputs[0] = dataX[ind_test].reshape(-1,seq_length,1).data.numpy()
@@ -276,6 +282,8 @@ fig2.clf()
 plt.plot(times_dataY[ind_test:ind_test+(fut_pred+1)], dataY_plot[ind_test-1:ind_test-1+(fut_pred+1)], 'r-', label = 'Raw Data')
 #plt.plot(range(len(data_predict)), data_predict, 'g-', label = 'Predicted Data')
 plt.plot(times_predictions, data_predict, 'g-', label = 'Predicted Data')
+if fut_pred>=seq_length:
+    plt.axvline(x=times_predictions[seq_length-1], c='b', linestyle='--')
 plt.title('Deformation vs Time')
 plt.ylabel('Defs(cm)')
 plt.xlabel('Time(d)')
