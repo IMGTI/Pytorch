@@ -97,11 +97,11 @@ times = (times/(3600*24) -
 defs = np.array(data['defs'])
 
 # Apply smooth
-#N_avg = 2#5#2    # 2 para hacer una linea recta (tendencia) y al menos
+N_avg = 2#5#2    # 2 para hacer una linea recta (tendencia) y al menos
                # 5 puntos para tendencia valida (entonces con N_avg=2
                # se logran 2-3 smooth ptos por cada 5)
-#times = smooth(times, N_avg)
-#defs = smooth(defs, N_avg)
+times = smooth(times, N_avg)
+defs = smooth(defs, N_avg)
 
 # Reshape data array from 1D to 2D
 defs = defs.reshape(-1, 1)
@@ -186,16 +186,22 @@ class LSTM(nn.Module):
 
 ### TRAINNING ####
 
+state_dict_path = 'state_dict'
+
 # Initiate model
 
 lstm = LSTM(num_classes, input_size, hidden_size, num_layers)
 
 # Load state dict of model
-#try:
-#    lstm.load_state_dict(torch.load('state_dict'))
-#    lstm.eval()
-#except:
-#    print('No model state dict found')
+try:
+    checkpoint = torch.load(state_dict_path)
+    lstm.load_state_dict(checkpoint['model_state_dict'])
+    optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    epoch = checkpoint['epoch']
+    loss = checkpoint['loss']
+    lstm.train()
+except:
+    print('State dict(s) missing')
 
 lstm.to(device)
 
@@ -230,7 +236,12 @@ for epoch in tqdm(range(num_epochs), total=num_epochs):
     fig_loss.savefig(current + "/loss_vs_epoch" + params_name + ".jpg")
 
     # Save state dict of model
-    torch.save(lstm.state_dict(), 'state_dict')
+    torch.save({
+                'epoch': epoch,
+                'model_state_dict': lstm.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'loss': loss,
+                }, state_dict_path)
 
 ### TESTING ###
 
