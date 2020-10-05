@@ -11,30 +11,29 @@ from main import (num_classes, input_size, hidden_size,
 
 class Train(self):
     def __init__(self):
+        # Initialize the model
+        self.lstm = LSTM(num_classes, input_size, hidden_size, num_layers, dropout)
         pass
 
-    def train_model(self):
-        # Initialize the model
-        lstm = LSTM(num_classes, input_size, hidden_size, num_layers, dropout)
-
+    def train_model(self, times, defs):
         # Try to load the model
         self.load_model()
 
         # Send model to device
-        lstm.to(device)
+        self.lstm.to(device)
 
         criterion = torch.nn.MSELoss()    # mean-squared error for regression
-        optimizer = torch.optim.Adam(lstm.parameters(), lr=learning_rate)
+        optimizer = torch.optim.Adam(self.lstm.parameters(), lr=learning_rate)
 
         # Train the model
         fig_loss = plt.figure(2)
         loss4plot = []
         for epoch in tqdm(range(num_epochs), total=num_epochs):
-            outputs = lstm(trainX.to(device))
+            outputs = self.lstm(trainX.to(device))
             optimizer.zero_grad()
 
             # Obtain the value for the loss function
-            loss = criterion(outputs.to(device), trainY.to(device))
+            loss = criterion(outputs.to(device), data.to(device))
 
             loss.backward()
 
@@ -53,7 +52,7 @@ class Train(self):
         # Save state dict of model
         torch.save({
                     'epoch': epoch,
-                    'model_state_dict': lstm.state_dict(),
+                    'model_state_dict': self.lstm.state_dict(),
                     'optimizer_state_dict': optimizer.state_dict(),
                     'loss': loss,
                     }, state_dict_path)
@@ -63,11 +62,11 @@ class Train(self):
         # Load state dict of model
         try:
             checkpoint = torch.load(state_dict_path)
-            lstm.load_state_dict(checkpoint['model_state_dict'])
+            self.lstm.load_state_dict(checkpoint['model_state_dict'])
             optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             epoch = checkpoint['epoch']
             loss = checkpoint['loss']
-            lstm.train()
+            self.lstm.train()
         except:
             print('State dict(s) missing')
         pass

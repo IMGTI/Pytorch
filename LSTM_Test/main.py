@@ -1,4 +1,43 @@
-### Define the hyperparameters ###
+import os
+import datetime as dt
+import torch
+import sys
+import getopt
+from data import Data
+from train import Train
+from test import Test
+
+### Parse line arguments
+
+def main(argv):
+    train_arg = True
+    test_arg = False
+    inputfile = ''
+    outputfile = ''
+    try:
+        opts, args = getopt.getopt(argv,"ht:i:o:",["train=","ifile=","ofile="])
+    except getopt.GetoptError:
+        print 'main.py -t <True> -i <inputfile> -o <outputfile>'
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-h':
+            print 'main.py (-t <[True]/False>) -i <inputfile> -o <outputfile>'
+            sys.exit()
+        elif opt in ("-i", "--ifile"):
+            inputfile = arg
+        elif opt in ("-o", "--ofile"):
+            outputfile = arg
+        elif opt in ("-t", "--train"):
+            train_arg = arg
+            if arg==True:
+                test_arg = False
+            else:
+                test_arg = True
+if __name__ == "__main__":
+   main(sys.argv[1:])
+
+
+### Define the Hyperparameters
 
 # Net parameters
 num_epochs = 2000#200#300#2000
@@ -32,13 +71,11 @@ params_name = ('_e' + str(num_epochs) +
                '_h' + str(hidden_size) +
                '_o' + str(num_classes) +
                '_trw' + str(seq_length) +
-               '_drp' + str(drop))
+               '_drp' + str(dropout))
 
-# Create directory for each run and different hyperparameters
+### Create directory for each run and different hyperparameters
 
 current = dt.datetime.now().strftime("%d_%m_%Y") + '/' + dt.datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
-
-# Create new directory for each run
 
 # Create directory
 try:
@@ -53,7 +90,35 @@ except:
 # Path for state dictionary to save model's weights and parameters
 state_dict_path = 'state_dict'
 
-### SELECT DEVICE ###
+### Select Device
 
 # Send net to GPU if possible
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+### Data
+
+#file = 'Figura de Control.xlsx'
+#fig_name = 'F6'
+#file = 'prueba_serie.xlsx'
+#fig_name = 'Sheet1'
+file = 'Figura_de_control_desde_feb.xlsx'
+fig_name = 'Datos'
+
+data = Data()
+data.ext_data(file, fig_name)
+data.data_smooth()
+data.reshape_data()
+data.plot_data()
+data.treat_data()
+
+### Train
+if train_arg:
+    train = Train()
+
+
+
+### Test
+inputfile = inputfile
+outputfile = outputfile
+if test_arg:
+    test = Test()
