@@ -85,9 +85,9 @@ state_dict_path = 'state_dict'
 if train_arg:
     ## Extract data for training
 
-    file = 'Figura de Control.xlsx'
+    #file = 'Figura de Control.xlsx'
     #file = 'prueba_serie.xlsx'
-    #file = 'Figura_de_control_desde_feb.xlsx'
+    file = 'Figura_de_control_desde_feb.xlsx'
 
     data = Data()
     data.ext_data(file)

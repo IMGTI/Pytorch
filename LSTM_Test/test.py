@@ -102,9 +102,9 @@ class Test(object):
                               seq_length, fut_pred)
             ## Fitting whole model
 
-            train_predict = self.lstm(defsX.to(self.device))  # Should be the same length as dataX
-                                                    # but in a delayed window by 1 time
-                                                    # (prediction) ==> last value
+            train_predict = self.lstm(defsX.to(self.device))    # Should be the same length as dataX
+                                                                # but in a delayed window by 1 time
+                                                                # (prediction) ==> last value
 
             data_predict = train_predict.data.cpu().numpy()
             dataY_plot = defsY.data.cpu().numpy()
@@ -113,8 +113,8 @@ class Test(object):
             dataY_plot = sc.inverse_transform(dataY_plot)
 
             self.plot_fit(self.current + "/defs_vs_times_fit" + self.params_name + ".jpg",
-                         [self.times, dataY_plot],
-                         [self.times, data_predict],
+                         [self.times, self.times],
+                         [dataY_plot, data_predict],
                          ind_test)
 
         ### Use test data
