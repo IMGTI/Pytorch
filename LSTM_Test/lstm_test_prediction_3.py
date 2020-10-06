@@ -19,7 +19,7 @@ def smooth(data, N_avg):
 ### HYPERPARAMETERS ###
 
 # Net parameters
-num_epochs = 2000#200#300#2000
+num_epochs = 2#200#300#2000
 learning_rate = 0.001#0.001#0.01
 
 input_size = 1

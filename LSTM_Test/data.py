@@ -1,10 +1,10 @@
+import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import datetime as dt
 from torch.autograd import Variable
 from sklearn.preprocessing import MinMaxScaler
-from main import current, params_name, seq_length, train_size
 
 class Data(object):
     def __init__(self):
@@ -16,8 +16,8 @@ class Data(object):
             return (cumsum[N:] - cumsum[:-N]) / float(N)
         return mov_avg(data, N_avg)
 
-    def ext_data(self, file, fig_name):
-        data = pd.read_excel(file, fig_name, usecols=[0,1], names=['times', 'defs'])
+    def ext_data(self, file):
+        data = pd.read_excel(file, usecols=[0,1], names=['times', 'defs'])
 
         try:
             times = np.array([dt.datetime.timestamp(x) for x in data['times']])
@@ -38,19 +38,20 @@ class Data(object):
                                # 5 puntos para tendencia valida (entonces con N_avg=2
                                # se logran 2-3 smooth ptos por cada 5)
 
-        self.times = smooth(self.times, self.N_avg)
-        self.defs = smooth(self.defs, self.N_avg)
+        self.times = self.smooth(self.times, self.N_avg)
+        self.defs = self.smooth(self.defs, self.N_avg)
         pass
 
-    def select_lastwin(self):
+    def select_lastwin(self, seq_length):
         # Select last window of "seq_length" size
-        self.lastt = self.times[-seq_length:]
-        self.lastd = self.defs[-seq_length:]
+        self.times_dataY = self.times[-seq_length:]
+        self.dataX = self.defs[-seq_length:]
+        self.dataY = self.defs[-1]
         pass
 
     def reshape_data(self):
         # Reshape data array from 1D to 2D
-        self.defs = defs.reshape(-1, 1)
+        self.defs = self.defs.reshape(-1, 1)
         pass
 
     def sliding_windows(self, data, seq_length):
@@ -65,7 +66,7 @@ class Data(object):
 
         return np.array(x),np.array(y)
 
-    def plot_data(self):
+    def plot_data(self, current, params_name):
         # Plot Data
         fig1 = plt.figure(1)
         fig1.clf()
@@ -78,7 +79,7 @@ class Data(object):
         fig1.savefig(current + "/defs_vs_times" + params_name + ".jpg")
         pass
 
-    def treat_data(self):
+    def treat_data(self, train_size, seq_length):
         # Load data into sequences
         training_set = self.defs
 
@@ -95,4 +96,8 @@ class Data(object):
 
         self.testX = Variable(torch.Tensor(np.array(x[train_size:len(x)])))
         self.testY = Variable(torch.Tensor(np.array(y[train_size:len(y)])))
-        pass
+
+        # Times according with dataX and dataY dimensions
+        time_step = np.absolute(self.times[0] - self.times[1])
+        self.times_dataY = (self.times + (seq_length*time_step))[:-seq_length-1]
+        return sc

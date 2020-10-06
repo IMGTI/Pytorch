@@ -1,65 +1,56 @@
 import os
 import datetime as dt
 import torch
-import sys
-import getopt
 from data import Data
 from train import Train
 from test import Test
+import getopt
+import sys
 
 ### Parse line arguments
-
-def main(argv):
+def arg_parser(argv):
     train_arg = True
     test_arg = False
     inputfile = ''
-    outputfile = ''
     try:
-        opts, args = getopt.getopt(argv,"ht:i:o:",["train=","ifile=","ofile="])
+        opts, args = getopt.getopt(argv,"ht:i:",["train=","ifile="])
     except getopt.GetoptError:
-        print 'main.py -t <True> -i <inputfile> -o <outputfile>'
+        print('argpar.py -t <True> -i <inputfile>')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print 'main.py (-t <[True]/False>) -i <inputfile> -o <outputfile>'
+            print('argpar.py (-t <[True]/False>) -i <inputfile>')
             sys.exit()
         elif opt in ("-i", "--ifile"):
             inputfile = arg
-        elif opt in ("-o", "--ofile"):
-            outputfile = arg
         elif opt in ("-t", "--train"):
             train_arg = arg
             if arg==True:
                 test_arg = False
             else:
                 test_arg = True
+    return (train_arg, test_arg, inputfile)
 if __name__ == "__main__":
-   main(sys.argv[1:])
-
+   train_arg, test_arg, inputfile = arg_parser(sys.argv[1:])
 
 ### Define the Hyperparameters
 
 # Net parameters
-num_epochs = 2000#200#300#2000
+num_epochs = 2#200#300#2000
 learning_rate = 0.001#0.001#0.01
 input_size = 1
 batch_size = 1  # Unused variable
 hidden_size = 100#10#2
 num_layers = 1
-
 num_classes = 1
-
 
 # Data parameters
 seq_length = 12#1000#4  # Train Window
                         # 1h = 12
                         # 5min = 1
-
 train_size = -100#int(len(y) * 0.67)
 test_size = -100#len(y) - train_size  # Unused variable
-
 fut_pred = 12#100  # Number of predictions
-
 dropout = 0.05#0.05
 
 # Parameters in name for .jpg files
@@ -90,35 +81,43 @@ except:
 # Path for state dictionary to save model's weights and parameters
 state_dict_path = 'state_dict'
 
-### Select Device
-
-# Send net to GPU if possible
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-### Data
-
-#file = 'Figura de Control.xlsx'
-#fig_name = 'F6'
-#file = 'prueba_serie.xlsx'
-#fig_name = 'Sheet1'
-file = 'Figura_de_control_desde_feb.xlsx'
-fig_name = 'Datos'
-
-data = Data()
-data.ext_data(file, fig_name)
-data.data_smooth()
-data.reshape_data()
-data.plot_data()
-data.treat_data()
-
 ### Train
 if train_arg:
-    train = Train()
+    ## Extract data for training
 
+    file = 'Figura de Control.xlsx'
+    #file = 'prueba_serie.xlsx'
+    #file = 'Figura_de_control_desde_feb.xlsx'
 
+    data = Data()
+    data.ext_data(file)
+    data.data_smooth()
+    data.reshape_data()
+    data.plot_data(current, params_name)
+    sc = data.treat_data(train_size, seq_length)
+
+    ## Train with data
+    train = Train(num_classes, input_size, hidden_size, num_layers, dropout,
+                  state_dict_path, current, params_name)
+    train.train_model(learning_rate, num_epochs, data.times_dataY, data.dataX, data.dataY)
 
 ### Test
-inputfile = inputfile
-outputfile = outputfile
 if test_arg:
-    test = Test()
+    if inputfile!='':
+        # Extract data from input file
+        data = Data()
+        data.ext_data(inputfile)
+        #data.data_smooth()
+        data.select_lastwin(seq_length)
+        # Use last seq_length-data
+        ind_test = -1
+        scaler = None
+    else:
+        # Use custom selected input from train data
+        ind_test = -100#5000#1000#len(dataX)-1
+        scaler = sc
+
+    test = Test(num_classes, input_size, hidden_size, num_layers, dropout,
+                state_dict_path, current, params_name)
+    test.test_model(ind_test, seq_length, fut_pred, data.times_dataY, data.dataX,
+                    data.dataY, sc=scaler)

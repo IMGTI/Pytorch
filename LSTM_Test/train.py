@@ -5,39 +5,45 @@ import torch.nn as nn
 import os
 from tqdm import tqdm
 from model import LSTM
-from main import (num_classes, input_size, hidden_size,
-                  num_layers, state_dict_path, dropout,
-                  params_name, current, device)
 
-class Train(self):
-    def __init__(self):
+class Train(object):
+    def __init__(self, num_classes, input_size, hidden_size, num_layers, dropout,
+                 state_dict_path, current, params_name):
         # Initialize the model
         self.lstm = LSTM(num_classes, input_size, hidden_size, num_layers, dropout)
+        # Path to state dictionary
+        self.state_dict_path = state_dict_path
+        # Path and name for plots
+        self.current = current
+        self.params_name = params_name
+
+        # Send net to GPU if possible
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         pass
 
-    def train_model(self, times, defs):
+    def train_model(self, learning_rate, num_epochs, times, defsX, defsY):
         # Try to load the model
         self.load_model()
 
         # Send model to device
-        self.lstm.to(device)
+        self.lstm.to(self.device)
 
-        criterion = torch.nn.MSELoss()    # mean-squared error for regression
-        optimizer = torch.optim.Adam(self.lstm.parameters(), lr=learning_rate)
+        self.criterion = torch.nn.MSELoss()    # mean-squared error for regression
+        self.optimizer = torch.optim.Adam(self.lstm.parameters(), lr=learning_rate)
 
         # Train the model
         fig_loss = plt.figure(2)
         loss4plot = []
         for epoch in tqdm(range(num_epochs), total=num_epochs):
-            outputs = self.lstm(trainX.to(device))
-            optimizer.zero_grad()
+            outputs = self.lstm(defsX.to(self.device))
+            self.optimizer.zero_grad()
 
             # Obtain the value for the loss function
-            loss = criterion(outputs.to(device), data.to(device))
+            loss = self.criterion(outputs.to(self.device), defsY.to(self.device))
 
             loss.backward()
 
-            optimizer.step()
+            self.optimizer.step()
 
             loss4plot.append(loss)
 
@@ -45,38 +51,39 @@ class Train(self):
             self.plot_loss(fig_loss, epoch, loss4plot)
 
             # Save model
-            self.save_model()
+            self.save_model(epoch, loss)
         pass
 
-    def save_model(self):
+    def save_model(self, epoch, loss):
         # Save state dict of model
         torch.save({
                     'epoch': epoch,
                     'model_state_dict': self.lstm.state_dict(),
-                    'optimizer_state_dict': optimizer.state_dict(),
+                    'optimizer_state_dict': self.optimizer.state_dict(),
                     'loss': loss,
-                    }, state_dict_path)
+                    }, self.state_dict_path)
         pass
 
     def load_model(self):
         # Load state dict of model
         try:
-            checkpoint = torch.load(state_dict_path)
+            checkpoint = torch.load(self.state_dict_path)
             self.lstm.load_state_dict(checkpoint['model_state_dict'])
-            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             epoch = checkpoint['epoch']
             loss = checkpoint['loss']
+            self.lstm.to(self.device)
             self.lstm.train()
         except:
             print('State dict(s) missing')
         pass
 
-    def plot_loss(self, figure, epoch, loss4plot):
-        fig_loss = figure
+    def plot_loss(self, fig, epoch, loss4plot):
+        fig_loss = fig
         fig_loss.clf()
         plt.plot(range(epoch+1), loss4plot, 'g-')
         plt.title("Mean running loss vs epoch")
         plt.xlabel("Epoch (units)")
         plt.ylabel("Running loss")
-        fig_loss.savefig(current + "/loss_vs_epoch" + params_name + ".jpg")
+        fig_loss.savefig(self.current + "/loss_vs_epoch" + self.params_name + ".jpg")
         pass

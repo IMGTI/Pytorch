@@ -2,160 +2,149 @@ import numpy as np
 import matplotlib.pyplot as plt
 import torch
 import datetime as dt
+from sklearn.preprocessing import MinMaxScaler
 from model import LSTM
-from main import (state_dict_path, num_classes, input_size, hidden_size, num_layers,
-                  dropout, fut_pred, seq_length)
 
-class Test(self):
-    def __init__(self):
+class Test(object):
+    def __init__(self, num_classes, input_size, hidden_size, num_layers, dropout,
+                 state_dict_path, current, params_name):
         # Initialize the model
         self.lstm = LSTM(num_classes, input_size, hidden_size, num_layers, dropout)
+        # Path to state dictionary
+        self.state_dict_path = state_dict_path
+        # Path and name for plots
+        self.current = current
+        self.params_name = params_name
+
+        # Send net to GPU if possible
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         pass
 
     def load_model(self):
         # Load state dict of model
         try:
-            checkpoint = torch.load(state_dict_path)
+            checkpoint = torch.load(self.state_dict_path)
             self.lstm.load_state_dict(checkpoint['model_state_dict'])
-            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-            epoch = checkpoint['epoch']
-            loss = checkpoint['loss']
+            self.lstm.to(self.device)
             self.lstm.eval()
         except:
             print('State dict(s) missing')
         pass
 
-    def test_model(self, times, defs):
-        # Test predictions over time
-
-        test_inputs = np.zeros([fut_pred + 1, 1, seq_length, 1])
-
-        ind_test = -100#5000#1000#len(dataX)-1
-        #test_inputs[0] = dataX[-1].reshape(-1,seq_length,1).data.numpy()
-
-        test_inputs[0] = dataX[ind_test].reshape(-1,seq_length,1).data.numpy()
-
-        time_step = np.absolute(times[0] - times[1])
-
-        times_dataY = (times + (seq_length*time_step))[:-seq_length-1]  # Times according with dataX and dataY dimensions
-
-        times_predictions = (np.arange(0, (fut_pred+1)*time_step, time_step) +
-                             times_dataY[ind_test])
-
-        for i in range(fut_pred):
-            seq = torch.FloatTensor(test_inputs[i]).to(device)
-            #print(seq)
-            with torch.no_grad():
-                prediction = lstm(seq).data.cpu().numpy().item()
-                test_inputs[i+1] = np.append(test_inputs[i][0][1:], prediction).reshape([1,seq_length,1])
-
-
-        #print(test_inputs)
-
-        data_predict = np.array([x.reshape(seq_length)[-1] for x in test_inputs]).reshape([-1,1])
-        dataY_plot = dataY.data.cpu().numpy()
-
-        data_predict = sc.inverse_transform(data_predict)
-        dataY_plot = sc.inverse_transform(dataY_plot)
-
-        #print(data_predict)
-
-        fig2 = plt.figure(2)
-        fig2.clf()
-
-        #plt.plot(range(-train_size), dataY_plot[train_size:], 'r-', label = 'Raw Data')
-        plt.plot(times_dataY[ind_test:ind_test+(fut_pred+1)], dataY_plot[ind_test-1:ind_test-1+(fut_pred+1)], 'r-', label = 'Raw Data')
-        #plt.plot(range(len(data_predict)), data_predict, 'g-', label = 'Predicted Data')
-        plt.plot(times_predictions, data_predict, 'g-', label = 'Predicted Data')
+    def plot_predict(self, fig_name, x, y, seq_length, fut_pred):
+        fig_pred = plt.figure(3)
+        fig_pred.clf()
+        plt.plot(x[0], y[0], 'r-', label = 'Raw Data')
+        plt.plot(x[1], y[1], 'g-', label = 'Predicted Data')
         if fut_pred>=seq_length:
-            plt.axvline(x=times_predictions[seq_length-1], c='b', linestyle='--')
+            plt.axvline(x=self.times_predictions[seq_length-1], c='b', linestyle='--')
         plt.title('Deformation vs Time')
         plt.ylabel('Defs(cm)')
         plt.xlabel('Time(d)')
         plt.grid(True)
         plt.legend()
-        fig2.savefig(current + "/defs_vs_times_pred" + params_name + ".jpg")
-        data_predict2 = data_predict
+        fig_pred.savefig(fig_name)
         pass
 
-### TESTING ###
+    def plot_fit(self, fig_name, x, y, ind_test):
+        fig_fit = plt.figure(4)
+        fig_fit.clf()
 
-# Test predctions over time
+        vline_substraction = self.times[ind_test]
+        plt.axvline(x=vline_substraction, c='r', linestyle='--')
 
-test_inputs = np.zeros([fut_pred + 1, 1, seq_length, 1])
+        plt.plot(x[0], y[0], 'r-', label = 'Raw Data')
+        plt.plot(x[1], y[1], 'g-', label = 'Predicted Data')
+        plt.title('Deformation vs Time')
+        plt.ylabel('Defs(cm)')
+        plt.xlabel('Time(d)')
+        plt.grid(True)
+        plt.legend()
+        fig_fit.savefig(fig_name)
 
-ind_test = -100#5000#1000#len(dataX)-1
-#test_inputs[0] = dataX[-1].reshape(-1,seq_length,1).data.numpy()
+        pass
 
-test_inputs[0] = dataX[ind_test].reshape(-1,seq_length,1).data.numpy()
+    def test_model(self, ind_test, seq_length, fut_pred, times, defsX, defsY, sc=None):
+        # Load model
+        self.load_model()
 
-time_step = np.absolute(times[0] - times[1])
+        ### Try to use train data
+        try:
+            ## Predictions over time
 
-times_dataY = (times + (seq_length*time_step))[:-seq_length-1]  # Times according with dataX and dataY dimensions
+            test_inputs = np.zeros([fut_pred + 1, 1, seq_length, 1])
+            #test_inputs[0] = dataX[-1].reshape(-1,seq_length,1).data.numpy()
 
-times_predictions = (np.arange(0, (fut_pred+1)*time_step, time_step) +
-                     times_dataY[ind_test])
+            test_inputs[0] = defsX[ind_test].reshape(-1,seq_length,1).data.numpy()
 
-for i in range(fut_pred):
-    seq = torch.FloatTensor(test_inputs[i]).to(device)
-    #print(seq)
-    with torch.no_grad():
-        prediction = lstm(seq).data.cpu().numpy().item()
-        test_inputs[i+1] = np.append(test_inputs[i][0][1:], prediction).reshape([1,seq_length,1])
+            time_step = np.absolute(times[0] - times[1])
+
+            self.times = times
+            self.times_predictions = (np.arange(0, (fut_pred+1)*time_step, time_step) +
+                                      times[ind_test])
+
+            for i in range(fut_pred):
+                seq = torch.FloatTensor(test_inputs[i]).to(self.device)
+                with torch.no_grad():
+                    prediction = self.lstm(seq).data.cpu().numpy().item()
+                    test_inputs[i+1] = np.append(test_inputs[i][0][1:], prediction).reshape([1,seq_length,1])
 
 
-#print(test_inputs)
+            data_predict = np.array([x.reshape(seq_length)[-1] for x in test_inputs]).reshape([-1,1])
+            dataY_plot = defsY.data.cpu().numpy()
 
-data_predict = np.array([x.reshape(seq_length)[-1] for x in test_inputs]).reshape([-1,1])
-dataY_plot = dataY.data.cpu().numpy()
+            data_predict = sc.inverse_transform(data_predict)
+            dataY_plot = sc.inverse_transform(dataY_plot)
 
-data_predict = sc.inverse_transform(data_predict)
-dataY_plot = sc.inverse_transform(dataY_plot)
+            self.plot_predict(self.current + "/defs_vs_times_pred" + self.params_name + ".jpg",
+                              [self.times[ind_test:ind_test+(fut_pred+1)],self.times_predictions],
+                              [dataY_plot[ind_test-1:ind_test-1+(fut_pred+1)],data_predict],
+                              seq_length, fut_pred)
+            ## Fitting whole model
 
-#print(data_predict)
+            train_predict = self.lstm(defsX.to(self.device))  # Should be the same length as dataX
+                                                    # but in a delayed window by 1 time
+                                                    # (prediction) ==> last value
 
-fig2 = plt.figure(2)
-fig2.clf()
+            data_predict = train_predict.data.cpu().numpy()
+            dataY_plot = defsY.data.cpu().numpy()
 
-#plt.plot(range(-train_size), dataY_plot[train_size:], 'r-', label = 'Raw Data')
-plt.plot(times_dataY[ind_test:ind_test+(fut_pred+1)], dataY_plot[ind_test-1:ind_test-1+(fut_pred+1)], 'r-', label = 'Raw Data')
-#plt.plot(range(len(data_predict)), data_predict, 'g-', label = 'Predicted Data')
-plt.plot(times_predictions, data_predict, 'g-', label = 'Predicted Data')
-if fut_pred>=seq_length:
-    plt.axvline(x=times_predictions[seq_length-1], c='b', linestyle='--')
-plt.title('Deformation vs Time')
-plt.ylabel('Defs(cm)')
-plt.xlabel('Time(d)')
-plt.grid(True)
-plt.legend()
-fig2.savefig(current + "/defs_vs_times_pred" + params_name + ".jpg")
-data_predict2 = data_predict
-# Test fitting model
+            data_predict = sc.inverse_transform(data_predict)
+            dataY_plot = sc.inverse_transform(dataY_plot)
 
-lstm.eval()
+            self.plot_fit(self.current + "/defs_vs_times_fit" + self.params_name + ".jpg",
+                         [self.times, dataY_plot],
+                         [self.times, data_predict],
+                         ind_test)
 
-train_predict = lstm(dataX.to(device))  # Should be the same length as dataX
-                                        # but in a delayed window by 1 time
-                                        # (prediction) ==> last value
+        ### Use test data
+        except:
+            ## Predictions over time
 
-data_predict = train_predict.data.cpu().numpy()
-dataY_plot = dataY.data.cpu().numpy()
+            test_inputs = np.zeros([fut_pred + 1, 1, seq_length, 1])
+            #test_inputs[0] = dataX[-1].reshape(-1,seq_length,1).data.numpy()
 
-data_predict = sc.inverse_transform(data_predict)
-dataY_plot = sc.inverse_transform(dataY_plot)
+            test_inputs[0] = defsX.reshape(-1,seq_length,1)
 
-fig3 = plt.figure(3)
-fig3.clf()
+            time_step = np.absolute(times[0] - times[1])
 
-#vline_substraction = np.absolute(train_size)# - (seq_length + 1)
-vline_substraction = times_dataY[ind_test]
-plt.axvline(x=vline_substraction, c='r', linestyle='--')
+            self.times = times
+            self.times_predictions = (np.arange(0, (fut_pred+1)*time_step, time_step) +
+                                      times[ind_test])
 
-plt.plot(times_dataY, dataY_plot, 'r-', label = 'Raw Data')
-plt.plot(times_dataY, data_predict, 'g-', label = 'Predicted Data')
-plt.title('Deformation vs Time')
-plt.ylabel('Defs(cm)')
-plt.xlabel('Time(d)')
-plt.grid(True)
-plt.legend()
-fig3.savefig(current + "/defs_vs_times_pred_fitting" + params_name + ".jpg")
+            for i in range(fut_pred):
+                seq = torch.FloatTensor(test_inputs[i]).to(self.device)
+                with torch.no_grad():
+                    prediction = self.lstm(seq).data.cpu().numpy().item()
+                    test_inputs[i+1] = np.append(test_inputs[i][0][1:], prediction).reshape([1,seq_length,1])
+
+
+            data_predict = np.array([x.reshape(seq_length)[-1] for x in test_inputs]).reshape([-1,1])
+            dataY_plot = defsY  # Pre-prediction deformation
+
+            data_predict = sc.inverse_transform(data_predict)
+
+            self.plot_predict(self.current + "/defs_vs_times_pred" + self.params_name + ".jpg",
+                              [self.times[-1],self.times_predictions],
+                              [dataY_plot,data_predict],
+                              seq_length, fut_pred)
