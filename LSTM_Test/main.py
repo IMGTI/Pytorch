@@ -25,7 +25,7 @@ def arg_parser(argv):
             inputfile = arg
         elif opt in ("-t", "--train"):
             train_arg = arg
-            if arg==True:
+            if train_arg:
                 test_arg = False
             else:
                 test_arg = True
@@ -33,10 +33,11 @@ def arg_parser(argv):
 if __name__ == "__main__":
    train_arg, test_arg, inputfile = arg_parser(sys.argv[1:])
 
+print(train_arg, test_arg, inputfile)
 ### Define the Hyperparameters
 
 # Net parameters
-num_epochs = 2#200#300#2000
+num_epochs = 2000#200#300#2000
 learning_rate = 0.001#0.001#0.01
 input_size = 1
 batch_size = 1  # Unused variable
