@@ -6,6 +6,7 @@ from train import Train
 from test import Test
 import getopt
 import sys
+from sklearn.externals import joblib
 
 ### Parse line arguments
 def arg_parser(argv):
@@ -15,25 +16,29 @@ def arg_parser(argv):
     try:
         opts, args = getopt.getopt(argv,"ht:i:",["train=","ifile="])
     except getopt.GetoptError:
-        print('argpar.py -t <True> -i <inputfile>')
+        print('main.py -t <True> -i <inputfile>')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print('argpar.py (-t <[True]/False>) -i <inputfile>')
+            print('main.py (-t <[True]/False>) -i <inputfile>')
             sys.exit()
         elif opt in ("-i", "--ifile"):
             inputfile = arg
         elif opt in ("-t", "--train"):
-            train_arg = arg
-            if train_arg:
+            if arg=='True':
+                train_arg = True
                 test_arg = False
             else:
+                train_arg = False
                 test_arg = True
     return (train_arg, test_arg, inputfile)
 if __name__ == "__main__":
    train_arg, test_arg, inputfile = arg_parser(sys.argv[1:])
 
+# Force training and testing
+#train_arg, test_arg = True, True
 print(train_arg, test_arg, inputfile)
+
 ### Define the Hyperparameters
 
 # Net parameters
@@ -88,14 +93,14 @@ if train_arg:
 
     #file = 'Figura de Control.xlsx'
     #file = 'prueba_serie.xlsx'
-    file = 'Figura_de_control_desde_feb.xlsx'
+    fig_num = 2
+    file = 'Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
 
     data = Data()
     data.ext_data(file)
     data.data_smooth()
-    data.reshape_data()
     data.plot_data(current, params_name)
-    sc = data.treat_data(train_size, seq_length)
+    data.treat_data(train_size, seq_length)
 
     ## Train with data
     train = Train(num_classes, input_size, hidden_size, num_layers, dropout,
@@ -112,13 +117,11 @@ if test_arg:
         data.select_lastwin(seq_length)
         # Use last seq_length-data
         ind_test = -1
-        scaler = None
     else:
         # Use custom selected input from train data
         ind_test = -100#5000#1000#len(dataX)-1
-        scaler = sc
 
     test = Test(num_classes, input_size, hidden_size, num_layers, dropout,
                 state_dict_path, current, params_name)
     test.test_model(ind_test, seq_length, fut_pred, data.times_dataY, data.dataX,
-                    data.dataY, sc=scaler)
+                    data.dataY, sc=data.scaler)

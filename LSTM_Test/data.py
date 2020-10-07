@@ -5,6 +5,7 @@ import pandas as pd
 import datetime as dt
 from torch.autograd import Variable
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.externals import joblib
 
 class Data(object):
     def __init__(self):
@@ -42,17 +43,10 @@ class Data(object):
         self.defs = self.smooth(self.defs, self.N_avg)
         pass
 
-    def select_lastwin(self, seq_length):
-        # Select last window of "seq_length" size
-        self.times_dataY = self.times[-seq_length:]
-        self.dataX = self.defs[-seq_length:]
-        self.dataY = self.defs[-1]
-        pass
-
-    def reshape_data(self):
+    def reshape_data(self, data):
         # Reshape data array from 1D to 2D
-        self.defs = self.defs.reshape(-1, 1)
-        pass
+        data = data.reshape(-1, 1)
+        return data
 
     def sliding_windows(self, data, seq_length):
         x = []
@@ -79,13 +73,40 @@ class Data(object):
         fig1.savefig(current + "/defs_vs_times" + params_name + ".jpg")
         pass
 
+    def scaling(self, data):
+        # Reshape for scaling
+        data = self.reshape_data(data)
+        # Load scaler file if exists (if not, model is not trained)
+        sc_filename = 'scaler.save'
+        try:
+            self.scaler = joblib.load(sc_filename)
+            data_sc = self.scaler.fit_transform(data)
+        except:
+            print('Scaler save file not found. Probably due to not trained model. ')
+
+            self.scaler = MinMaxScaler()
+            data_sc = self.scaler.fit_transform(data)
+
+            # Save scaler for later use in test
+            joblib.dump(self.scaler, sc_filename)
+        return data_sc
+
+    def select_lastwin(self, seq_length):
+        # Select last window of "seq_length" size
+        self.times_dataY = self.times[-seq_length:]
+        self.dataX = self.defs[-seq_length:]
+        self.dataY = self.defs[-1]
+        self.dataX, self.dataY = self.scaling(self.dataX), self.scaling(self.dataY)
+        pass
+
+
     def treat_data(self, train_size, seq_length):
         # Load data into sequences
         training_set = self.defs
 
-        sc = MinMaxScaler()
-        training_data = sc.fit_transform(training_set)
+        training_data = self.scaling(training_set)
 
+        # Treat data
         x, y = self.sliding_windows(training_data, seq_length)
 
         self.dataX = Variable(torch.Tensor(np.array(x)))
@@ -100,4 +121,3 @@ class Data(object):
         # Times according with dataX and dataY dimensions
         time_step = np.absolute(self.times[0] - self.times[1])
         self.times_dataY = (self.times + (seq_length*time_step))[:-seq_length-1]
-        return sc

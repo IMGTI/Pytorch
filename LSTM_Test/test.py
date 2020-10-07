@@ -143,6 +143,7 @@ class Test(object):
             dataY_plot = defsY  # Pre-prediction deformation
 
             data_predict = sc.inverse_transform(data_predict)
+            dataY_plot = sc.inverse_transform(dataY_plot)
 
             self.plot_predict(self.current + "/defs_vs_times_pred" + self.params_name + ".jpg",
                               [self.times[-1],self.times_predictions],
