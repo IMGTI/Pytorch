@@ -101,7 +101,8 @@ class Test(object):
             pred_r2_score = r2s(dataY_plot[ind_test:ind_test+(fut_pred+1)], data_predict)
             print('Predicted - R^2 Score: ', pred_r2_score)
 
-            self.plot_predict(self.current + "/defs_vs_times_pred" + self.params_name + ".jpg",
+            self.plot_predict(self.current + "/defs_vs_times_pred" + self.params_name +
+                              "_r2_" + str(round(pred_r2_score,3)) + ".jpg",
                               [self.times[ind_test:ind_test+(fut_pred+1)],self.times_predictions],
                               [dataY_plot[ind_test-1:ind_test-1+(fut_pred+1)],data_predict],
                               seq_length, fut_pred)
@@ -121,7 +122,8 @@ class Test(object):
             all_r2_score = r2s(dataY_plot, data_predict)
             print('All - R^2 Score: ', all_r2_score)
 
-            self.plot_fit(self.current + "/defs_vs_times_fit" + self.params_name + ".jpg",
+            self.plot_fit(self.current + "/defs_vs_times_fit" + self.params_name +
+                          "_r2_" + str(round(all_r2_score,3)) + ".jpg",
                          [self.times, self.times],
                          [dataY_plot, data_predict],
                          ind_test)

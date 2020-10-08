@@ -5,7 +5,7 @@ import pandas as pd
 import datetime as dt
 from torch.autograd import Variable
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.externals import joblib
+import joblib
 
 class Data(object):
     def __init__(self):

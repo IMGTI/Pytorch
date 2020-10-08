@@ -22,14 +22,14 @@ class Train(object):
         pass
 
     def train_model(self, learning_rate, num_epochs, times, defsX, defsY):
-        # Try to load the model
-        self.load_model()
-
         # Send model to device
         self.lstm.to(self.device)
 
         self.criterion = torch.nn.MSELoss()    # mean-squared error for regression
         self.optimizer = torch.optim.Adam(self.lstm.parameters(), lr=learning_rate)
+
+        # Try to load the model and optimizer 's state dictionaries
+        self.load_model()
 
         # Train the model
         fig_loss = plt.figure(2)
