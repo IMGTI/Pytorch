@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import torch
 import datetime as dt
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import r2_score as r2s
 from model import LSTM
 
 class Test(object):
@@ -96,6 +97,10 @@ class Test(object):
             data_predict = sc.inverse_transform(data_predict)
             dataY_plot = sc.inverse_transform(dataY_plot)
 
+            # Coefficient of determination (R**2 score)
+            pred_r2_score = r2s(dataY_plot[ind_test:ind_test+(fut_pred+1)], data_predict)
+            print('Predicted - R^2 Score: ', pred_r2_score)
+
             self.plot_predict(self.current + "/defs_vs_times_pred" + self.params_name + ".jpg",
                               [self.times[ind_test:ind_test+(fut_pred+1)],self.times_predictions],
                               [dataY_plot[ind_test-1:ind_test-1+(fut_pred+1)],data_predict],
@@ -111,6 +116,10 @@ class Test(object):
 
             data_predict = sc.inverse_transform(data_predict)
             dataY_plot = sc.inverse_transform(dataY_plot)
+
+            # Coefficient of determination (R**2 score)
+            all_r2_score = r2s(dataY_plot, data_predict)
+            print('All - R^2 Score: ', all_r2_score)
 
             self.plot_fit(self.current + "/defs_vs_times_fit" + self.params_name + ".jpg",
                          [self.times, self.times],

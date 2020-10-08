@@ -57,10 +57,10 @@ class Train(object):
     def save_model(self, epoch, loss):
         # Save state dict of model
         torch.save({
-                    'epoch': epoch,
+                    #'epoch': epoch,
                     'model_state_dict': self.lstm.state_dict(),
                     'optimizer_state_dict': self.optimizer.state_dict(),
-                    'loss': loss,
+                    #'loss': loss,
                     }, self.state_dict_path)
         pass
 
@@ -70,8 +70,8 @@ class Train(object):
             checkpoint = torch.load(self.state_dict_path)
             self.lstm.load_state_dict(checkpoint['model_state_dict'])
             self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-            epoch = checkpoint['epoch']
-            loss = checkpoint['loss']
+            #epoch = checkpoint['epoch']
+            #loss = checkpoint['loss']
             self.lstm.to(self.device)
             self.lstm.train()
         except:

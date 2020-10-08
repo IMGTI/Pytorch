@@ -14,7 +14,7 @@ def arg_parser(argv):
     test_arg = False
     inputfile = ''
     try:
-        opts, args = getopt.getopt(argv,"ht:i:",["train=","ifile="])
+        opts, args = getopt.getopt(argv,"hFt:i:",["train=","ifile="])
     except getopt.GetoptError:
         print('main.py -t <True> -i <inputfile>')
         sys.exit(2)
@@ -22,6 +22,10 @@ def arg_parser(argv):
         if opt == '-h':
             print('main.py (-t <[True]/False>) -i <inputfile>')
             sys.exit()
+        elif opt == '-F':
+            train_arg = True
+            test_arg = True
+            print('Forcing training and testing')
         elif opt in ("-i", "--ifile"):
             inputfile = arg
         elif opt in ("-t", "--train"):
@@ -35,14 +39,12 @@ def arg_parser(argv):
 if __name__ == "__main__":
    train_arg, test_arg, inputfile = arg_parser(sys.argv[1:])
 
-# Force training and testing
-#train_arg, test_arg = True, True
 print(train_arg, test_arg, inputfile)
 
 ### Define the Hyperparameters
 
 # Net parameters
-num_epochs = 2000#200#300#2000
+num_epochs = 200#6000#200#300#2000
 learning_rate = 0.001#0.001#0.01
 input_size = 1
 batch_size = 1  # Unused variable
@@ -93,7 +95,7 @@ if train_arg:
 
     #file = 'Figura de Control.xlsx'
     #file = 'prueba_serie.xlsx'
-    fig_num = 2
+    fig_num = 1
     file = 'Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
 
     data = Data()
