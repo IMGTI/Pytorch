@@ -25,14 +25,12 @@ class LSTM(nn.Module):
     def forward(self, x):
         h_0 = Variable(torch.zeros(
             self.num_layers, x.size(0), self.hidden_size))
-
         c_0 = Variable(torch.zeros(
             self.num_layers, x.size(0), self.hidden_size))
-
         # Propagate input through LSTM
         ula, (h_out, _) = self.lstm(x, (h_0.to(self.device), c_0.to(self.device)))
-
-        h_out = h_out.view(-1, self.hidden_size)
+        h_out = h_out[-1].view(-1, self.hidden_size)  # Contains the hidden states
+                                                      # of all LSTM layers (num_layers)
 
         out = self.fc(h_out)
 

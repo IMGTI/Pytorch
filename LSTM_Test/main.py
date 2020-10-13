@@ -6,7 +6,7 @@ from train import Train
 from test import Test
 import getopt
 import sys
-from sklearn.externals import joblib
+import joblib
 
 ### Parse line arguments
 def arg_parser(argv):
@@ -25,7 +25,7 @@ def arg_parser(argv):
         elif opt == '-F':
             train_arg = True
             test_arg = True
-            print('Forcing training and testing')
+            print('Forcing training and testing...')
         elif opt in ("-i", "--ifile"):
             inputfile = arg
         elif opt in ("-t", "--train"):
@@ -39,7 +39,9 @@ def arg_parser(argv):
 if __name__ == "__main__":
    train_arg, test_arg, inputfile = arg_parser(sys.argv[1:])
 
-print(train_arg, test_arg, inputfile)
+print('Train =', train_arg)
+print('Test =', test_arg)
+print('Input file =', inputfile)
 
 ### Define the Hyperparameters
 
@@ -47,9 +49,9 @@ print(train_arg, test_arg, inputfile)
 num_epochs = 200#6000#200#300#2000
 learning_rate = 0.001#0.001#0.01
 input_size = 1
-batch_size = 1  # Unused variable
-hidden_size = 100#10#2
-num_layers = 1
+batch_size = 1  # Unused variable - Batch size is automatically handled (not 1)
+hidden_size = 10#100#10#2
+num_layers = 2#1
 num_classes = 1
 
 # Data parameters
