@@ -46,12 +46,12 @@ print('Input file =', inputfile)
 ### Define the Hyperparameters
 
 # Net parameters
-num_epochs = 200#6000#200#300#2000
+num_epochs = 200#1000#300#2000
 learning_rate = 0.001#0.001#0.01
 input_size = 1
 batch_size = 1  # Unused variable - Batch size is automatically handled (not 1)
 hidden_size = 10#100#10#2
-num_layers = 2#1
+num_layers = 3#1
 num_classes = 1
 
 # Data parameters
@@ -60,7 +60,7 @@ seq_length = 12#1000#4  # Train Window
                         # 5min = 1
 train_size = -100#int(len(y) * 0.67)
 test_size = -100#len(y) - train_size  # Unused variable
-fut_pred = 12#100  # Number of predictions
+fut_pred = 12#200#12#100  # Number of predictions
 dropout = 0.05#0.05
 
 # Parameters in name for .jpg files

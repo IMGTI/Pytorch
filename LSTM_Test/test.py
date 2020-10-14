@@ -76,7 +76,7 @@ class Test(object):
             test_inputs = np.zeros([fut_pred + 1, 1, seq_length, 1])
             #test_inputs[0] = dataX[-1].reshape(-1,seq_length,1).data.numpy()
 
-            test_inputs[0] = defsX[ind_test].reshape(-1,seq_length,1).data.numpy()
+            test_inputs[0] = defsX[ind_test].reshape(1,seq_length,1).data.numpy()
 
             time_step = np.absolute(times[0] - times[1])
 
@@ -135,7 +135,7 @@ class Test(object):
             test_inputs = np.zeros([fut_pred + 1, 1, seq_length, 1])
             #test_inputs[0] = dataX[-1].reshape(-1,seq_length,1).data.numpy()
 
-            test_inputs[0] = defsX.reshape(-1,seq_length,1)
+            test_inputs[0] = defsX.reshape(1,seq_length,1)
 
             time_step = np.absolute(times[0] - times[1])
 
