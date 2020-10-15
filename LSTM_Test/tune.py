@@ -18,6 +18,28 @@ from sklearn.preprocessing import MinMaxScaler
 import joblib
 import datetime as dt
 import pandas as pd
+import getopt
+import sys
+
+### Parse line arguments
+def arg_parser(argv):
+    try:
+        opts, args = getopt.getopt(argv,"hn:",["nsamples="])
+    except getopt.GetoptError:
+        print('argparser.py -n <number_samples>')
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-h':
+            print('argparser.py -n <number_samples>')
+            sys.exit()
+        elif opt in ("-n", "--nsamples"):
+            num_samples = int(arg)
+    return num_samples
+
+if __name__ == "__main__":
+    num_samples = arg_parser(sys.argv[1:])
+else:
+    num_samples = 10
 
 # Send to GPU if possible
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -260,4 +282,4 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
     print("Best trial test set accuracy: {}".format(test_acc))
     '''
 if __name__ == "__main__":
-   hyp_tune(num_samples=100, max_num_epochs=10, gpus_per_trial=1)
+    hyp_tune(num_samples=num_samples, max_num_epochs=10, gpus_per_trial=1)
