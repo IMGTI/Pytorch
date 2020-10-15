@@ -22,7 +22,7 @@ import pandas as pd
 # Send to GPU if possible
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-def load_data(data_dir=""):
+def load_data(data_dir):
     def ext_data(file):
         data = pd.read_excel(file, usecols=[0,1], names=['times', 'defs'])
 
@@ -33,26 +33,30 @@ def load_data(data_dir=""):
 
         # Convert times from seconds to days
         times = (times/(3600*24) -
-                      (times/(3600*24))[0])
+                 (times/(3600*24))[0])
 
         defs = np.array(data['defs'])
         return times, defs
 
     def data_smooth(times, defs):
+        def mov_avg(x, N):
+            cumsum = np.cumsum(np.insert(x, 0, 0))
+            return (cumsum[N:] - cumsum[:-N]) / float(N)
+
         # Apply Moving average
 
         N_avg = 2#5#2     # 2 para hacer una linea recta (tendencia) y al menos
                           # 5 puntos para tendencia valida (entonces con N_avg=2
                           # se logran 2-3 smooth ptos por cada 5)
 
-        times = self.smooth(times, N_avg)
-        defs = self.smooth(defs, N_avg)
+        times = mov_avg(times, N_avg)
+        defs = mov_avg(defs, N_avg)
         return times, defs
 
     fig_num = 1
     file = 'Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
 
-    times, defs = ext_data(file)
+    times, defs = ext_data(os.path.abspath(data_dir + '/' + file))
     times, defs = data_smooth(times, defs)
 
     return times, defs
@@ -92,6 +96,7 @@ def treat_data(times, defs, seq_length):
             # Save scaler for later use in test
             joblib.dump(scaler, sc_filename)
         return data_sc
+
     # Load data into sequences
     training_set = defs
 
@@ -114,11 +119,11 @@ def treat_data(times, defs, seq_length):
 
 def train_model(config, checkpoint_dir="", data_dir=""):
     # Load data
-    times, defs = load_data()
+    times, defs = load_data(data_dir)
     defsX, defsY, times_dataY, time_step = treat_data(times, defs, config["sl"])
 
     # Initialize model
-    lstm = LSTM(1,1,config["hs"],0)
+    lstm = LSTM(1,1,config["hs"],config["nl"],0)
     # Send model to device
     lstm.to(device)
 
@@ -133,12 +138,14 @@ def train_model(config, checkpoint_dir="", data_dir=""):
         optimizer.load_state_dict(optimizer_state)
 
     # Train the model
-    for epoch in range(num_epochs):
+    for epoch in range(10):
         outputs = lstm(defsX.to(device))
         optimizer.zero_grad()
 
         # Obtain the value for the loss function
         loss = criterion(outputs.to(device), defsY.to(device))
+
+        loss4report = loss.clone()
 
         loss.backward()
 
@@ -150,7 +157,7 @@ def train_model(config, checkpoint_dir="", data_dir=""):
             torch.save((lstm.state_dict(), optimizer.state_dict()), path)
 
         # Report loss to tune
-        tune.report(loss=loss)
+        tune.report(loss=loss4report.detach().cpu().numpy())
     pass
 
 def test_accuracy(seq_length, model, device="cpu"):
@@ -182,15 +189,15 @@ def test_accuracy(seq_length, model, device="cpu"):
     return r2s
 
 def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
-    data_dir = ""
+    data_dir = os.path.abspath(os.getcwd())
     # Configuration for raytune
     config = {
               "hs": tune.sample_from(lambda _: 2 ** np.random.randint(1, 6)),
-              "nl": tune.uniform(1, 4),
-              "sl": tune.uniform(1, 288),
-              "lr": tune.loguniform(1e-4, 1e-1),
-              "batch_size": tune.choice([2, 4, 8, 16])
+              "nl": tune.sample_from(lambda _: np.random.randint(1, 4)),
+              "sl": tune.sample_from(lambda _: np.random.randint(1, 288)),
+              "lr": tune.loguniform(1e-4, 1e-1)
               }
+
     scheduler = ASHAScheduler(
                               metric="loss",
                               mode="min",
@@ -215,7 +222,7 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
     print("Best trial final validation accuracy: {}".format(
         best_trial.last_result["accuracy"]))
 
-    best_trained_model = LSTM(1,1,best_trial.config["hs"],0)
+    best_trained_model = LSTM(1,1,best_trial.config["hs"],best_trial.config["nl"],0)
     device = "cpu"
     if torch.cuda.is_available():
         device = "cuda:0"
@@ -232,4 +239,4 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
     print("Best trial test set accuracy: {}".format(test_acc))
 
 if __name__ == "__main__":
-   hyp_tune(num_samples=1, max_num_epochs=10, gpus_per_trial=0)
+   hyp_tune(num_samples=20, max_num_epochs=10, gpus_per_trial=1)
