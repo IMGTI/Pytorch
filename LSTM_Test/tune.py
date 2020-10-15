@@ -192,9 +192,9 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
     data_dir = os.path.abspath(os.getcwd())
     # Configuration for raytune
     config = {
-              "hs": tune.sample_from(lambda _: 2 ** np.random.randint(1, 6)),
+              "hs": tune.sample_from(lambda _: np.random.randint(1, 10)),
               "nl": tune.sample_from(lambda _: np.random.randint(1, 4)),
-              "sl": tune.sample_from(lambda _: np.random.randint(1, 288)),
+              "sl": tune.sample_from(lambda _: np.random.randint(1,100)),#(1, 288)),
               "lr": tune.loguniform(1e-4, 1e-1)
               }
 
@@ -205,15 +205,36 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
                               grace_period=1,
                               reduction_factor=2)
     reporter = CLIReporter(
-                           # parameter_columns=["l1", "l2", "lr", "batch_size"],
-                           metric_columns=["loss", "accuracy", "training_iteration"])
+                           metric_columns=["loss", "training_iteration"])
     result = tune.run(
                       partial(train_model, data_dir=data_dir),
-                      resources_per_trial={"cpu": 6, "gpu": gpus_per_trial},
+                      resources_per_trial={"cpu": 4, "gpu": gpus_per_trial},
                       config=config,
                       num_samples=num_samples,
                       scheduler=scheduler,
                       progress_reporter=reporter)
+
+    df_result = result.results_df
+    loss_result = df_result['loss'].to_numpy()
+    ind_min_loss = np.argmin(loss_result)
+    min_loss = np.min(loss_result)
+
+    min_loss_trial = df_result.iloc[ind_min_loss]
+    best_config = [df_result.iloc[ind_min_loss]['loss'],
+                   df_result.iloc[ind_min_loss]['config.hs'],
+                   df_result.iloc[ind_min_loss]['config.nl'],
+                   df_result.iloc[ind_min_loss]['config.sl'],
+                   df_result.iloc[ind_min_loss]['config.lr']]
+    print('Best configuration parameters:')
+    print('------------------------------')
+    print(' Loss = ', best_config[0], '\n',
+          'Hidden Size = ', best_config[1], '\n',
+          'Number of layers = ', best_config[2], '\n',
+          'Sequence length = ', best_config[3], '\n',
+          'Learning rate = ', best_config[4])
+
+    '''
+    NOT WORKING
 
     best_trial = result.get_best_trial("loss", "min", "last")
     print("Best trial config: {}".format(best_trial.config))
@@ -237,6 +258,6 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
 
     test_acc = test_accuracy(best_trial.config["sl"], best_trained_model, device)
     print("Best trial test set accuracy: {}".format(test_acc))
-
+    '''
 if __name__ == "__main__":
-   hyp_tune(num_samples=20, max_num_epochs=10, gpus_per_trial=1)
+   hyp_tune(num_samples=100, max_num_epochs=10, gpus_per_trial=1)
