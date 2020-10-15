@@ -16,11 +16,11 @@ def arg_parser(argv):
     try:
         opts, args = getopt.getopt(argv,"hFt:i:",["train=","ifile="])
     except getopt.GetoptError:
-        print('main.py -t <True> -i <inputfile>')
+        print('argparser.py -t <True> -i <inputfile>')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print('main.py (-t <[True]/False>) -i <inputfile>')
+            print('argparser.py (-t <[True]/False>) -i <inputfile>')
             sys.exit()
         elif opt == '-F':
             train_arg = True
@@ -36,6 +36,7 @@ def arg_parser(argv):
                 train_arg = False
                 test_arg = True
     return (train_arg, test_arg, inputfile)
+
 if __name__ == "__main__":
    train_arg, test_arg, inputfile = arg_parser(sys.argv[1:])
 
