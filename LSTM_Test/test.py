@@ -37,6 +37,7 @@ class Test(object):
         fig_pred.clf()
         plt.plot(x[0], y[0], 'r-', label = 'Raw Data')
         plt.plot(x[1], y[1], 'g-', label = 'Predicted Data')
+        plt.plot(x[1][0], y[1][0], 'b*', label = 'Start point (Raw)')
         if fut_pred>=seq_length:
             plt.axvline(x=self.times_predictions[seq_length-1], c='b', linestyle='--')
         plt.title('Deformation vs Time')
@@ -157,6 +158,6 @@ class Test(object):
             dataY_plot = sc.inverse_transform(dataY_plot)
 
             self.plot_predict(self.current + "/defs_vs_times_pred" + self.params_name + ".jpg",
-                              [self.times[-1],self.times_predictions],
+                              [self.times,self.times_predictions],
                               [dataY_plot,data_predict],
                               seq_length, fut_pred)
