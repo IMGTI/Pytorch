@@ -3,7 +3,6 @@ import torch.nn as nn
 from torch.autograd import Variable
 
 class LSTM(nn.Module):
-
     def __init__(self, num_classes, input_size, hidden_size, num_layers, dropout):
         super(LSTM, self).__init__()
 
