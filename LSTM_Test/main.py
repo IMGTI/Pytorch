@@ -48,15 +48,15 @@ print('Input file =', inputfile)
 
 # Net parameters
 num_epochs = 200#1000#300#2000
-learning_rate = 0.001#0.001#0.01
+learning_rate = 0.022472643513504736#0.001#0.001#0.01
 input_size = 1
 batch_size = 1  # Unused variable - Batch size is automatically handled (not 1)
-hidden_size = 10#100#10#2
-num_layers = 3#1
+hidden_size = 5#10#100#10#2
+num_layers = 1#3#1
 num_classes = 1
 
 # Data parameters
-seq_length = 12#1000#4  # Train Window
+seq_length = 92#12#1000#4  # Train Window
                         # 1h = 12
                         # 5min = 1
 train_size = -100#int(len(y) * 0.67)
