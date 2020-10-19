@@ -60,6 +60,26 @@ class Data(object):
 
         return np.array(x),np.array(y)
 
+    def sliding_windows_no_overlap(self, data, seq_length):
+        x = []
+        y = []
+
+        try:
+            i = 0
+            while True:
+                _x = data[i:(i+seq_length)]
+                _y = data[i+seq_length]
+                i = i+seq_length
+                x.append(_x)
+                y.append(_y)
+        except:
+            return np.array(x),np.array(y)
+
+    def random_win(self, x, y):
+        ind_rand = np.random.permutation(len(y))
+        self.rev_rand = np.argsort(ind_rand)
+        return x[ind_rand], y[ind_rand]
+
     def plot_data(self, current, params_name):
         # Plot Data
         fig1 = plt.figure(1)
@@ -100,7 +120,7 @@ class Data(object):
         pass
 
 
-    def treat_data(self, train_size, seq_length):
+    def treat_data(self, train_size, seq_length, random_win=False):
         # Load data into sequences
         training_set = self.defs
 
@@ -108,6 +128,8 @@ class Data(object):
 
         # Treat data
         x, y = self.sliding_windows(training_data, seq_length)
+        if random_win:
+            x, y = self.random_win(x, y)
 
         self.dataX = Variable(torch.Tensor(np.array(x)))
         self.dataY = Variable(torch.Tensor(np.array(y)))

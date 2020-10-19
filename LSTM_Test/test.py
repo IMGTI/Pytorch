@@ -66,9 +66,19 @@ class Test(object):
 
         pass
 
+    def include_rw(self, ind):
+        self.rev_rand = ind
+        pass
+
     def test_model(self, ind_test, seq_length, fut_pred, times, defsX, defsY, sc=None):
         # Load model
         self.load_model()
+
+        # Try to reorder data if its randomized
+        try:
+            defsX, defsY = defsX[self.rev_rand], defsY[self.rev_rand]
+        except:
+            print('Data is not randomized!')
 
         ### Try to use train data
         try:

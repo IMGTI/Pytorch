@@ -47,7 +47,7 @@ print('Input file =', inputfile)
 ### Define the Hyperparameters
 
 # Net parameters
-num_epochs = 50#200#1000#300#2000
+num_epochs = 10#50#200#1000#300#2000
 learning_rate = 0.022472643513504736#0.001#0.001#0.01
 input_size = 1
 batch_size = 1  # Unused variable - Batch size is automatically handled (not 1)
@@ -63,6 +63,9 @@ train_size = -100#int(len(y) * 0.67)
 test_size = -100#len(y) - train_size  # Unused variable
 fut_pred = 12#200#12#100  # Number of predictions
 dropout = 0#0.05
+
+# Random windows for training
+rw = False#True
 
 # Parameters in name for .jpg files
 params_name = ('_e' + str(num_epochs) +
@@ -96,16 +99,17 @@ state_dict_path = 'state_dict'
 if train_arg:
     ## Extract data for training
 
-    #file = 'Figura de Control.xlsx'
+    file = 'Figura de Control.xlsx'
     #file = 'prueba_serie.xlsx'
-    fig_num = 1
-    file = 'Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
+    #fig_num = 1
+    #file = 'Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
+    #file = 'prueba_serie.xlsx'
 
     data = Data()
     data.ext_data(file)
     data.data_smooth()
     data.plot_data(current, params_name)
-    data.treat_data(train_size, seq_length)
+    data.treat_data(train_size, seq_length, random_win=rw)
 
     ## Train with data
     train = Train(num_classes, input_size, hidden_size, num_layers, dropout,
@@ -128,5 +132,10 @@ if test_arg:
 
     test = Test(num_classes, input_size, hidden_size, num_layers, dropout,
                 state_dict_path, current, params_name)
+
+    # Reorder data to original state
+    if rw:
+        test.include_rw(data.rev_rand)
+
     test.test_model(ind_test, seq_length, fut_pred, data.times_dataY, data.dataX,
                     data.dataY, sc=data.scaler)
