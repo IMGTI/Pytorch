@@ -40,9 +40,9 @@ class Train(object):
         for x in defsX:
             import numpy as np
             try:
-                batches.append({'defsX':torch.index_select(defsX, 0, torch.tensor(np.int64(np.arange(ind,ind+25,1)))),
-                                'defsY':torch.index_select(defsY, 0, torch.tensor(np.int64(np.arange(ind,ind+25,1))))})
-                ind += 25
+                batches.append({'defsX':torch.index_select(defsX, 0, torch.tensor(np.int64(np.arange(ind,ind+200,1)))),
+                                'defsY':torch.index_select(defsY, 0, torch.tensor(np.int64(np.arange(ind,ind+200,1))))})
+                ind += 200
             except:
                 break
         for epoch in tqdm(range(num_epochs), total=num_epochs):

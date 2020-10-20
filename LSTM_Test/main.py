@@ -47,8 +47,8 @@ print('Input file =', inputfile)
 ### Define the Hyperparameters
 
 # Net parameters
-num_epochs = 10#50#200#1000#300#2000
-learning_rate = 0.022472643513504736#0.001#0.001#0.01
+num_epochs = 6000#50#200#1000#300#2000
+learning_rate = 0.001#0.022472643513504736#0.001#0.001#0.01
 input_size = 1
 batch_size = 1  # Unused variable - Batch size is automatically handled (not 1)
 hidden_size = 5#10#100#10#2
@@ -61,11 +61,11 @@ seq_length = 92#12#1000#4  # Train Window
                         # 5min = 1
 train_size = -100#int(len(y) * 0.67)
 test_size = -100#len(y) - train_size  # Unused variable
-fut_pred = 12#200#12#100  # Number of predictions
+fut_pred = 92#200#12#100  # Number of predictions
 dropout = 0#0.05
 
 # Random windows for training
-rw = False#True
+rw = True#False#True
 
 # Parameters in name for .jpg files
 params_name = ('_e' + str(num_epochs) +
@@ -133,8 +133,8 @@ if test_arg:
     test = Test(num_classes, input_size, hidden_size, num_layers, dropout,
                 state_dict_path, current, params_name)
 
-    # Reorder data to original state
-    if rw:
+    # Reorder data to original state just for test and train forcing
+    if train_arg and rw:
         test.include_rw(data.rev_rand)
 
     test.test_model(ind_test, seq_length, fut_pred, data.times_dataY, data.dataX,
