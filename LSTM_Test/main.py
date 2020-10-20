@@ -47,10 +47,10 @@ print('Input file =', inputfile)
 ### Define the Hyperparameters
 
 # Net parameters
-num_epochs = 2000#50#200#1000#300#2000
-learning_rate = 0.001#0.022472643513504736#0.001#0.001#0.01
+num_epochs = 100#50#200#1000#300#2000
+learning_rate = 0.022472643513504736#0.001#0.001#0.01
 input_size = 1
-batch_size = 1  # Unused variable - Batch size is automatically handled (not 1)
+batch_size = 1  # Batch size is automatically handled in model
 hidden_size = 5#10#100#10#2
 num_layers = 1#3#1
 num_classes = 1
@@ -114,7 +114,8 @@ if train_arg:
     ## Train with data
     train = Train(num_classes, input_size, hidden_size, num_layers, dropout,
                   state_dict_path, current, params_name)
-    train.train_model(learning_rate, num_epochs, data.times_dataY, data.dataX, data.dataY)
+    train.train_model(batch_size, learning_rate, num_epochs, data.times_dataY,
+                      data.dataX, data.dataY)
 
 ### Test
 if test_arg:

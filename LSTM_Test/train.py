@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import os
 from tqdm import tqdm
+import numpy as np
 from model import LSTM
 
 class Train(object):
@@ -21,7 +22,7 @@ class Train(object):
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         pass
 
-    def train_model(self, learning_rate, num_epochs, times, defsX, defsY):
+    def train_model(self, batch_size, learning_rate, num_epochs, times, defsX, defsY):
         # Send model to device
         self.lstm.to(self.device)
 
@@ -37,12 +38,11 @@ class Train(object):
 
         batches = []
         ind = 0
-        for x in defsX:
-            import numpy as np
+        while True:
             try:
-                batches.append({'defsX':torch.index_select(defsX, 0, torch.tensor(np.int64(np.arange(ind,ind+10,1)))),
-                                'defsY':torch.index_select(defsY, 0, torch.tensor(np.int64(np.arange(ind,ind+10,1))))})
-                ind += 10
+                batches.append({'defsX':torch.index_select(defsX, 0, torch.tensor(np.int64(np.arange(ind,ind+batch_size,1)))),
+                                'defsY':torch.index_select(defsY, 0, torch.tensor(np.int64(np.arange(ind,ind+batch_size,1))))})
+                ind += batch_size
             except:
                 break
         for epoch in tqdm(range(num_epochs), total=num_epochs):
