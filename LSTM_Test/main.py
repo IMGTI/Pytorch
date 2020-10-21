@@ -47,10 +47,11 @@ print('Input file =', inputfile)
 ### Define the Hyperparameters
 
 # Net parameters
-num_epochs = 100#50#200#1000#300#2000
+num_epochs = 1000#50#200#1000#300#2000
 learning_rate = 0.022472643513504736#0.001#0.001#0.01
 input_size = 1
-batch_size = 1  # Batch size is automatically handled in model
+batch_size = 50  # Batch size is automatically handled in model
+                 # if -1 then uses 1 batch of full data-length size
 hidden_size = 5#10#100#10#2
 num_layers = 1#3#1
 num_classes = 1
@@ -99,10 +100,10 @@ state_dict_path = 'state_dict'
 if train_arg:
     ## Extract data for training
 
-    file = 'Figura de Control.xlsx'
+    #file = 'Figura de Control.xlsx'
     #file = 'prueba_serie.xlsx'
-    #fig_num = 1
-    #file = 'Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
+    fig_num = 1
+    file = 'Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
     #file = 'prueba_serie.xlsx'
 
     data = Data()

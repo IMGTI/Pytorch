@@ -36,56 +36,55 @@ class Train(object):
         fig_loss = plt.figure(2)
         loss4plot = []
 
-        batches = []
-        ind = 0
-        while True:
-            try:
-                batches.append({'defsX':torch.index_select(defsX, 0, torch.tensor(np.int64(np.arange(ind,ind+batch_size,1)))),
-                                'defsY':torch.index_select(defsY, 0, torch.tensor(np.int64(np.arange(ind,ind+batch_size,1))))})
-                ind += batch_size
-            except:
-                break
-        for epoch in tqdm(range(num_epochs), total=num_epochs):
-            self.optimizer.zero_grad()
-            for batch in batches:
-                outputs = self.lstm(batch['defsX'].to(self.device))
+        if batch_size==-1:
+            for epoch in tqdm(range(num_epochs), total=num_epochs):
+                outputs = self.lstm(defsX.to(self.device))
+
+                self.optimizer.zero_grad()
 
                 # Obtain the value for the loss function
-                loss = self.criterion(outputs.to(self.device), batch['defsY'].to(self.device))
+                loss = self.criterion(outputs.to(self.device), defsY.to(self.device))
 
                 loss.backward()
 
                 self.optimizer.step()
 
-            loss4plot.append(loss)
+                loss4plot.append(loss)
 
-            # Plot loss vs epoch
-            self.plot_loss(fig_loss, epoch, loss4plot)
+                # Plot loss vs epoch
+                self.plot_loss(fig_loss, epoch, loss4plot)
 
-            # Save model
-            self.save_model(epoch, loss)
+                # Save model
+                self.save_model(epoch, loss)
+        else:
+            batches = []
+            ind = 0
+            while True:
+                try:
+                    batches.append({'defsX':torch.index_select(defsX, 0, torch.tensor(np.int64(np.arange(ind,ind+batch_size,1)))),
+                                    'defsY':torch.index_select(defsY, 0, torch.tensor(np.int64(np.arange(ind,ind+batch_size,1))))})
+                    ind += batch_size
+                except:
+                    break
+            for epoch in tqdm(range(num_epochs), total=num_epochs):
+                self.optimizer.zero_grad()
+                for batch in batches:
+                    outputs = self.lstm(batch['defsX'].to(self.device))
 
-        '''
-        for epoch in tqdm(range(num_epochs), total=num_epochs):
-            outputs = self.lstm(defsX.to(self.device))
+                    # Obtain the value for the loss function
+                    loss = self.criterion(outputs.to(self.device), batch['defsY'].to(self.device))
 
-            self.optimizer.zero_grad()
+                    loss.backward()
 
-            # Obtain the value for the loss function
-            loss = self.criterion(outputs.to(self.device), defsY.to(self.device))
+                    self.optimizer.step()
 
-            loss.backward()
+                loss4plot.append(loss)
 
-            self.optimizer.step()
+                # Plot loss vs epoch
+                self.plot_loss(fig_loss, epoch, loss4plot)
 
-            loss4plot.append(loss)
-
-            # Plot loss vs epoch
-            self.plot_loss(fig_loss, epoch, loss4plot)
-
-            # Save model
-            self.save_model(epoch, loss)
-        '''
+                # Save model
+                self.save_model(epoch, loss)
         pass
 
     def save_model(self, epoch, loss):
