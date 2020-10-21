@@ -47,7 +47,7 @@ print('Input file =', inputfile)
 ### Define the Hyperparameters
 
 # Net parameters
-num_epochs = 1000#50#200#1000#300#2000
+num_epochs = 10#50#200#1000#300#2000
 learning_rate = 0.022472643513504736#0.001#0.001#0.01
 input_size = 1
 batch_size = 50  # Batch size is automatically handled in model

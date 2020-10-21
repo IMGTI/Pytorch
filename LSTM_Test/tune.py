@@ -160,26 +160,60 @@ def train_model(config, checkpoint_dir="", data_dir=""):
         optimizer.load_state_dict(optimizer_state)
 
     # Train the model
-    for epoch in range(10):
-        outputs = lstm(defsX.to(device))
-        optimizer.zero_grad()
+    if config["bs"]==-1:
+        for epoch in range(10):
+            optimizer.zero_grad()
 
-        # Obtain the value for the loss function
-        loss = criterion(outputs.to(device), defsY.to(device))
+            outputs = lstm(defsX.to(device))
 
-        loss4report = loss.clone()
+            # Obtain the value for the loss function
+            loss = criterion(outputs.to(device), defsY.to(device))
 
-        loss.backward()
+            loss4report = loss.clone()
 
-        optimizer.step()
+            loss.backward()
 
-        # Save model
-        with tune.checkpoint_dir(epoch) as checkpoint_dir:
-            path = os.path.join(checkpoint_dir, "checkpoint")
-            torch.save((lstm.state_dict(), optimizer.state_dict()), path)
+            optimizer.step()
 
-        # Report loss to tune
-        tune.report(loss=loss4report.detach().cpu().numpy())
+            # Save model
+            with tune.checkpoint_dir(epoch) as checkpoint_dir:
+                path = os.path.join(checkpoint_dir, "checkpoint")
+                torch.save((lstm.state_dict(), optimizer.state_dict()), path)
+
+            # Report loss to tune
+            tune.report(loss=loss4report.detach().cpu().numpy())
+    else:
+        batches = []
+        ind = 0
+        while True:
+            try:
+                batches.append({'defsX':torch.index_select(defsX, 0, torch.tensor(np.int64(np.arange(ind,ind+config["bs"],1)))),
+                                'defsY':torch.index_select(defsY, 0, torch.tensor(np.int64(np.arange(ind,ind+config["bs"],1))))})
+                ind += config["bs"]
+            except:
+                break
+        for epoch in tqdm(range(num_epochs), total=num_epochs):
+            for batch in batches:
+                optimizer.zero_grad()
+
+                outputs = self.lstm(batch['defsX'].to(device))
+
+                # Obtain the value for the loss function
+                loss = self.criterion(outputs.to(device), batch['defsY'].to(device))
+
+                loss4report = loss.clone()
+
+                loss.backward()
+
+                optimizer.step()
+
+            # Save model
+            with tune.checkpoint_dir(epoch) as checkpoint_dir:
+                path = os.path.join(checkpoint_dir, "checkpoint")
+                torch.save((lstm.state_dict(), optimizer.state_dict()), path)
+
+            # Report loss to tune
+            tune.report(loss=loss4report.detach().cpu().numpy())
     pass
 
 def test_accuracy(seq_length, model, device="cpu"):
@@ -217,6 +251,7 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
               "hs": tune.sample_from(lambda _: np.random.randint(1, 10)),
               "nl": tune.sample_from(lambda _: np.random.randint(1, 4)),
               "sl": tune.sample_from(lambda _: np.random.randint(1,100)),#(1, 288)),
+              "bs": tune.sample_from(lambda _: np.random.randint(1,1000)),
               "lr": tune.loguniform(1e-4, 1e-1)
               }
 

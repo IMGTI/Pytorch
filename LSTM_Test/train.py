@@ -38,9 +38,9 @@ class Train(object):
 
         if batch_size==-1:
             for epoch in tqdm(range(num_epochs), total=num_epochs):
-                outputs = self.lstm(defsX.to(self.device))
-
                 self.optimizer.zero_grad()
+
+                outputs = self.lstm(defsX.to(self.device))
 
                 # Obtain the value for the loss function
                 loss = self.criterion(outputs.to(self.device), defsY.to(self.device))
@@ -67,8 +67,9 @@ class Train(object):
                 except:
                     break
             for epoch in tqdm(range(num_epochs), total=num_epochs):
-                self.optimizer.zero_grad()
                 for batch in batches:
+                    self.optimizer.zero_grad()
+
                     outputs = self.lstm(batch['defsX'].to(self.device))
 
                     # Obtain the value for the loss function
