@@ -192,14 +192,14 @@ def train_model(config, checkpoint_dir="", data_dir=""):
                 ind += config["bs"]
             except:
                 break
-        for epoch in tqdm(range(num_epochs), total=num_epochs):
+        for epoch in range(10):
             for batch in batches:
                 optimizer.zero_grad()
 
-                outputs = self.lstm(batch['defsX'].to(device))
+                outputs = lstm(batch['defsX'].to(device))
 
                 # Obtain the value for the loss function
-                loss = self.criterion(outputs.to(device), batch['defsY'].to(device))
+                loss = criterion(outputs.to(device), batch['defsY'].to(device))
 
                 loss4report = loss.clone()
 
@@ -281,6 +281,7 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
                    df_result.iloc[ind_min_loss]['config.hs'],
                    df_result.iloc[ind_min_loss]['config.nl'],
                    df_result.iloc[ind_min_loss]['config.sl'],
+                   df_result.iloc[ind_min_loss]['config.bs'],
                    df_result.iloc[ind_min_loss]['config.lr']]
     print('Best configuration parameters:')
     print('------------------------------')
@@ -288,7 +289,8 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
           'Hidden Size = ', best_config[1], '\n',
           'Number of layers = ', best_config[2], '\n',
           'Sequence length = ', best_config[3], '\n',
-          'Learning rate = ', best_config[4])
+          'Batch Size = ', best_config[4], '\n',
+          'Learning rate = ', best_config[5])
 
     '''
     NOT WORKING
