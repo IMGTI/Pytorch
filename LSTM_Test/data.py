@@ -32,10 +32,10 @@ class Data(object):
         self.defs = np.array(data['defs'])
         pass
 
-    def data_smooth(self):
+    def data_smooth(self, N_avg=2):
         # Apply Moving average
 
-        self.N_avg = 2#5#2     # 2 para hacer una linea recta (tendencia) y al menos
+        self.N_avg = N_avg#2#5#2     # 2 para hacer una linea recta (tendencia) y al menos
                                # 5 puntos para tendencia valida (entonces con N_avg=2
                                # se logran 2-3 smooth ptos por cada 5)
 

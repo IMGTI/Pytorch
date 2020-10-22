@@ -56,6 +56,8 @@ hidden_size = 8#5#10#100#10#2
 num_layers = 2#1#3#1
 num_classes = 1
 bidirectional = False#True
+dropout = 0.031194832470140016#0.05#0#0.05
+fut_pred = 21#92#200#12#100  # Number of predictions
 
 # Data parameters
 seq_length = 21#72#92#12#1000#4  # Train Window
@@ -63,8 +65,8 @@ seq_length = 21#72#92#12#1000#4  # Train Window
                         # 5min = 1
 train_size = -100#int(len(y) * 0.67)
 test_size = -100#len(y) - train_size  # Unused variable
-fut_pred = 21#92#200#12#100  # Number of predictions
-dropout = 0.031194832470140016#0.05#0#0.05
+
+n_avg = 10#2
 
 # Random windows for training
 rw = False#True
@@ -109,7 +111,7 @@ if train_arg:
 
     data = Data()
     data.ext_data(file)
-    data.data_smooth()
+    data.data_smooth(N_avg=n_avg)
     data.plot_data(current, params_name)
     data.treat_data(train_size, seq_length, random_win=rw)
 
