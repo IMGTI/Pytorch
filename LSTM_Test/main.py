@@ -47,7 +47,7 @@ print('Input file =', inputfile)
 ### Define the Hyperparameters
 
 # Net parameters
-num_epochs = 100#50#200#1000#300#2000
+num_epochs = 100#10#50#200#1000#300#2000
 learning_rate = 0.0008695868177968809#0.0003910427505590165#0.022472643513504736#0.001#0.001#0.01
 input_size = 1
 batch_size = 27#50  # Batch size is automatically handled in model
@@ -55,7 +55,7 @@ batch_size = 27#50  # Batch size is automatically handled in model
 hidden_size = 8#5#10#100#10#2
 num_layers = 2#1#3#1
 num_classes = 1
-bidirectional = False
+bidirectional = False#True
 
 # Data parameters
 seq_length = 21#72#92#12#1000#4  # Train Window
