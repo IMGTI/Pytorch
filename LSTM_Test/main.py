@@ -66,7 +66,7 @@ seq_length = 21#72#92#12#1000#4  # Train Window
 train_size = -100#int(len(y) * 0.67)
 test_size = -100#len(y) - train_size  # Unused variable
 
-n_avg = 10#2
+n_avg = 2
 
 # Random windows for training
 rw = False#True
@@ -127,7 +127,7 @@ if test_arg:
         # Extract data from input file
         data = Data()
         data.ext_data(inputfile)
-        #data.data_smooth()
+        #data.data_smooth(N_avg=n_avg)
         data.select_lastwin(seq_length)
         # Use last seq_length-data
         ind_test = -1
