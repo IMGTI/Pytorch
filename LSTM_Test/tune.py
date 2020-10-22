@@ -145,7 +145,7 @@ def train_model(config, checkpoint_dir="", data_dir=""):
     defsX, defsY, times_dataY, time_step = treat_data(times, defs, config["sl"])
 
     # Initialize model
-    lstm = LSTM(1,1,config["hs"],config["nl"],0)
+    lstm = LSTM(1,1,config["hs"],config["nl"],0, False)
     # Send model to device
     lstm.to(device)
 

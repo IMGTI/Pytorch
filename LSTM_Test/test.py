@@ -8,9 +8,10 @@ from model import LSTM
 
 class Test(object):
     def __init__(self, num_classes, input_size, hidden_size, num_layers, dropout,
-                 state_dict_path, current, params_name):
+                 bidirectional, state_dict_path, current, params_name):
         # Initialize the model
-        self.lstm = LSTM(num_classes, input_size, hidden_size, num_layers, dropout)
+        self.lstm = LSTM(num_classes, input_size, hidden_size, num_layers,
+                         dropout, bidirectional)
         # Path to state dictionary
         self.state_dict_path = state_dict_path
         # Path and name for plots

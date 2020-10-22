@@ -47,7 +47,7 @@ print('Input file =', inputfile)
 ### Define the Hyperparameters
 
 # Net parameters
-num_epochs = 100#50#200#1000#300#2000
+num_epochs = 1000#50#200#1000#300#2000
 learning_rate = 0.0008695868177968809#0.0003910427505590165#0.022472643513504736#0.001#0.001#0.01
 input_size = 1
 batch_size = 27#50  # Batch size is automatically handled in model
@@ -55,6 +55,7 @@ batch_size = 27#50  # Batch size is automatically handled in model
 hidden_size = 8#5#10#100#10#2
 num_layers = 2#1#3#1
 num_classes = 1
+bidirectional = False
 
 # Data parameters
 seq_length = 21#72#92#12#1000#4  # Train Window
@@ -66,7 +67,7 @@ fut_pred = 92#200#12#100  # Number of predictions
 dropout = 0#0.05
 
 # Random windows for training
-rw = True#False#True
+rw = False#True
 
 # Parameters in name for .jpg files
 params_name = ('_e' + str(num_epochs) +
@@ -114,7 +115,7 @@ if train_arg:
 
     ## Train with data
     train = Train(num_classes, input_size, hidden_size, num_layers, dropout,
-                  state_dict_path, current, params_name)
+                  bidirectional, state_dict_path, current, params_name)
     train.train_model(batch_size, learning_rate, num_epochs, data.times_dataY,
                       data.dataX, data.dataY)
 
@@ -133,7 +134,7 @@ if test_arg:
         ind_test = -100#5000#1000#len(dataX)-1
 
     test = Test(num_classes, input_size, hidden_size, num_layers, dropout,
-                state_dict_path, current, params_name)
+                bidirectional, state_dict_path, current, params_name)
 
     # Reorder data to original state just for test and train forcing
     if train_arg and rw:

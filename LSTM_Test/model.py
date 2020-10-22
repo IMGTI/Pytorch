@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 
 class LSTM(nn.Module):
-    def __init__(self, num_classes, input_size, hidden_size, num_layers, dropout):
+    def __init__(self, num_classes, input_size, hidden_size, num_layers, dropout, bidirectional):
         super(LSTM, self).__init__()
 
         self.num_classes = num_classes
@@ -13,7 +13,7 @@ class LSTM(nn.Module):
 
         self.lstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size,
                             num_layers=num_layers, batch_first=True,
-                            dropout=dropout)
+                            dropout=dropout, bidirectional=bidirectional)
 
         self.fc = nn.Linear(self.hidden_size, self.num_classes)
 
