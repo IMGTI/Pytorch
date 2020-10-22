@@ -216,7 +216,7 @@ def train_model(config, checkpoint_dir="", data_dir=""):
             tune.report(loss=loss4report.detach().cpu().numpy())
     pass
 
-def test_accuracy(seq_length, model, device="cpu"):
+def test_accuracy(config, seq_length, model, device="cpu"):
     fut_pred = 12
     ind_test = -100
 
