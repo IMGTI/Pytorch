@@ -127,10 +127,11 @@ if test_arg:
         # Extract data from input file
         data = Data()
         data.ext_data(inputfile)
-        data.data_smooth(N_avg=n_avg)
-        data.select_lastwin(seq_length)
+        #data.data_smooth(N_avg=n_avg)
+
         # Use last seq_length-data
-        ind_test = -1
+        ind_test = -seq_length#-1
+        data.select_lastwin(seq_length, ind_test)
     else:
         # Use custom selected input from train data
         ind_test = -100#5000#1000#len(dataX)-1

@@ -113,12 +113,20 @@ class Data(object):
             joblib.dump(self.scaler, sc_filename)
         return data_sc
 
-    def select_lastwin(self, seq_length):
+    def select_lastwin(self, seq_length, ind_test):
         # Select last window of "seq_length" size
-        self.times_dataY = self.times[-seq_length:]
-        self.dataX = self.defs[-seq_length:]
-        self.dataY = self.defs[-seq_length:]
-        self.dataX, self.dataY = self.scaling(self.dataX), self.scaling(self.dataY)
+        if ind_test==-1:
+            self.times_dataY = self.times[-seq_length:]
+            self.dataX = sself.defs[-seq_length:]
+            self.dataY = self.defs[-seq_length:]
+            self.dataX, self.dataY = self.scaling(self.dataX), self.scaling(self.dataY)
+        else:
+            self.times_dataY = self.times[ind_test-seq_length+1:ind_test+1]
+            self.dataX = self.defs[ind_test-seq_length+1:ind_test+1]
+            # Since there is more data, use all available data for plot
+            self.dataY = self.defs[ind_test-seq_length+1:]
+            self.dataY = self.dataY[:2*seq_length]
+            self.dataX, self.dataY = self.scaling(self.dataX), self.scaling(self.dataY)
         pass
 
 

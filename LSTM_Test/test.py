@@ -153,7 +153,7 @@ class Test(object):
 
             self.times = times
             self.times_predictions = (np.arange(0, (fut_pred+1)*time_step, time_step) +
-                                      times[ind_test])
+                                      times[-1])
 
             for i in range(fut_pred):
                 seq = torch.FloatTensor(test_inputs[i]).to(self.device)
@@ -169,6 +169,6 @@ class Test(object):
             dataY_plot = sc.inverse_transform(dataY_plot)
 
             self.plot_predict(self.current + "/defs_vs_times_pred" + self.params_name + ".jpg",
-                              [self.times,self.times_predictions],
+                              [np.hstack([self.times, self.times_predictions])[:len(dataY_plot)],self.times_predictions],
                               [dataY_plot,data_predict],
                               seq_length, fut_pred)
