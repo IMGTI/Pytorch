@@ -117,7 +117,7 @@ class Data(object):
         # Select last window of "seq_length" size
         if ind_test==-1:
             self.times_dataY = self.times[-seq_length:]
-            self.dataX = sself.defs[-seq_length:]
+            self.dataX = self.defs[-seq_length:]
             self.dataY = self.defs[-seq_length:]
             self.dataX, self.dataY = self.scaling(self.dataX), self.scaling(self.dataY)
         else:
