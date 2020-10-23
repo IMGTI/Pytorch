@@ -169,6 +169,6 @@ class Test(object):
             dataY_plot = sc.inverse_transform(dataY_plot)
 
             self.plot_predict(self.current + "/defs_vs_times_pred" + self.params_name + ".jpg",
-                              [np.hstack([self.times, self.times_predictions])[:len(dataY_plot)],self.times_predictions],
+                              [np.hstack([self.times[:-1], self.times_predictions])[:len(dataY_plot)],self.times_predictions],
                               [dataY_plot,data_predict],
                               seq_length, fut_pred)

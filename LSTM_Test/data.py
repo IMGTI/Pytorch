@@ -102,7 +102,7 @@ class Data(object):
         sc_filename = 'scaler.save'
         try:
             self.scaler = joblib.load(sc_filename)
-            data_sc = self.scaler.fit_transform(data)
+            data_sc = self.scaler.transform(data)
         except:
             print('Scaler save file not found. Probably due to not trained model. ')
 
@@ -122,11 +122,10 @@ class Data(object):
             self.dataX, self.dataY = self.scaling(self.dataX), self.scaling(self.dataY)
         else:
             self.times_dataY = self.times[ind_test-seq_length+1:ind_test+1]
-            self.dataX = self.defs[ind_test-seq_length+1:ind_test+1]
             # Since there is more data, use all available data for plot
-            self.dataY = self.defs[ind_test-seq_length+1:]
-            self.dataY = self.dataY[:2*seq_length]
-            self.dataX, self.dataY = self.scaling(self.dataX), self.scaling(self.dataY)
+            self.dataX = (self.defs[ind_test-seq_length+1:])[:2*seq_length]
+            self.dataY = (self.defs[ind_test-seq_length+1:])[:2*seq_length]
+            self.dataX, self.dataY = self.scaling(self.dataX)[:seq_length], self.scaling(self.dataY)
         pass
 
 
