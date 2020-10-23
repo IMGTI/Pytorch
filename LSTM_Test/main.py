@@ -47,7 +47,7 @@ print('Input file =', inputfile)
 ### Define the Hyperparameters
 
 # Net parameters
-num_epochs = 100#10#50#200#1000#300#2000
+num_epochs = 10#10#50#200#1000#300#2000
 learning_rate = 0.0008695868177968809#0.0003910427505590165#0.022472643513504736#0.001#0.001#0.01
 input_size = 1
 batch_size = 27#50  # Batch size is automatically handled in model
@@ -66,7 +66,7 @@ seq_length = 21#72#92#12#1000#4  # Train Window
 train_size = -100#int(len(y) * 0.67)
 test_size = -100#len(y) - train_size  # Unused variable
 
-n_avg = 2
+n_avg = 43#2
 
 # Random windows for training
 rw = False#True

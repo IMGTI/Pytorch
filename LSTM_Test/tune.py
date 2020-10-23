@@ -44,7 +44,7 @@ else:
 # Send to GPU if possible
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-def load_data(data_dir):
+def load_data(config, data_dir):
     def ext_data(file):
         data = pd.read_excel(file, usecols=[0,1], names=['times', 'defs'])
 
@@ -60,14 +60,14 @@ def load_data(data_dir):
         defs = np.array(data['defs'])
         return times, defs
 
-    def data_smooth(times, defs):
+    def data_smooth(times, defs, N_avg=2):
         def mov_avg(x, N):
             cumsum = np.cumsum(np.insert(x, 0, 0))
             return (cumsum[N:] - cumsum[:-N]) / float(N)
 
         # Apply Moving average
 
-        N_avg = 2#5#2     # 2 para hacer una linea recta (tendencia) y al menos
+        #N_avg = 2#5#2     # 2 para hacer una linea recta (tendencia) y al menos
                           # 5 puntos para tendencia valida (entonces con N_avg=2
                           # se logran 2-3 smooth ptos por cada 5)
 
@@ -79,7 +79,7 @@ def load_data(data_dir):
     file = 'Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
 
     times, defs = ext_data(os.path.abspath(data_dir + '/' + file))
-    times, defs = data_smooth(times, defs)
+    times, defs = data_smooth(times, defs, N_avg=config["na"])
 
     return times, defs
 
@@ -141,11 +141,11 @@ def treat_data(times, defs, seq_length):
 
 def train_model(config, checkpoint_dir="", data_dir=""):
     # Load data
-    times, defs = load_data(data_dir)
+    times, defs = load_data(config, data_dir)
     defsX, defsY, times_dataY, time_step = treat_data(times, defs, config["sl"])
 
     # Initialize model
-    lstm = LSTM(1,1,config["hs"],config["nl"],0, False)
+    lstm = LSTM(1,1,config["hs"],config["nl"],config["do"], False)
     # Send model to device
     lstm.to(device)
 
@@ -216,11 +216,11 @@ def train_model(config, checkpoint_dir="", data_dir=""):
             tune.report(loss=loss4report.detach().cpu().numpy())
     pass
 
-def test_accuracy(config, seq_length, model, device="cpu"):
+def test_accuracy(config, seq_length, model, device="cpu", data_dir=""):
     fut_pred = 12
     ind_test = -100
 
-    times, defs = load_data()
+    times, defs = load_data(config, data_dir)
     defsX, defsY, times_dataY, time_step = treat_data(times, defs, config["sl"])
 
     test_inputs = np.zeros([fut_pred + 1, 1, seq_length, 1])
@@ -248,11 +248,13 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
     data_dir = os.path.abspath(os.getcwd())
     # Configuration for raytune
     config = {
-              "hs": tune.sample_from(lambda _: np.random.randint(1, 10)),
-              "nl": tune.sample_from(lambda _: np.random.randint(1, 4)),
-              "sl": tune.sample_from(lambda _: np.random.randint(1,100)),#(1, 288)),
-              "bs": tune.sample_from(lambda _: np.random.randint(1,1000)),
-              "lr": tune.loguniform(1e-4, 1e-1)
+              "na": 43,#tune.sample_from(lambda _: np.random.randint(2, 100)),
+              "do": 0.031194832470140016, #tune.sample_from(lambda _: np.random.uniform(0.01, 0.05)),
+              "hs": 8,#tune.sample_from(lambda _: np.random.randint(1, 10)),
+              "nl": 2,#tune.sample_from(lambda _: np.random.randint(1, 4)),
+              "sl": 21,#tune.sample_from(lambda _: np.random.randint(1,100)),#(1, 288)),
+              "bs": 27,#tune.sample_from(lambda _: np.random.randint(1,1000)),
+              "lr": 0.0008695868177968809#tune.loguniform(1e-4, 1e-1)
               }
 
     scheduler = ASHAScheduler(
@@ -282,7 +284,9 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
                    df_result.iloc[ind_min_loss]['config.nl'],
                    df_result.iloc[ind_min_loss]['config.sl'],
                    df_result.iloc[ind_min_loss]['config.bs'],
-                   df_result.iloc[ind_min_loss]['config.lr']]
+                   df_result.iloc[ind_min_loss]['config.lr'],
+                   df_result.iloc[ind_min_loss]['config.na'],
+                   df_result.iloc[ind_min_loss]['config.do']]
     print('Best configuration parameters:')
     print('------------------------------')
     print(' Loss = ', best_config[0], '\n',
@@ -290,7 +294,9 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
           'Number of layers = ', best_config[2], '\n',
           'Sequence length = ', best_config[3], '\n',
           'Batch Size = ', best_config[4], '\n',
-          'Learning rate = ', best_config[5])
+          'Learning rate = ', best_config[5], '\n',
+          'Number for Moving Average = ', best_config[6], '\n',
+          'Dropout = ', best_config[7])
 
     '''
     NOT WORKING
