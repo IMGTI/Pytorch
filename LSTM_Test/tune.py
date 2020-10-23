@@ -14,7 +14,7 @@ from ray.tune.schedulers import ASHAScheduler
 from model import LSTM
 from sklearn.metrics import r2_score as r2s
 from torch.autograd import Variable
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 import joblib
 import datetime as dt
 import pandas as pd
@@ -108,11 +108,11 @@ def treat_data(times, defs, seq_length):
         sc_filename = 'scaler_tune.save'
         try:
             scaler = joblib.load(sc_filename)
-            data_sc = scaler.fit_transform(data)
+            data_sc = scaler.transform(data)
         except:
             print('Scaler save file not found. Probably due to not trained model. ')
 
-            scaler = MinMaxScaler()
+            scaler = StandardScaler()
             data_sc = scaler.fit_transform(data)
 
             # Save scaler for later use in test

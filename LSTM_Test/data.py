@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import datetime as dt
 from torch.autograd import Variable
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 import joblib
 
 class Data(object):
@@ -106,7 +106,7 @@ class Data(object):
         except:
             print('Scaler save file not found. Probably due to not trained model. ')
 
-            self.scaler = MinMaxScaler()
+            self.scaler = StandardScaler()
             data_sc = self.scaler.fit_transform(data)
 
             # Save scaler for later use in test
