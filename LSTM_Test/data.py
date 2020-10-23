@@ -61,6 +61,8 @@ class Data(object):
         return np.array(x),np.array(y)
 
     def sliding_windows_no_overlap(self, data, seq_length):
+        size_overlap = 0.5
+
         x = []
         y = []
 
@@ -69,7 +71,7 @@ class Data(object):
             while True:
                 _x = data[i:(i+seq_length)]
                 _y = data[i+seq_length]
-                i = i+seq_length
+                i = i+int(seq_length*size_overlap)
                 x.append(_x)
                 y.append(_y)
         except:

@@ -47,7 +47,7 @@ print('Input file =', inputfile)
 ### Define the Hyperparameters
 
 # Net parameters
-num_epochs = 10#50#200#1000#300#2000
+num_epochs = 10#10#100#200#1000#300#2000
 learning_rate = 0.0008695868177968809#0.0003910427505590165#0.022472643513504736#0.001#0.001#0.01
 input_size = 1
 batch_size = 27#50  # Batch size is automatically handled in model
@@ -127,7 +127,7 @@ if test_arg:
         # Extract data from input file
         data = Data()
         data.ext_data(inputfile)
-        #data.data_smooth(N_avg=n_avg)
+        data.data_smooth(N_avg=n_avg)
         data.select_lastwin(seq_length)
         # Use last seq_length-data
         ind_test = -1
