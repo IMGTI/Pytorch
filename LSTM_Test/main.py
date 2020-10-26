@@ -46,7 +46,7 @@ print('Input file =', inputfile)
 ### Define the Hyperparameters
 
 # Net parameters
-num_epochs = 2#10#100#200#1000#300#2000
+num_epochs = 100#10#100#200#1000#300#2000
 learning_rate = 0.0008695868177968809#0.0003910427505590165#0.022472643513504736#0.001#0.001#0.01
 input_size = 1
 batch_size = 27#50  # Batch size is automatically handled in model
@@ -79,6 +79,9 @@ params_name = ('_e' + str(num_epochs) +
                '_h' + str(hidden_size) +
                '_o' + str(num_classes) +
                '_trw' + str(seq_length) +
+               '_bid' + str(bidirectional) +
+               '_na' + str(n_avg) +
+               '_rw' + str(rw) +
                '_drp' + str(dropout))
 
 ### Create directory for each run and different hyperparameters

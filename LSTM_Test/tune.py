@@ -140,12 +140,17 @@ def treat_data(times, defs, seq_length):
     return dataX, dataY, times_dataY, time_step
 
 def train_model(config, checkpoint_dir="", data_dir=""):
+    # Transform num into bool for biderectionality
+    if config["bd"]==0:
+        bd = False
+    else:
+        bd = True
     # Load data
     times, defs = load_data(config, data_dir)
     defsX, defsY, times_dataY, time_step = treat_data(times, defs, config["sl"])
 
     # Initialize model
-    lstm = LSTM(1,1,config["hs"],config["nl"],config["do"], False)
+    lstm = LSTM(1,1,config["hs"],config["nl"],config["do"], bd)
     # Send model to device
     lstm.to(device)
 
@@ -248,13 +253,14 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
     data_dir = os.path.abspath(os.getcwd())
     # Configuration for raytune
     config = {
-              "na": 43,#tune.sample_from(lambda _: np.random.randint(2, 100)),
-              "do": 0.031194832470140016, #tune.sample_from(lambda _: np.random.uniform(0.01, 0.05)),
-              "hs": 8,#tune.sample_from(lambda _: np.random.randint(1, 10)),
-              "nl": 2,#tune.sample_from(lambda _: np.random.randint(1, 4)),
-              "sl": 21,#tune.sample_from(lambda _: np.random.randint(1,100)),#(1, 288)),
-              "bs": 27,#tune.sample_from(lambda _: np.random.randint(1,1000)),
-              "lr": 0.0008695868177968809#tune.loguniform(1e-4, 1e-1)
+              "na": tune.sample_from(lambda _: np.random.randint(2, 100)),#43
+              "do": tune.sample_from(lambda _: np.random.uniform(0.01, 0.06)),#0.031194832470140016
+              "hs": tune.sample_from(lambda _: np.random.randint(1, 11)),#8
+              "nl": tune.sample_from(lambda _: np.random.randint(2, 5)),#2
+              "sl": tune.sample_from(lambda _: np.random.randint(1,101)),#(1, 288)),#21
+              "bs": tune.sample_from(lambda _: np.random.randint(1,1001)),#27
+              "lr": tune.loguniform(1e-4, 1e-1),#0.0008695868177968809
+              "bd": tune.sample_from(lambda _: np.random.randint(0,2)),#0
               }
 
     scheduler = ASHAScheduler(
@@ -286,7 +292,8 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
                    df_result.iloc[ind_min_loss]['config.bs'],
                    df_result.iloc[ind_min_loss]['config.lr'],
                    df_result.iloc[ind_min_loss]['config.na'],
-                   df_result.iloc[ind_min_loss]['config.do']]
+                   df_result.iloc[ind_min_loss]['config.do'],
+                   df_result.iloc[ind_min_loss]['config.bd']]
     print('Best configuration parameters:')
     print('------------------------------')
     print(' Loss = ', best_config[0], '\n',
@@ -296,7 +303,8 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
           'Batch Size = ', best_config[4], '\n',
           'Learning rate = ', best_config[5], '\n',
           'Number for Moving Average = ', best_config[6], '\n',
-          'Dropout = ', best_config[7])
+          'Dropout = ', best_config[7],
+          'Bidirectional (0:F 1:T) = ', best_config[8])
 
     '''
     NOT WORKING
