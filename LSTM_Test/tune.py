@@ -303,7 +303,7 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
           'Batch Size = ', best_config[4], '\n',
           'Learning rate = ', best_config[5], '\n',
           'Number for Moving Average = ', best_config[6], '\n',
-          'Dropout = ', best_config[7],
+          'Dropout = ', best_config[7], '\n',
           'Bidirectional (0:F 1:T) = ', best_config[8])
 
     '''
