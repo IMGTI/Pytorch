@@ -4,6 +4,7 @@ from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor
 from pytorch_forecasting import TimeSeriesDataSet, TemporalFusionTransformer
 import pandas as pd
 import datetime as dt
+import numpy as np
 
 # load data
 fig_num = 1
