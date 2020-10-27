@@ -253,14 +253,14 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
     data_dir = os.path.abspath(os.getcwd())
     # Configuration for raytune
     config = {
-              "na": tune.sample_from(lambda _: np.random.randint(2, 100)),#43
-              "do": tune.sample_from(lambda _: np.random.uniform(0.01, 0.06)),#0.031194832470140016
-              "hs": tune.sample_from(lambda _: np.random.randint(1, 11)),#8
-              "nl": tune.sample_from(lambda _: np.random.randint(2, 5)),#2
-              "sl": tune.sample_from(lambda _: np.random.randint(1,101)),#(1, 288)),#21
-              "bs": tune.sample_from(lambda _: np.random.randint(1,1001)),#27
+              "na": tune.sample_from(lambda _: np.random.randint(2, 10)),#43
+              "do": tune.sample_from(lambda _: np.random.uniform(0.01, 0.05)),#0.031194832470140016
+              "hs": tune.sample_from(lambda _: np.random.randint(1, 10)),#8
+              "nl": tune.sample_from(lambda _: np.random.randint(1, 4)),#2
+              "sl": tune.sample_from(lambda _: np.random.randint(1,10)),#(1, 288)),#21
+              "bs": tune.sample_from(lambda _: np.random.randint(1,50)),#27
               "lr": tune.loguniform(1e-4, 1e-1),#0.0008695868177968809
-              "bd": tune.sample_from(lambda _: np.random.randint(0,2)),#0
+              "bd": tune.sample_from(lambda _: np.random.randint(0,2))#0
               }
 
     scheduler = ASHAScheduler(
