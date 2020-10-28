@@ -56,7 +56,7 @@ batch_size = 27#50  # Batch size is automatically handled in model
 hidden_size = 8#5#10#100#10#2
 num_layers = 2#1#3#1
 num_classes = 1
-bidirectional = True#False#True
+bidirectional = False#True
 dropout = 0.031194832470140016#0.05#0#0.05
 fut_pred = 12#92#200#12#100  # Number of predictions
 
@@ -70,7 +70,7 @@ test_size = -100#len(y) - train_size  # Unused variable
 n_avg = 2#43#2
 
 # Random windows for training
-rw = True#False#True
+rw = False#True
 
 # Parameters in name for .jpg files
 params_name = ('_e' + str(num_epochs) +
