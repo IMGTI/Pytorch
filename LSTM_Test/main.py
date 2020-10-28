@@ -13,7 +13,7 @@ def arg_parser(argv):
     test_arg = False
     inputfile = ''
     try:
-        opts, args = getopt.getopt(argv,"hFt:i:",["train=","ifile="])
+        opts, args = getopt.getopt(argv,"hFt:i:n:",["train=","ifile=","nepoch="])
     except getopt.GetoptError:
         print('argparser.py -t <True> -i <inputfile>')
         sys.exit(2)
@@ -27,6 +27,8 @@ def arg_parser(argv):
             print('Forcing training and testing...')
         elif opt in ("-i", "--ifile"):
             inputfile = arg
+        elif opt in ("-n", "--nepoch="):
+            num_epochs = int(arg)
         elif opt in ("-t", "--train"):
             if arg=='True':
                 train_arg = True
@@ -34,10 +36,10 @@ def arg_parser(argv):
             else:
                 train_arg = False
                 test_arg = True
-    return (train_arg, test_arg, inputfile)
+    return (train_arg, test_arg, inputfile, num_epochs)
 
 if __name__ == "__main__":
-   train_arg, test_arg, inputfile = arg_parser(sys.argv[1:])
+   train_arg, test_arg, inputfile, n_epochs = arg_parser(sys.argv[1:])
 
 print('Train =', train_arg)
 print('Test =', test_arg)
@@ -46,7 +48,7 @@ print('Input file =', inputfile)
 ### Define the Hyperparameters
 
 # Net parameters
-num_epochs = 100#10#100#200#1000#300#2000
+num_epochs = n_epochs#10#10#100#200#1000#300#2000
 learning_rate = 0.0008695868177968809#0.0003910427505590165#0.022472643513504736#0.001#0.001#0.01
 input_size = 1
 batch_size = 27#50  # Batch size is automatically handled in model
@@ -54,9 +56,9 @@ batch_size = 27#50  # Batch size is automatically handled in model
 hidden_size = 8#5#10#100#10#2
 num_layers = 2#1#3#1
 num_classes = 1
-bidirectional = False#True
+bidirectional = True#False#True
 dropout = 0.031194832470140016#0.05#0#0.05
-fut_pred = 21#92#200#12#100  # Number of predictions
+fut_pred = 12#92#200#12#100  # Number of predictions
 
 # Data parameters
 seq_length = 21#72#92#12#1000#4  # Train Window
@@ -68,7 +70,7 @@ test_size = -100#len(y) - train_size  # Unused variable
 n_avg = 2#43#2
 
 # Random windows for training
-rw = False#True
+rw = True#False#True
 
 # Parameters in name for .jpg files
 params_name = ('_e' + str(num_epochs) +

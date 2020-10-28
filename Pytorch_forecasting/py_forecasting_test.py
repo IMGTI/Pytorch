@@ -24,7 +24,7 @@ times = (times/(3600*24) -
 defs = np.array(data['defs'])
 
 # define dataset
-max_encode_length = 36
+max_encoder_length = 36
 max_prediction_length = 6
 
 training = TimeSeriesDataSet(
@@ -33,7 +33,7 @@ training = TimeSeriesDataSet(
     target='defs',
     # weight="weight",
     group_ids=[],
-    max_encode_length=max_encode_length,
+    max_encoder_length=max_encoder_length,
     max_prediction_length=max_prediction_length,
     static_categoricals=[],
     static_reals=[],
