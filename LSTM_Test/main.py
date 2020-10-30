@@ -120,7 +120,7 @@ if train_arg:
     data.treat_data(train_size, seq_length, random_win=rw)
 
     ## Train with data
-    train = Train(num_classes, input_size, hidden_size, num_layers, dropout,
+    train = Train(batch_size, num_classes, input_size, hidden_size, num_layers, dropout,
                   bidirectional, state_dict_path, current, params_name)
     train.train_model(batch_size, learning_rate, num_epochs, data.times_dataY,
                       data.dataX, data.dataY)
@@ -140,7 +140,7 @@ if test_arg:
         # Use custom selected input from train data
         ind_test = -1000#5000#1000#len(dataX)-1
 
-    test = Test(num_classes, input_size, hidden_size, num_layers, dropout,
+    test = Test(batch_size, num_classes, input_size, hidden_size, num_layers, dropout,
                 bidirectional, state_dict_path, current, params_name)
 
     # Reorder data to original state just for test and train forcing

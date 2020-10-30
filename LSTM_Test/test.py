@@ -7,10 +7,10 @@ from sklearn.metrics import r2_score as r2s
 from model import LSTM
 
 class Test(object):
-    def __init__(self, num_classes, input_size, hidden_size, num_layers, dropout,
+    def __init__(self, batch_size, num_classes, input_size, hidden_size, num_layers, dropout,
                  bidirectional, state_dict_path, current, params_name):
         # Initialize the model
-        self.lstm = LSTM(num_classes, input_size, hidden_size, num_layers,
+        self.lstm = LSTM(batch_size, num_classes, input_size, hidden_size, num_layers,
                          dropout, bidirectional)
         # Path to state dictionary
         self.state_dict_path = state_dict_path
@@ -99,7 +99,8 @@ class Test(object):
             for i in range(fut_pred):
                 seq = torch.FloatTensor(test_inputs[i]).to(self.device)
                 with torch.no_grad():
-                    prediction = self.lstm(seq).data.cpu().numpy().item()
+                    prediction, hidden = self.lstm(seq)
+                    prediction = prediction.data.cpu().numpy().item()
                     test_inputs[i+1] = np.append(test_inputs[i][0][1:], prediction).reshape([1,seq_length,1])
 
 
@@ -120,9 +121,9 @@ class Test(object):
                               seq_length, fut_pred)
             ## Fitting whole model
 
-            train_predict = self.lstm(defsX.to(self.device))    # Should be the same length as dataX
-                                                                # but in a delayed window by 1 time
-                                                                # (prediction) ==> last value
+            train_predict, hidden_train_predict = self.lstm(defsX.to(self.device))  # Should be the same length as dataX
+                                                                                    # but in a delayed window by 1 time
+                                                                                    # (prediction) ==> last value
 
             data_predict = train_predict.data.cpu().numpy()
             dataY_plot = defsY.data.cpu().numpy()
@@ -158,7 +159,8 @@ class Test(object):
             for i in range(fut_pred):
                 seq = torch.FloatTensor(test_inputs[i]).to(self.device)
                 with torch.no_grad():
-                    prediction = self.lstm(seq).data.cpu().numpy().item()
+                    prediction, hidden = self.lstm(seq)
+                    prediction = prediction.data.cpu().numpy().item()
                     test_inputs[i+1] = np.append(test_inputs[i][0][1:], prediction).reshape([1,seq_length,1])
 
 
