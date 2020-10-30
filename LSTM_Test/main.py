@@ -69,8 +69,17 @@ test_size = -100#len(y) - train_size  # Unused variable
 
 n_avg = 2#43#2
 
+# Stateful
+stateful = True
+
 # Random windows for training
 rw = False#True
+
+if rw:
+    stateful = False
+else:
+    stateful = True
+
 
 # Parameters in name for .jpg files
 params_name = ('_e' + str(num_epochs) +
@@ -121,7 +130,7 @@ if train_arg:
 
     ## Train with data
     train = Train(batch_size, num_classes, input_size, hidden_size, num_layers, dropout,
-                  bidirectional, state_dict_path, current, params_name)
+                  bidirectional, state_dict_path, current, params_name, stateful=stateful)
     train.train_model(batch_size, learning_rate, num_epochs, data.times_dataY,
                       data.dataX, data.dataY)
 

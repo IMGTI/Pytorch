@@ -9,7 +9,7 @@ from model import LSTM
 
 class Train(object):
     def __init__(self, batch_size, num_classes, input_size, hidden_size, num_layers, dropout,
-                 bidirectional, state_dict_path, current, params_name):
+                 bidirectional, state_dict_path, current, params_name, stateful=False):
         # Initialize the model
         self.lstm = LSTM(batch_size, num_classes, input_size, hidden_size, num_layers,
                          dropout, bidirectional)
@@ -18,6 +18,7 @@ class Train(object):
         # Path and name for plots
         self.current = current
         self.params_name = params_name
+        self.stateful = stateful
 
         # Send net to GPU if possible
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -67,18 +68,20 @@ class Train(object):
                     ind += batch_size
                 except:
                     break
-            for ind, batch in enumerate(batches):
-                if len(batch['defsX'])!=batch_size:
-                    print('Error en', ind)
+
             if len(batches[-1]['defsX'])!=batch_size:
                 batches = batches[:-1]
                 print("Removing last batch because of invalid batch size")
+
             for epoch in tqdm(range(num_epochs), total=num_epochs):
                 hidden = None
                 for batch in batches:
                     self.optimizer.zero_grad()
 
-                    outputs, hidden = self.lstm(batch['defsX'].to(self.device), hidden=hidden)
+                    if self.stateful:
+                        outputs, hidden = self.lstm(batch['defsX'].to(self.device), hidden=hidden)
+                    else:
+                        outputs, hidden = self.lstm(batch['defsX'].to(self.device))
 
                     # Obtain the value for the loss function
                     loss = self.criterion(outputs.to(self.device), batch['defsY'].to(self.device))
