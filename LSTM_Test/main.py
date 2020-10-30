@@ -47,7 +47,7 @@ print('Input file =', inputfile)
 
 ### Define the Hyperparameters
 
-# Net parameters
+## Net parameters
 num_epochs = n_epochs#10#10#100#200#1000#300#2000
 learning_rate = 0.0008695868177968809#0.0003910427505590165#0.022472643513504736#0.001#0.001#0.01
 input_size = 1
@@ -58,30 +58,29 @@ num_layers = 2#1#3#1
 num_classes = 1
 bidirectional = False#True
 dropout = 0.031194832470140016#0.05#0#0.05
-fut_pred = 12#92#200#12#100  # Number of predictions
-
-# Data parameters
-seq_length = 21#72#92#12#1000#4  # Train Window
-                        # 1h = 12
-                        # 5min = 1
-train_size = -100#int(len(y) * 0.67)
-test_size = -100#len(y) - train_size  # Unused variable
-
-n_avg = 2#43#2
-
 # Stateful
-stateful = True
+stateful = False#True
 
+## Data parameters
+n_avg = 2#43#2
 # Random windows for training
 rw = False#True
+#if rw:
+#    stateful = False
+#else:
+#    stateful = True
 
-if rw:
-    stateful = False
-else:
-    stateful = True
+## Test parameters
+fut_pred = 21#92#200#12#100  # Number of predictions
 
+## Train parameters
+validate = True
+seq_length = 21#72#92#12#1000#4  # Train Window
+                                 # 1h = 12
+                                 # 5min = 1
+train_size = -fut_pred  # Not necessarily equal to fut_pred
 
-# Parameters in name for .jpg files
+## Parameters in name for .jpg files
 params_name = ('_e' + str(num_epochs) +
                '_lr' + str(learning_rate) +
                '_b' + str(batch_size) +
@@ -93,7 +92,8 @@ params_name = ('_e' + str(num_epochs) +
                '_bid' + str(bidirectional) +
                '_na' + str(n_avg) +
                '_rw' + str(rw) +
-               '_drp' + str(dropout))
+               '_drp' + str(dropout) +
+               '_stf' + str(stateful))
 
 ### Create directory for each run and different hyperparameters
 
@@ -132,7 +132,7 @@ if train_arg:
     train = Train(batch_size, num_classes, input_size, hidden_size, num_layers, dropout,
                   bidirectional, state_dict_path, current, params_name, stateful=stateful)
     train.train_model(batch_size, learning_rate, num_epochs, data.times_dataY,
-                      data.dataX, data.dataY)
+                      data.dataX, data.dataY, validate=validate)
 
 ### Test
 if test_arg:
@@ -143,11 +143,11 @@ if test_arg:
         data.data_smooth(N_avg=n_avg)
 
         # Use last seq_length-data
-        ind_test = -1002#-seq_length#-1
+        ind_test = -1002#-fut_pred-2#-seq_length#-1
         data.select_lastwin(seq_length, ind_test)
     else:
         # Use custom selected input from train data
-        ind_test = -1000#5000#1000#len(dataX)-1
+        ind_test = -1000#-fut_pred#5000#1000#len(dataX)-1
 
     test = Test(batch_size, num_classes, input_size, hidden_size, num_layers, dropout,
                 bidirectional, state_dict_path, current, params_name)

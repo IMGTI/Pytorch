@@ -81,7 +81,7 @@ class Test(object):
         except:
             print('Data is not randomized!')
 
-        ### Try to use train data
+        ### Validation test
         try:
             ## Predictions over time
 
@@ -141,7 +141,7 @@ class Test(object):
                          [dataY_plot, data_predict],
                          ind_test)
 
-        ### Use test data
+        ### Data Test (Prediction)
         except:
             ## Predictions over time
 

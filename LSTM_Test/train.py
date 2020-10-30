@@ -24,7 +24,8 @@ class Train(object):
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         pass
 
-    def train_model(self, batch_size, learning_rate, num_epochs, times, defsX, defsY):
+    def train_model(self, batch_size, learning_rate, num_epochs, times, defsX, defsY,
+                    validate=True):
         # Send model to device
         self.lstm.to(self.device)
 
@@ -69,7 +70,7 @@ class Train(object):
                 except:
                     break
 
-            if len(batches[-1]['defsX'])!=batch_size:
+            if (batches[-1]['defsX']).size(0)!=batch_size:
                 batches = batches[:-1]
                 print("Removing last batch because of invalid batch size")
 

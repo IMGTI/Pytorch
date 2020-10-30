@@ -146,8 +146,8 @@ class Data(object):
         self.trainX = Variable(torch.Tensor(np.array(x[0:train_size])))
         self.trainY = Variable(torch.Tensor(np.array(y[0:train_size])))
 
-        self.testX = Variable(torch.Tensor(np.array(x[train_size:len(x)])))
-        self.testY = Variable(torch.Tensor(np.array(y[train_size:len(y)])))
+        self.testX = Variable(torch.Tensor(np.array(x[train_size:])))
+        self.testY = Variable(torch.Tensor(np.array(y[train_size:])))
 
         # Times according with dataX and dataY dimensions
         time_step = np.absolute(self.times[0] - self.times[1])
