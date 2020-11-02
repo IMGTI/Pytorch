@@ -59,7 +59,7 @@ num_classes = 1
 bidirectional = False#True
 dropout = 0.031194832470140016#0.05#0#0.05
 # Stateful
-stateful = False#True
+stateful = True
 
 ## Data parameters
 n_avg = 2#43#2
