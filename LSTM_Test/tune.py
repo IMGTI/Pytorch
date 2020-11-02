@@ -139,18 +139,23 @@ def treat_data(times, defs, seq_length):
 
     return dataX, dataY, times_dataY, time_step
 
-def train_model(config, checkpoint_dir="", data_dir=""):
+def train_model(config, checkpoint_dir="", data_dir="", validate=True):
     # Transform num into bool for biderectionality
     if config["bd"]==0:
         bd = False
     else:
         bd = True
+
+    if config['st']==0:
+        stateful = True
+    else:
+        stateful = False
     # Load data
     times, defs = load_data(config, data_dir)
     defsX, defsY, times_dataY, time_step = treat_data(times, defs, config["sl"])
 
     # Initialize model
-    lstm = LSTM(1,1,config["hs"],config["nl"],config["do"], bd)
+    lstm = LSTM(config["bs"],1,1,config["hs"],config["nl"],config["do"], bd)
     # Send model to device
     lstm.to(device)
 
@@ -165,20 +170,37 @@ def train_model(config, checkpoint_dir="", data_dir=""):
         optimizer.load_state_dict(optimizer_state)
 
     # Train the model
+
+    # Define validation set and training set
+    if validate:
+        ind_val = int(len(defsY) * 0.25)  # Select 25% of data as validation
+        val_defsX = defsX[ind_val:]
+        val_defsY = defsY[ind_val:]
+        defsX = defsX[:ind_val]
+        defsY = defsY[:ind_val]
+
     if config["bs"]==-1:
         for epoch in range(10):
             optimizer.zero_grad()
 
-            outputs = lstm(defsX.to(device))
+            outputs, hidden = lstm(defsX.to(device))
 
             # Obtain the value for the loss function
             loss = criterion(outputs.to(device), defsY.to(device))
 
-            loss4report = loss.clone()
-
             loss.backward()
 
             optimizer.step()
+
+            with torch.no_grad():
+                # Initialize model in testing mode
+                lstm.eval()
+                val_pred, val_hidden = lstm(val_defsX.to(device))
+                val_loss = criterion(val_pred.to(device), val_defsY.to(device))
+
+                loss4report = val_loss.item()
+                # Initialize model in trainning mode again
+                lstm.train()
 
             # Save model
             with tune.checkpoint_dir(epoch) as checkpoint_dir:
@@ -186,7 +208,7 @@ def train_model(config, checkpoint_dir="", data_dir=""):
                 torch.save((lstm.state_dict(), optimizer.state_dict()), path)
 
             # Report loss to tune
-            tune.report(loss=loss4report.detach().cpu().numpy())
+            tune.report(loss=loss4report)
     else:
         batches = []
         ind = 0
@@ -197,20 +219,44 @@ def train_model(config, checkpoint_dir="", data_dir=""):
                 ind += config["bs"]
             except:
                 break
+
+        if (batches[-1]['defsX']).size(0)!=config["bs"]:
+            batches = batches[:-1]
+            print("Removing last batch because of invalid batch size")
+
         for epoch in range(10):
+            hidden = None
+            running_loss = 0.0
+            val_running_loss = 0.0
             for batch in batches:
                 optimizer.zero_grad()
 
-                outputs = lstm(batch['defsX'].to(device))
+                if stateful:
+                    outputs, hidden = lstm(batch['defsX'].to(device), hidden=hidden)
+                else:
+                    outputs, hidden = lstm(batch['defsX'].to(device))
 
                 # Obtain the value for the loss function
                 loss = criterion(outputs.to(device), batch['defsY'].to(device))
 
-                loss4report = loss.clone()
+                running_loss += loss.item()
 
                 loss.backward()
 
                 optimizer.step()
+
+                with torch.no_grad():
+                    # Initialize model in testing mode
+                    lstm.eval()
+                    val_pred, val_hidden = lstm(val_defsX.to(device))
+                    val_loss = criterion(val_pred.to(device), val_defsY.to(device))
+
+                    val_running_loss += val_loss.item()
+
+                    # Initialize model in trainning mode again
+                    lstm.train()
+
+            loss4report = (val_running_loss/len(batches))
 
             # Save model
             with tune.checkpoint_dir(epoch) as checkpoint_dir:
@@ -218,36 +264,8 @@ def train_model(config, checkpoint_dir="", data_dir=""):
                 torch.save((lstm.state_dict(), optimizer.state_dict()), path)
 
             # Report loss to tune
-            tune.report(loss=loss4report.detach().cpu().numpy())
+            tune.report(loss=loss4report)
     pass
-
-def test_accuracy(config, seq_length, model, device="cpu", data_dir=""):
-    fut_pred = 12
-    ind_test = -100
-
-    times, defs = load_data(config, data_dir)
-    defsX, defsY, times_dataY, time_step = treat_data(times, defs, config["sl"])
-
-    test_inputs = np.zeros([fut_pred + 1, 1, seq_length, 1])
-    #test_inputs[0] = dataX[-1].reshape(-1,seq_length,1).data.numpy()
-
-    test_inputs[0] = defsX[ind_test].reshape(1,seq_length,1)
-
-    for i in range(fut_pred):
-        seq = torch.FloatTensor(test_inputs[i]).to(device)
-        with torch.no_grad():
-            prediction = model(seq).data.cpu().numpy().item()
-            test_inputs[i+1] = np.append(test_inputs[i][0][1:], prediction).reshape([1,seq_length,1])
-
-    data_predict = np.array([x.reshape(seq_length)[-1] for x in test_inputs]).reshape([-1,1])
-    data = defsY  # Pre-prediction deformation
-
-    data_predict = sc.inverse_transform(data_predict)
-    data = sc.inverse_transform(dataY_plot)[ind_test:ind_test+(fut_pred+1)]
-
-    # Test predicted model output with data
-    r2s = r2s(data, data_predict)
-    return r2s
 
 def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
     data_dir = os.path.abspath(os.getcwd())
@@ -260,7 +278,8 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
               "sl": tune.sample_from(lambda _: np.random.randint(1,10)),#(1, 288)),#21
               "bs": tune.sample_from(lambda _: np.random.randint(1,50)),#27
               "lr": tune.loguniform(1e-4, 1e-1),#0.0008695868177968809
-              "bd": tune.sample_from(lambda _: np.random.randint(0,2))#0
+              "bd": tune.sample_from(lambda _: np.random.randint(0,2)),#0
+              "st": tune.sample_from(lambda _: np.random.randint(0,2))#0
               }
 
     scheduler = ASHAScheduler(
@@ -293,7 +312,8 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
                    df_result.iloc[ind_min_loss]['config.lr'],
                    df_result.iloc[ind_min_loss]['config.na'],
                    df_result.iloc[ind_min_loss]['config.do'],
-                   df_result.iloc[ind_min_loss]['config.bd']]
+                   df_result.iloc[ind_min_loss]['config.bd'],
+                   df_result.iloc[ind_min_loss]['config.st']]
     print('Best configuration parameters:')
     print('------------------------------')
     print(' Loss = ', best_config[0], '\n',
@@ -304,33 +324,8 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
           'Learning rate = ', best_config[5], '\n',
           'Number for Moving Average = ', best_config[6], '\n',
           'Dropout = ', best_config[7], '\n',
-          'Bidirectional (0:F 1:T) = ', best_config[8])
+          'Bidirectional (0:F 1:T) = ', best_config[8], '\n',
+          'Stateful (0:F 1:T) = ', best_config[9])
 
-    '''
-    NOT WORKING
-
-    best_trial = result.get_best_trial("loss", "min", "last")
-    print("Best trial config: {}".format(best_trial.config))
-    print("Best trial final validation loss: {}".format(
-        best_trial.last_result["loss"]))
-    print("Best trial final validation accuracy: {}".format(
-        best_trial.last_result["accuracy"]))
-
-    best_trained_model = LSTM(1,1,best_trial.config["hs"],best_trial.config["nl"],0)
-    device = "cpu"
-    if torch.cuda.is_available():
-        device = "cuda:0"
-        if gpus_per_trial > 1:
-            best_trained_model = nn.DataParallel(best_trained_model)
-    best_trained_model.to(device)
-
-    best_checkpoint_dir = best_trial.checkpoint.value
-    model_state, optimizer_state = torch.load(os.path.join(
-        best_checkpoint_dir, "checkpoint"))
-    best_trained_model.load_state_dict(model_state)
-
-    test_acc = test_accuracy(best_trial.config["sl"], best_trained_model, device)
-    print("Best trial test set accuracy: {}".format(test_acc))
-    '''
 if __name__ == "__main__":
     hyp_tune(num_samples=num_samples, max_num_epochs=10, gpus_per_trial=1)

@@ -28,10 +28,12 @@ class Train(object):
                     validate=True):
         # Define validation set and training set
         if validate:
-            defsX = defsX[:-10]
-            defsY = defsY[:-10]
-            val_defsX = defsX[-10:]
-            val_defsY = defsY[-10:]
+            # Select 25% of data as validation
+            ind_val = int(len(defsY) * 0.25)
+            val_defsX = defsX[ind_val:]
+            val_defsY = defsY[ind_val:]
+            defsX = defsX[:ind_val]
+            defsY = defsY[:ind_val]
 
         # Send model to device
         self.lstm.to(self.device)
@@ -93,6 +95,8 @@ class Train(object):
 
             for epoch in tqdm(range(num_epochs), total=num_epochs):
                 hidden = None
+                running_loss = 0.0
+                val_running_loss = 0.0
                 for batch in batches:
                     self.optimizer.zero_grad()
 
@@ -104,6 +108,8 @@ class Train(object):
                     # Obtain the value for the loss function
                     loss = self.criterion(outputs.to(self.device), batch['defsY'].to(self.device))
 
+                    running_loss += loss.item()
+
                     loss.backward()
 
                     self.optimizer.step()
@@ -113,11 +119,14 @@ class Train(object):
                         self.lstm.eval()
                         val_pred, val_hidden = self.lstm(val_defsX.to(self.device))
                         val_loss = self.criterion(val_pred.to(self.device), val_defsY.to(self.device))
+
+                        val_running_loss += val_loss.item()
+
                         # Initialize model in trainning mode again
                         self.lstm.train()
 
-                loss4plot.append(loss.item())
-                val_loss4plot.append(val_loss.item())
+                loss4plot.append(running_loss/len(batches))
+                val_loss4plot.append(val_running_loss/len(batches))
 
                 # Plot loss vs epoch
                 self.plot_loss(fig_loss, epoch, loss4plot, val_loss4plot)
