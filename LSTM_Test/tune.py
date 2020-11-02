@@ -271,7 +271,7 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
     data_dir = os.path.abspath(os.getcwd())
     # Configuration for raytune
     config = {
-              "na": tune.sample_from(lambda _: np.random.randint(2, 10)),#43
+              "na": 2,#tune.sample_from(lambda _: np.random.randint(2, 10)),#43
               "do": tune.sample_from(lambda _: np.random.uniform(0.01, 0.05)),#0.031194832470140016
               "hs": tune.sample_from(lambda _: np.random.randint(1, 10)),#8
               "nl": tune.sample_from(lambda _: np.random.randint(1, 4)),#2
