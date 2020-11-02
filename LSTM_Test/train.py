@@ -60,10 +60,19 @@ class Train(object):
 
                 self.optimizer.step()
 
+                with torch.no_grad():
+                    # Initialize model in testing mode
+                    self.lstm.eval()
+                    val_pred, val_hidden = self.lstm(val_defsX.to(self.device))
+                    val_loss = self.criterion(val_pred.to(self.device), val_defsY.to(self.device))
+                    # Initialize model in trainning mode again
+                    self.lstm.train()
+
                 loss4plot.append(loss.item())
+                val_loss4plot.append(val_loss.item())
 
                 # Plot loss vs epoch
-                self.plot_loss(fig_loss, epoch, loss4plot)
+                self.plot_loss(fig_loss, epoch, loss4plot, val_loss4plot)
 
                 # Save model
                 self.save_model(epoch, loss)
@@ -116,32 +125,6 @@ class Train(object):
                 # Save model
                 self.save_model(epoch, loss)
         pass
-
-        '''
-        val_inputs = np.zeros([np.absolute(train_size) + 1, 1, batch['defsX'].size(1), 1])
-
-        val_inputs[0] = batch['defsX'].reshape(1,seq_length,1).data.numpy()
-
-        time_step = np.absolute(times[0] - times[1])
-
-        self.times = times
-        self.times_predictions = (np.arange(0, (fut_pred+1)*time_step, time_step) +
-                                  times[ind_test])
-
-        for i in range(fut_pred):
-            seq = torch.FloatTensor(test_inputs[i]).to(self.device)
-            with torch.no_grad():
-                prediction, hidden = self.lstm(seq)
-                prediction = prediction.data.cpu().numpy().item()
-                test_inputs[i+1] = np.append(test_inputs[i][0][1:], prediction).reshape([1,seq_length,1])
-
-
-        data_predict = np.array([x.reshape(seq_length)[-1] for x in test_inputs]).reshape([-1,1])
-        dataY_plot = defsY.data.cpu().numpy()
-
-        data_predict = sc.inverse_transform(data_predict)
-        dataY_plot = sc.inverse_transform(dataY_plot)
-        '''
 
     def save_model(self, epoch, loss):
         # Save state dict of model
