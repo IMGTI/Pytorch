@@ -18,6 +18,31 @@ class Data(object):
         return mov_avg(data, N_avg)
 
     def ext_data(self, file):
+        def fill_data(y):
+            ind_fill = np.where(np.isnan(y))[0]
+
+            # Look for nans
+            if len(ind_fill)==0:
+                return y
+            else:
+                # Select boundary values
+                try:
+                    boundaries = (y[ind_fill[0]-1], y[ind_fill[-1]+1])
+                except:
+                    try:
+                        boundaries = (y[ind_fill[-1]+1], y[ind_fill[-1]+1])
+                    except:
+                        boundaries = (y[ind_fill[0]-1], y[ind_fill[0]-1])
+
+                # Fill with random data from mean between boundaries
+                m_bound = (boundaries[0] + boundaries[1])/2
+
+                for ind in ind_fill:
+                    fill = np.random.uniform(boundaries[0], boundaries[1])
+                    y[ind] = fill
+
+            return y
+
         data = pd.read_excel(file, usecols=[0,1], names=['times', 'defs'])
 
         try:
@@ -29,7 +54,7 @@ class Data(object):
         self.times = (times/(3600*24) -
                       (times/(3600*24))[0])
 
-        self.defs = np.array(data['defs'])
+        self.defs = fill_data(np.array(data['defs']))
         pass
 
     def data_smooth(self, N_avg=2):

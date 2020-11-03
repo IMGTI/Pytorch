@@ -118,7 +118,7 @@ if train_arg:
 
     #file = 'Figura de Control.xlsx'
     #file = 'prueba_serie.xlsx'
-    fig_num = 1
+    fig_num = 2
     file = 'Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
     #file = 'prueba_serie.xlsx'
 

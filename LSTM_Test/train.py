@@ -13,6 +13,10 @@ class Train(object):
         # Initialize the model
         self.lstm = LSTM(batch_size, num_classes, input_size, hidden_size, num_layers,
                          dropout, bidirectional)
+
+        # Print model summary
+        #print("Number of Learnable parameters =", sum(p.numel() for p in self.lstm.parameters()))
+
         # Path to state dictionary
         self.state_dict_path = state_dict_path
         # Path and name for plots
