@@ -83,7 +83,11 @@ def load_data(config, data_dir):
 
     return times, defs
 
-def treat_data(times, defs, seq_length):
+def treat_data(times, defs, seq_length, random_win=False):
+    def random_win(x, y):
+        ind_rand = np.random.permutation(len(y))
+        rev_rand = np.argsort(ind_rand)
+        return x[ind_rand], y[ind_rand], rev_rand
     def reshape_data(data):
         # Reshape data array from 1D to 2D
         data = data.reshape(-1, 1)
@@ -126,6 +130,8 @@ def treat_data(times, defs, seq_length):
 
     # Treat data
     x, y = sliding_windows(training_data, seq_length)
+    if random_win:
+        x, y, rev_rand = self.random_win(x, y)
 
     dataX = Variable(torch.Tensor(np.array(x)))
     dataY = Variable(torch.Tensor(np.array(y)))
@@ -137,7 +143,7 @@ def treat_data(times, defs, seq_length):
     time_step = np.absolute(times[0] - times[1])
     times_dataY = (times + (seq_length*time_step))[:-seq_length-1]
 
-    return dataX, dataY, times_dataY, time_step
+    return dataX, dataY, times_dataY, time_step, rev_rand
 
 def train_model(config, checkpoint_dir="", data_dir="", validate=True):
     # Transform num into bool for biderectionality
@@ -150,9 +156,14 @@ def train_model(config, checkpoint_dir="", data_dir="", validate=True):
         stateful = True
     else:
         stateful = False
+
+    if config['rd']==0:
+        rw = True
+    else:
+        rw = False
     # Load data
     times, defs = load_data(config, data_dir)
-    defsX, defsY, times_dataY, time_step = treat_data(times, defs, config["sl"])
+    defsX, defsY, times_dataY, time_step, rev_rand = treat_data(times, defs, config["sl"], random_win=rw)
 
     # Initialize model
     lstm = LSTM(config["bs"],1,1,config["hs"],config["nl"],config["do"], bd)
@@ -279,7 +290,8 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
               "bs": tune.sample_from(lambda _: np.random.randint(1,50)),#27
               "lr": tune.loguniform(1e-4, 1e-1),#0.0008695868177968809
               "bd": tune.sample_from(lambda _: np.random.randint(0,2)),#0
-              "st": tune.sample_from(lambda _: np.random.randint(0,2))#0
+              "st": tune.sample_from(lambda _: np.random.randint(0,2)),#0
+              "rd": tune.sample_from(lambda _: np.random.randint(0,2))#0
               }
 
     scheduler = ASHAScheduler(
@@ -313,7 +325,8 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
                    df_result.iloc[ind_min_loss]['config.na'],
                    df_result.iloc[ind_min_loss]['config.do'],
                    df_result.iloc[ind_min_loss]['config.bd'],
-                   df_result.iloc[ind_min_loss]['config.st']]
+                   df_result.iloc[ind_min_loss]['config.st'],
+                   df_result.iloc[ind_min_loss]['config.rd']]
     print('Best configuration parameters:')
     print('------------------------------')
     print(' Loss = ', best_config[0], '\n',
@@ -325,7 +338,8 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
           'Number for Moving Average = ', best_config[6], '\n',
           'Dropout = ', best_config[7], '\n',
           'Bidirectional (0:F 1:T) = ', best_config[8], '\n',
-          'Stateful (0:F 1:T) = ', best_config[9])
+          'Stateful (0:F 1:T) = ', best_config[9], '\n',
+          'Randomized Data (0:F 1:T) = ', best_config[10])
 
 if __name__ == "__main__":
     hyp_tune(num_samples=num_samples, max_num_epochs=10, gpus_per_trial=1)

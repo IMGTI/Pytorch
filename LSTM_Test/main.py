@@ -64,7 +64,7 @@ stateful = False#True
 ## Data parameters
 n_avg = 2#43#2
 # Random windows for training
-rw = False#True
+rw = True#False#True
 #if rw:
 #    stateful = False
 #else:
