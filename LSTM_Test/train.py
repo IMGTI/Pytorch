@@ -33,7 +33,7 @@ class Train(object):
         # Define validation set and training set
         if validate:
             # Select 25% of data as validation
-            ind_val = int(len(defsY) * 0.25)
+            ind_val = int(len(defsY) * 0.75)
             val_defsX = defsX[ind_val:]
             val_defsY = defsY[ind_val:]
             defsX = defsX[:ind_val]
