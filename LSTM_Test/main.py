@@ -11,6 +11,7 @@ import sys
 def arg_parser(argv):
     train_arg = True
     test_arg = False
+    num_epochs = 10
     inputfile = ''
     try:
         opts, args = getopt.getopt(argv,"hFt:i:n:",["train=","ifile=","nepoch="])
@@ -118,7 +119,7 @@ if train_arg:
 
     #file = 'Figura de Control.xlsx'
     #file = 'prueba_serie.xlsx'
-    fig_num = 1
+    fig_num = 4
     file = 'Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
     #file = 'datos_26102020_fig_' + str(fig_num) + '.xlsx'
     #file = 'prueba_serie.xlsx'
