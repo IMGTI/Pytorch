@@ -13,7 +13,7 @@ def ext_data(file_name):
 
             # Create new excel with figures
 
-            writer = ExcelWriter(file_name + '_fig_' + str(ind) + '.xlsx',  datetime_format='dd-mm-yy hh:mm')
+            writer = ExcelWriter(file_name[:-5] + '_fig_' + str(ind) + '.xlsx',  datetime_format='dd-mm-yy hh:mm')
 
             data.to_excel(writer, index=False)
             writer.save()
