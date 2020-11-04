@@ -140,13 +140,20 @@ class Train(object):
         pass
 
     def save_model(self, epoch, loss):
-        # Save state dict of model
+        # Save state dict of model in main folder
         torch.save({
                     #'epoch': epoch,
                     'model_state_dict': self.lstm.state_dict(),
                     'optimizer_state_dict': self.optimizer.state_dict(),
                     #'loss': loss,
                     }, self.state_dict_path)
+        # Save state dict of model in current date folder
+        torch.save({
+                    #'epoch': epoch,
+                    'model_state_dict': self.lstm.state_dict(),
+                    'optimizer_state_dict': self.optimizer.state_dict(),
+                    #'loss': loss,
+                    }, self.current)
         pass
 
     def load_model(self):
