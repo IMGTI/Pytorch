@@ -153,7 +153,7 @@ class Train(object):
                     'model_state_dict': self.lstm.state_dict(),
                     'optimizer_state_dict': self.optimizer.state_dict(),
                     #'loss': loss,
-                    }, self.current)
+                    }, self.current + '/' + self.state_dict_path)
         pass
 
     def load_model(self):
