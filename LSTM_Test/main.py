@@ -119,7 +119,7 @@ if train_arg:
 
     #file = 'Figura de Control.xlsx'
     #file = 'prueba_serie.xlsx'
-    fig_num = 4
+    fig_num = 5
     file = 'Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
     #file = 'datos_26102020_fig_' + str(fig_num) + '.xlsx'
     #file = 'prueba_serie.xlsx'
