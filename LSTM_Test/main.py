@@ -160,3 +160,35 @@ if test_arg:
 
     test.test_model(ind_test, seq_length, fut_pred, data.times_dataY, data.dataX,
                     data.dataY, sc=data.scaler)
+
+# Store parameters and runtime info in file
+params_file = open(current + '/params.txt', 'w')
+
+params_file.write('current  = ' + str(current) + '\n')
+params_file.write('train_arg  = ' + str(train_arg) + '\n')
+params_file.write('test_arg  = ' + str(test_arg) + '\n')
+params_file.write('inputfile  = ' + str(inputfile) + '\n')
+params_file.write('ind_test  = ' + str(ind_test) + '\n')
+if train_arg:
+    params_file.write('file  = ' + str(file) + '\n')
+    params_file.write('num_epoch  = ' + str(num_epoch) + '\n')
+else:
+    params_file.write('file  = ' + '\n')
+    params_file.write('num_epoch  = ' + '\n')
+params_file.write('learning_rate  = ' + str(learning_rate) + '\n')
+params_file.write('input_size  = ' + str(input_size) + '\n')
+params_file.write('batch_size  = ' + str(batch_size) + '\n')
+params_file.write('hidden_size  = ' + str(hidden_size) + '\n')
+params_file.write('num_layers  = ' + str(num_layers) + '\n')
+params_file.write('num_classes  = ' + str(num_classes) + '\n')
+params_file.write('bidirectional  = ' + str(bidirectional) + '\n')
+params_file.write('dropout  = ' + str(dropout) + '\n')
+params_file.write('stateful  = ' + str(stateful) + '\n')
+params_file.write('n_avg  = ' + str(n_avg) + '\n')
+params_file.write('rw  = ' + str(rw) + '\n')
+params_file.write('fut_pred  = ' + str(fut_pred) + '\n')
+params_file.write('validate  = ' + str(validate) + '\n')
+params_file.write('seq_length  = ' + str(seq_length) + '\n')
+params_file.write('train_size  = ' + str(train_size) + '\n')
+
+params_file.close()

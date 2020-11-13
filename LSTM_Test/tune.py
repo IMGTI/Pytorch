@@ -20,6 +20,7 @@ import datetime as dt
 import pandas as pd
 import getopt
 import sys
+import datetime as dt
 
 ### Parse line arguments
 def arg_parser(argv):
@@ -340,6 +341,28 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
           'Bidirectional (0:F 1:T) = ', best_config[8], '\n',
           'Stateful (0:F 1:T) = ', best_config[9], '\n',
           'Randomized Data (0:F 1:T) = ', best_config[10])
+
+    # Store best parameters in file
+    best_params_file = open('best_params.txt', 'a')
+
+    best_params_file.write('Date = ' + dt.datetime.now().strftime("%d_%m_%Y_%H_%M_%S") + '\n')
+    best_params_file.write('Loss = ' + str(best_config[0]) + '\n')
+    best_params_file.write('Hidden Size = ' + str(best_config[1]) + '\n')
+    best_params_file.write('Number of layers = ' + str(best_config[2]) + '\n')
+    best_params_file.write('Sequence length = ' + str(best_config[3]) + '\n')
+    best_params_file.write('Batch Size = ' + str(best_config[4]) + '\n')
+    best_params_file.write('Learning rate = ' + str(best_config[5]) + '\n')
+    best_params_file.write('Number for Moving Average = ' + str(best_config[6]) + '\n')
+    best_params_file.write('Dropout = ' + str(best_config[7]) + '\n')
+    best_params_file.write('Bidirectional (0:F 1:T) = ' + str(best_config[8]) + '\n')
+    best_params_file.write('Stateful (0:F 1:T) = ' + str(best_config[9]) + '\n')
+    best_params_file.write('Randomized Data (0:F 1:T) = ' + str(best_config[10]))
+    best_params_file.write('\n')
+    best_params_file.write('----------------------------------------------------' + '\n')
+    best_params_file.write('\n')
+
+    best_params_file.close()
+
 
 if __name__ == "__main__":
     hyp_tune(num_samples=num_samples, max_num_epochs=10, gpus_per_trial=1)

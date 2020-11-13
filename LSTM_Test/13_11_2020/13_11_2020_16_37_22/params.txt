@@ -1,0 +1,1 @@
+train_arg  = Falsetest_arg  = Trueinputfile  = Figura_de_control_desde_feb_fig5.xlsxind_test  = -1002
