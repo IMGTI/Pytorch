@@ -98,17 +98,30 @@ params_name = ('_e' + str(num_epochs) +
 
 ### Create directory for each run and different hyperparameters
 
-current = dt.datetime.now().strftime("%d_%m_%Y") + '/' + dt.datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
+current_month = dt.datetime.now().strftime("%m_%Y")
+current_day = dt.datetime.now().strftime("%d_%m_%Y")
+current_min = dt.datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
+
+current = (current_month + '/' +
+           current_day + '/' +
+           current_min)
 
 # Create directory
 try:
-    os.mkdir(dt.datetime.now().strftime("%d_%m_%Y"))
+    os.mkdir(current_month)
+    os.mkdir(current_month + '/' +
+             current_day)
     os.mkdir(current)
 except:
     try:
+        os.mkdir(current_month + '/' +
+                 current_day)
         os.mkdir(current)
     except:
-        pass
+        try:
+            os.mkdir(current)
+        except:
+            pass
 
 # Path for state dictionary to save model's weights and parameters
 state_dict_path = 'state_dict'
