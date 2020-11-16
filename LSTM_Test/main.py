@@ -126,6 +126,9 @@ except:
 # Path for state dictionary to save model's weights and parameters
 state_dict_path = 'state_dict'
 
+# Path to data
+data_path = 'data'
+
 ### Train
 if train_arg:
     ## Extract data for training
@@ -133,8 +136,8 @@ if train_arg:
     #file = 'Figura de Control.xlsx'
     #file = 'prueba_serie.xlsx'
     fig_num = 5
-    file = 'Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
-    #file = 'datos_26102020_fig_' + str(fig_num) + '.xlsx'
+    file = data_path + '/Figura_de_control/Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
+    #file = data_path + '/datos_26102020/datos_26102020_fig_' + str(fig_num) + '.xlsx'
     #file = 'prueba_serie.xlsx'
 
     data = Data()
