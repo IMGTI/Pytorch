@@ -20,7 +20,17 @@ def arg_parser(argv):
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print('argparser.py (-t <[True]/False>) -i <inputfile>')
+            print('------------ Commands -------------')
+            print('-t: Train network (True/False)')
+            print('-F: Force training and testing (-t True will not test)')
+            print('-n: Number of epochs to use in training')
+            print('-i: Input file for testing')
+            print('-h: Show help')
+            print('--------- Example usage ----------')
+            print('For training:')
+            print('argparser.py (-t True)/(-F) -n <epochs>')
+            print('For testing:')
+            print('argparser.py -t False -i <inputfile>')
             sys.exit()
         elif opt == '-F':
             train_arg = True
@@ -135,9 +145,9 @@ if train_arg:
 
     #file = 'Figura de Control.xlsx'
     #file = 'prueba_serie.xlsx'
-    fig_num = 5
-    file = data_path + '/Figura_de_control/Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
-    #file = data_path + '/datos_26102020/datos_26102020_fig_' + str(fig_num) + '.xlsx'
+    fig_num = 1
+    #file = data_path + '/Figura_de_control/Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
+    file = data_path + '/datos_26102020/datos_26102020_fig_' + str(fig_num) + '.xlsx'
     #file = 'prueba_serie.xlsx'
 
     data = Data()
