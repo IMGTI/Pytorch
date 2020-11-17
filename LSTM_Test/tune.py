@@ -76,8 +76,11 @@ def load_data(config, data_dir):
         defs = mov_avg(defs, N_avg)
         return times, defs
 
+    # Path to data
+    data_path = 'datos'
+
     fig_num = 1
-    file = 'Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
+    file = data_path + '/Figura_de_control/Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
 
     times, defs = ext_data(os.path.abspath(data_dir + '/' + file))
     times, defs = data_smooth(times, defs, N_avg=config["na"])
@@ -132,7 +135,7 @@ def treat_data(times, defs, seq_length, random_win=False):
     # Treat data
     x, y = sliding_windows(training_data, seq_length)
     if random_win:
-        x, y, rev_rand = self.random_win(x, y)
+        x, y, rev_rand = random_win(x, y)
 
     dataX = Variable(torch.Tensor(np.array(x)))
     dataY = Variable(torch.Tensor(np.array(y)))
@@ -283,16 +286,16 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
     data_dir = os.path.abspath(os.getcwd())
     # Configuration for raytune
     config = {
-              "na": 2,#tune.sample_from(lambda _: np.random.randint(2, 10)),#43
-              "do": tune.sample_from(lambda _: np.random.uniform(0.01, 0.05)),#0.031194832470140016
-              "hs": tune.sample_from(lambda _: np.random.randint(1, 10)),#8
-              "nl": tune.sample_from(lambda _: np.random.randint(1, 4)),#2
-              "sl": tune.sample_from(lambda _: np.random.randint(1,10)),#(1, 288)),#21
-              "bs": tune.sample_from(lambda _: np.random.randint(1,50)),#27
-              "lr": tune.loguniform(1e-4, 1e-1),#0.0008695868177968809
-              "bd": tune.sample_from(lambda _: np.random.randint(0,2)),#0
-              "st": tune.sample_from(lambda _: np.random.randint(0,2)),#0
-              "rd": tune.sample_from(lambda _: np.random.randint(0,2))#0
+              "na": tune.sample_from(lambda _: np.random.randint(2, 25)),#2
+              "do": 0.0289,#tune.sample_from(lambda _: np.random.uniform(0.01, 0.05)),#0.0289
+              "hs": 9,#tune.sample_from(lambda _: np.random.randint(1, 10)),#9
+              "nl": 1,#tune.sample_from(lambda _: np.random.randint(1, 4)),#1
+              "sl": 9,#tune.sample_from(lambda _: np.random.randint(1,10)),#9
+              "bs": 7,#tune.sample_from(lambda _: np.random.randint(1,50)),#7
+              "lr": 0.0009,#tune.loguniform(1e-4, 1e-1),#0.0009
+              "bd": 1,#tune.sample_from(lambda _: np.random.randint(0,2)),#1
+              "st": 0,#tune.sample_from(lambda _: np.random.randint(0,2)),#0
+              "rd": 1,#tune.sample_from(lambda _: np.random.randint(0,2))#1
               }
 
     scheduler = ASHAScheduler(
