@@ -137,7 +137,7 @@ except:
 state_dict_path = 'state_dict'
 
 # Path to data
-data_path = 'data'
+data_path = 'datos'
 
 ### Train
 if train_arg:
@@ -145,7 +145,7 @@ if train_arg:
 
     #file = 'Figura de Control.xlsx'
     #file = 'prueba_serie.xlsx'
-    fig_num = 1
+    fig_num = 6
     #file = data_path + '/Figura_de_control/Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
     file = data_path + '/datos_26102020/datos_26102020_fig_' + str(fig_num) + '.xlsx'
     #file = 'prueba_serie.xlsx'
@@ -197,10 +197,10 @@ params_file.write('inputfile  = ' + str(inputfile) + '\n')
 params_file.write('ind_test  = ' + str(ind_test) + '\n')
 if train_arg:
     params_file.write('file  = ' + str(file) + '\n')
-    params_file.write('num_epoch  = ' + str(num_epoch) + '\n')
+    params_file.write('num_epochs  = ' + str(num_epochs) + '\n')
 else:
     params_file.write('file  = ' + '\n')
-    params_file.write('num_epoch  = ' + '\n')
+    params_file.write('num_epochs  = ' + '\n')
 params_file.write('learning_rate  = ' + str(learning_rate) + '\n')
 params_file.write('input_size  = ' + str(input_size) + '\n')
 params_file.write('batch_size  = ' + str(batch_size) + '\n')
