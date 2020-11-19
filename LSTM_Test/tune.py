@@ -286,14 +286,14 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
     data_dir = os.path.abspath(os.getcwd())
     # Configuration for raytune
     config = {
-              "na": tune.sample_from(lambda _: np.random.randint(2, 25)),#23
-              "do": 0.0289,#tune.sample_from(lambda _: np.random.uniform(0.01, 0.05)),#0.0289
-              "hs": 9,#tune.sample_from(lambda _: np.random.randint(1, 10)),#9
-              "nl": 1,#tune.sample_from(lambda _: np.random.randint(1, 4)),#1
-              "sl": 9,#tune.sample_from(lambda _: np.random.randint(1,10)),#9
-              "bs": 7,#tune.sample_from(lambda _: np.random.randint(1,50)),#7
-              "lr": 0.0009,#tune.loguniform(1e-4, 1e-1),#0.0009
-              "bd": 1,#tune.sample_from(lambda _: np.random.randint(0,2)),#1
+              "na": 2,#tune.sample_from(lambda _: np.random.randint(2, 25)),#23#2
+              "do": tune.sample_from(lambda _: np.random.uniform(0.01, 0.05)),#0.0289
+              "hs": tune.sample_from(lambda _: np.random.randint(1, 25)),#9
+              "nl": tune.sample_from(lambda _: np.random.randint(1, 4)),#1
+              "sl": tune.sample_from(lambda _: np.random.randint(1,100)),#9
+              "bs": tune.sample_from(lambda _: np.random.randint(1,50)),#7
+              "lr": tune.loguniform(1e-4, 1e-1),#0.0009
+              "bd": tune.sample_from(lambda _: np.random.randint(0,2)),#1
               "st": 0,#tune.sample_from(lambda _: np.random.randint(0,2)),#0
               "rd": 1,#tune.sample_from(lambda _: np.random.randint(0,2))#1
               }
