@@ -64,11 +64,11 @@ learning_rate = 0.0076#0.0009539191097038075
 input_size = 1
 batch_size = 31#7   # Batch size is automatically handled in model
                     # if -1 then uses 1 batch of full data-length size
-hidden_size = 9#8#5#10#100#10#2
+hidden_size = 6#9
 num_layers = 1#2#1#3#1
 num_classes = 1
 bidirectional = False#True#False
-dropout = 0.02898#0.05
+dropout = 0#0.02898
 # Stateful
 stateful = False#True
 
@@ -145,7 +145,7 @@ if train_arg:
 
     #file = 'Figura de Control.xlsx'
     #file = 'prueba_serie.xlsx'
-    fig_num = 2
+    fig_num = 1
     file = data_path + '/Figura_de_control/Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
     #file = data_path + '/datos_26102020/datos_26102020_fig_' + str(fig_num) + '.xlsx'
     #file = 'prueba_serie.xlsx'
