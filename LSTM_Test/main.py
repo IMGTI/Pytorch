@@ -11,7 +11,7 @@ import sys
 def arg_parser(argv):
     train_arg = True
     test_arg = False
-    num_epochs = 10
+    num_epochs = 100
     inputfile = ''
     try:
         opts, args = getopt.getopt(argv,"hFt:i:n:",["train=","ifile=","nepoch="])
@@ -59,21 +59,21 @@ print('Input file =', inputfile)
 ### Define the Hyperparameters
 
 ## Net parameters
-num_epochs = n_epochs#10#10#100#200#1000#300#2000
-learning_rate = 0.0009539191097038075#0.0008695868177968809#0.0003910427505590165#0.022472643513504736#0.001#0.001#0.01
+num_epochs = n_epochs#10
+learning_rate = 0.0076#0.0009539191097038075
 input_size = 1
-batch_size = 7#27#50  # Batch size is automatically handled in model
+batch_size = 31#7   # Batch size is automatically handled in model
                     # if -1 then uses 1 batch of full data-length size
 hidden_size = 9#8#5#10#100#10#2
 num_layers = 1#2#1#3#1
 num_classes = 1
-bidirectional = True#False#True
-dropout = 0.02898251967066#0.031194832470140016#0.05#0#0.05
+bidirectional = False#True#False
+dropout = 0.02898#0.05
 # Stateful
 stateful = False#True
 
 ## Data parameters
-n_avg = 2#43#2
+n_avg = 2#23#2
 # Random windows for training
 rw = True#False#True
 #if rw:
@@ -82,13 +82,13 @@ rw = True#False#True
 #    stateful = True
 
 ## Test parameters
-fut_pred = 18#21#92#200#12#100  # Number of predictions
+fut_pred = 84#21  # Number of predictions
 
 ## Train parameters
 validate = True
-seq_length = 9#21#72#92#12#1000#4  # Train Window
-                                 # 1h = 12
-                                 # 5min = 1
+seq_length = 84#9    # Train Window
+                     # 1h = 12
+                     # 5min = 1
 train_size = -fut_pred  # Not necessarily equal to fut_pred
 
 ## Parameters in name for .jpg files
@@ -145,9 +145,9 @@ if train_arg:
 
     #file = 'Figura de Control.xlsx'
     #file = 'prueba_serie.xlsx'
-    fig_num = 6
-    #file = data_path + '/Figura_de_control/Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
-    file = data_path + '/datos_26102020/datos_26102020_fig_' + str(fig_num) + '.xlsx'
+    fig_num = 2
+    file = data_path + '/Figura_de_control/Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
+    #file = data_path + '/datos_26102020/datos_26102020_fig_' + str(fig_num) + '.xlsx'
     #file = 'prueba_serie.xlsx'
 
     data = Data()
