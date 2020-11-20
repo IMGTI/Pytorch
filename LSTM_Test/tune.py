@@ -288,7 +288,7 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
     config = {
               "na": 2,#tune.sample_from(lambda _: np.random.randint(2, 25)),#23#2
               "do": tune.sample_from(lambda _: np.random.uniform(0.01, 0.05)),#0.0289
-              "hs": tune.sample_from(lambda _: np.random.randint(1, 25)),#9
+              "hs": tune.sample_from(lambda _: np.random.randint(1, 10)),#9
               "nl": tune.sample_from(lambda _: np.random.randint(1, 4)),#1
               "sl": tune.sample_from(lambda _: np.random.randint(1,100)),#9
               "bs": tune.sample_from(lambda _: np.random.randint(1,50)),#7
