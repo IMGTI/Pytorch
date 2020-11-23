@@ -25,24 +25,6 @@ class LSTM(nn.Module):
 
         self.fc = nn.Linear(self.hidden_size*self.ways, self.num_classes)
 
-        # Send net to GPU if possible
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-        pass
-        '''
-    def forward(self, x):
-        h_0 = Variable(torch.zeros(
-            self.num_layers*self.ways, x.size(0), self.hidden_size))
-        c_0 = Variable(torch.zeros(
-            self.num_layers*self.ways, x.size(0), self.hidden_size))
-        # Propagate input through LSTM
-        ula, (h_out, _) = self.lstm(x, (h_0.to(self.device), c_0.to(self.device)))
-
-        out = self.fc(ula[:,-1,:])
-
-        return out
-
-        '''
     def forward(self, x, hidden=None):
         # Propagate input through LSTM
         if hidden:

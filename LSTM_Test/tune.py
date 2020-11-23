@@ -24,26 +24,34 @@ import datetime as dt
 
 ### Parse line arguments
 def arg_parser(argv):
+    # Set device (Send to GPU if possible)
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # Set number of samples
+    num_samples = 100
     try:
-        opts, args = getopt.getopt(argv,"hn:",["nsamples="])
+        opts, args = getopt.getopt(argv,"hn:d:",["nsamples=","device="])
     except getopt.GetoptError:
         print('argparser.py -n <number_samples>')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print('argparser.py -n <number_samples>')
+            print('argparser.py -n <number_samples> -d <cpu/gpu>')
             sys.exit()
         elif opt in ("-n", "--nsamples"):
             num_samples = int(arg)
-    return num_samples
+        elif opt in ("-d", "--device"):
+            if arg=='cpu':
+                device = torch.device(arg)
+            elif arg=='gpu':
+                device = torch.device("cuda:0")
+    return num_samples, device
 
 if __name__ == "__main__":
-    num_samples = arg_parser(sys.argv[1:])
+    num_samples, device = arg_parser(sys.argv[1:])
 else:
     num_samples = 10
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-# Send to GPU if possible
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 def load_data(config, data_dir):
     def ext_data(file):
@@ -282,7 +290,7 @@ def train_model(config, checkpoint_dir="", data_dir="", validate=True):
             tune.report(loss=loss4report)
     pass
 
-def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
+def hyp_tune(num_samples=10, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial=1):
     data_dir = os.path.abspath(os.getcwd())
     # Configuration for raytune
     config = {
@@ -308,7 +316,7 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
                            metric_columns=["loss", "training_iteration"])
     result = tune.run(
                       partial(train_model, data_dir=data_dir),
-                      resources_per_trial={"cpu": 4, "gpu": gpus_per_trial},
+                      resources_per_trial={"cpu": cpus_per_trial, "gpu": gpus_per_trial},
                       config=config,
                       num_samples=num_samples,
                       scheduler=scheduler,
@@ -368,4 +376,7 @@ def hyp_tune(num_samples=10, max_num_epochs=10, gpus_per_trial=2):
 
 
 if __name__ == "__main__":
-    hyp_tune(num_samples=num_samples, max_num_epochs=10, gpus_per_trial=0.5)
+    if device==torch.device("cuda:0"):
+        hyp_tune(num_samples=num_samples, max_num_epochs=5, cpus_per_trial=4, gpus_per_trial=0.5)
+    else:
+        hyp_tune(num_samples=num_samples, max_num_epochs=5, cpus_per_trial=1, gpus_per_trial=0)
