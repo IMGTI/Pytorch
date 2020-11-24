@@ -21,6 +21,7 @@ import pandas as pd
 import getopt
 import sys
 import datetime as dt
+import json
 
 ### Parse line arguments
 def arg_parser(argv):
@@ -157,7 +158,7 @@ def treat_data(times, defs, seq_length, random_win=False):
 
     return dataX, dataY, times_dataY, time_step, rev_rand
 
-def train_model(config, checkpoint_dir="", data_dir="", validate=True):
+def train_model(config, checkpoint_dir=None, data_dir="", validate=True):
     # Transform num into bool for biderectionality
     if config["bd"]==0:
         bd = False
@@ -185,12 +186,18 @@ def train_model(config, checkpoint_dir="", data_dir="", validate=True):
     criterion = torch.nn.MSELoss()    # mean-squared error for regression
     optimizer = torch.optim.Adam(lstm.parameters(), lr=config["lr"])
 
-    # load model
+    # load checkpoint
+    start = 0
     if checkpoint_dir:
+        # Model checkpoint
         model_state, optimizer_state = torch.load(
-            os.path.join(checkpoint_dir, "checkpoint"))
+            os.path.join(checkpoint_dir, "model_checkpoint"))
         lstm.load_state_dict(model_state)
         optimizer.load_state_dict(optimizer_state)
+        # Tune checkpoint
+        with open(os.path.join(checkpoint_dir, "tune_checkpoint")) as f:
+            state = json.loads(f.read())
+            start = state["step"] + 1
 
     # Train the model
 
@@ -203,7 +210,7 @@ def train_model(config, checkpoint_dir="", data_dir="", validate=True):
         defsY = defsY[:ind_val]
 
     if config["bs"]==-1:
-        for epoch in range(config["max_nepochs"]):
+        for epoch in range(start, config["max_nepochs"]):
             optimizer.zero_grad()
 
             outputs, hidden = lstm(defsX.to(device))
@@ -227,8 +234,18 @@ def train_model(config, checkpoint_dir="", data_dir="", validate=True):
 
             # Save model
             with tune.checkpoint_dir(epoch) as checkpoint_dir:
-                path = os.path.join(checkpoint_dir, "checkpoint")
+                # Model checkpoint
+                path = os.path.join(checkpoint_dir, "model_checkpoint")
                 torch.save((lstm.state_dict(), optimizer.state_dict()), path)
+                # Tune checkpoint
+                path_tune = os.path.join(checkpoint_dir, "tune_checkpoint")
+                with open(path_tune, "w") as f:
+                    f.write(json.dumps({"step": start}))
+                    f.close()
+                # Save path for checkpoint_dir
+                with open(os.path.join(os.getcwd(), "checkpoint_dir"), "w") as f_check_dir:
+                    f_check_dir.write(checkpoint_dir)
+                    f_check_dir.close()
 
             # Report loss to tune
             tune.report(loss=loss4report)
@@ -247,7 +264,7 @@ def train_model(config, checkpoint_dir="", data_dir="", validate=True):
             batches = batches[:-1]
             print("Removing last batch because of invalid batch size")
 
-        for epoch in range(config["max_nepochs"]):
+        for epoch in range(start, config["max_nepochs"]):
             hidden = None
             running_loss = 0.0
             val_running_loss = 0.0
@@ -283,14 +300,31 @@ def train_model(config, checkpoint_dir="", data_dir="", validate=True):
 
             # Save model
             with tune.checkpoint_dir(epoch) as checkpoint_dir:
-                path = os.path.join(checkpoint_dir, "checkpoint")
+                # Model checkpoint
+                path = os.path.join(checkpoint_dir, "model_checkpoint")
                 torch.save((lstm.state_dict(), optimizer.state_dict()), path)
+                # Tune checkpoint
+                path_tune = os.path.join(checkpoint_dir, "tune_checkpoint")
+                with open(path_tune, "w") as f:
+                    f.write(json.dumps({"step": start}))
+                    f.close()
+                # Save path for checkpoint_dir
+                with open(os.path.join(os.getcwd(), "checkpoint_dir"), "w") as f_check_dir:
+                    f_check_dir.write(checkpoint_dir)
+                    f_check_dir.close()
 
             # Report loss to tune
             tune.report(loss=loss4report)
     pass
 
 def hyp_tune(num_samples=10, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial=1):
+    # Checkpoint directory
+    try:
+        with open(os.path.join(os.getcwd(), "checkpoint_dir"), "r") as f:
+            checkpoint_dir = f.read()
+    except:
+        checkpoint_dir = None
+    # Data directory
     data_dir = os.path.abspath(os.getcwd())
     # Configuration for raytune
     config = {
@@ -317,7 +351,17 @@ def hyp_tune(num_samples=10, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial
                               reduction_factor=2)
     reporter = CLIReporter(
                            metric_columns=["loss", "training_iteration"])
-    result = tune.run(
+    try:
+        result = tune.run(
+                      partial(train_model, checkpoint_dir=checkpoint_dir ,data_dir=data_dir),
+                      restore=checkpoint_dir,
+                      resources_per_trial={"cpu": cpus_per_trial, "gpu": gpus_per_trial},
+                      config=config,
+                      num_samples=num_samples,
+                      scheduler=scheduler,
+                      progress_reporter=reporter)
+    except:
+        result = tune.run(
                       partial(train_model, data_dir=data_dir),
                       resources_per_trial={"cpu": cpus_per_trial, "gpu": gpus_per_trial},
                       config=config,
