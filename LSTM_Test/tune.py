@@ -163,7 +163,13 @@ def treat_data(times, defs, seq_length, random_win=False):
 
     return dataX, dataY, times_dataY, time_step, rev_rand
 
-def train_model(config, checkpoint_dir=None, data_dir="", validate=True):
+def train_model(config, validate=True):
+    # Get data dir
+    data_dir = config["data_dir"]
+    '''
+    # Get checkpoint dir
+    checkpoint_dir = config["chck_dir"]
+    '''
     # Transform num into bool for biderectionality
     if config["bd"]==0:
         bd = False
@@ -190,20 +196,24 @@ def train_model(config, checkpoint_dir=None, data_dir="", validate=True):
 
     criterion = torch.nn.MSELoss()    # mean-squared error for regression
     optimizer = torch.optim.Adam(lstm.parameters(), lr=config["lr"])
-
+    '''
     # load checkpoint
     start = 0
     if checkpoint_dir:
-        # Model checkpoint
-        model_state, optimizer_state = torch.load(
-            os.path.join(checkpoint_dir, "model_checkpoint"))
-        lstm.load_state_dict(model_state)
-        optimizer.load_state_dict(optimizer_state)
         # Tune checkpoint
         with open(os.path.join(checkpoint_dir, "tune_checkpoint")) as f:
             state = json.loads(f.read())
-            start = state["step"] + 1
-
+            if state["step"]==(config["max_nepochs"]-1):
+                start = 0
+            else:
+                start = state["step"] + 1
+        # Model checkpoint
+        if start!=0:
+            model_state, optimizer_state = torch.load(
+                os.path.join(checkpoint_dir, "model_checkpoint"))
+            lstm.load_state_dict(model_state)
+            optimizer.load_state_dict(optimizer_state)
+    '''
     # Train the model
 
     # Define validation set and training set
@@ -215,7 +225,8 @@ def train_model(config, checkpoint_dir=None, data_dir="", validate=True):
         defsY = defsY[:ind_val]
 
     if config["bs"]==-1:
-        for epoch in range(start, config["max_nepochs"]):
+        #for epoch in range(start, config["max_nepochs"]):
+        for epoch in range(config["max_nepochs"]):
             optimizer.zero_grad()
 
             outputs, hidden = lstm(defsX.to(device))
@@ -236,7 +247,7 @@ def train_model(config, checkpoint_dir=None, data_dir="", validate=True):
                 loss4report = val_loss.item()
                 # Initialize model in trainning mode again
                 lstm.train()
-
+            '''
             # Save model
             with tune.checkpoint_dir(epoch) as checkpoint_dir:
                 # Model checkpoint
@@ -245,14 +256,14 @@ def train_model(config, checkpoint_dir=None, data_dir="", validate=True):
                 # Tune checkpoint
                 path_tune = os.path.join(checkpoint_dir, "tune_checkpoint")
                 with open(path_tune, "w") as f:
-                    f.write(json.dumps({"step": start}))
+                    f.write(json.dumps({"step": epoch}))
                     f.close()
                 # Save path for checkpoint_dir
                 path_checkpoint_dir = 'D:/Documents/GitHub/Pytorch/LSTM_Test'
                 with open(os.path.join(path_checkpoint_dir, "checkpoint_dir.txt"), "w") as f_check_dir:
                     f_check_dir.write(checkpoint_dir)
                     f_check_dir.close()
-
+            '''
             # Report loss to tune
             tune.report(loss=loss4report)
     else:
@@ -270,7 +281,8 @@ def train_model(config, checkpoint_dir=None, data_dir="", validate=True):
             batches = batches[:-1]
             print("Removing last batch because of invalid batch size")
 
-        for epoch in range(start, config["max_nepochs"]):
+        #for epoch in range(start, config["max_nepochs"]):
+        for epoch in range(config["max_nepochs"]):
             hidden = None
             running_loss = 0.0
             val_running_loss = 0.0
@@ -303,7 +315,7 @@ def train_model(config, checkpoint_dir=None, data_dir="", validate=True):
                     lstm.train()
 
             loss4report = (val_running_loss/len(batches))
-
+            '''
             # Save model
             with tune.checkpoint_dir(epoch) as checkpoint_dir:
                 # Model checkpoint
@@ -312,22 +324,23 @@ def train_model(config, checkpoint_dir=None, data_dir="", validate=True):
                 # Tune checkpoint
                 path_tune = os.path.join(checkpoint_dir, "tune_checkpoint")
                 with open(path_tune, "w") as f:
-                    f.write(json.dumps({"step": start}))
+                    f.write(json.dumps({"step": epoch}))
                     f.close()
                 # Save path for checkpoint_dir
                 path_checkpoint_dir = 'D:/Documents/GitHub/Pytorch/LSTM_Test'
                 with open(os.path.join(path_checkpoint_dir, "checkpoint_dir.txt"), "w") as f_check_dir:
                     f_check_dir.write(checkpoint_dir)
                     f_check_dir.close()
-
+            '''
             # Report loss to tune
             tune.report(loss=loss4report)
     pass
 
 def hyp_tune(num_samples=10, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial=1,
-             checkpoint=True):
+             checkpoint=False):
     # Data directory
     data_dir = 'D:/Documents/GitHub/Pytorch/LSTM_Test'
+    '''
     # Checkpoint directory
     chck_path = 'D:/Documents/GitHub/Pytorch/LSTM_Test'
     try:
@@ -335,7 +348,7 @@ def hyp_tune(num_samples=10, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial
             checkpoint_dir = f.read()
     except:
         checkpoint_dir = None
-
+    '''
     # Configuration for raytune
     config = {
               # Model Parameters
@@ -350,7 +363,10 @@ def hyp_tune(num_samples=10, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial
               "st": 0,#tune.sample_from(lambda _: np.random.randint(0,2)),#0
               "rd": 1,#tune.sample_from(lambda _: np.random.randint(0,2))#1
               # Training Parameters
-              "max_nepochs": max_num_epochs
+              "max_nepochs": max_num_epochs,
+              # Data Parameters
+              "data_dir": data_dir,
+              #"chck_dir": checkpoint_dir
               }
 
     scheduler = ASHAScheduler(
@@ -361,9 +377,23 @@ def hyp_tune(num_samples=10, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial
                               reduction_factor=2)
     reporter = CLIReporter(
                            metric_columns=["loss", "training_iteration"])
+
+    result = tune.run(
+                  partial(train_model),
+                  resources_per_trial={"cpu": cpus_per_trial, "gpu": gpus_per_trial},
+                  checkpoint_freq=1,
+                  checkpoint_at_end=True,
+                  reuse_actors=True,
+                  local_dir='./RayTune_results',
+                  config=config,
+                  num_samples=num_samples,
+                  scheduler=scheduler,
+                  progress_reporter=reporter,
+                  resume=checkpoint)
+    '''
     if checkpoint:
         result = tune.run(
-                      partial(train_model, checkpoint_dir=checkpoint_dir, data_dir=data_dir),
+                      partial(train_model),
                       restore=checkpoint_dir,
                       resources_per_trial={"cpu": cpus_per_trial, "gpu": gpus_per_trial},
                       config=config,
@@ -372,13 +402,13 @@ def hyp_tune(num_samples=10, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial
                       progress_reporter=reporter)
     else:
         result = tune.run(
-                      partial(train_model, data_dir=data_dir),
+                      partial(train_model),
                       resources_per_trial={"cpu": cpus_per_trial, "gpu": gpus_per_trial},
                       config=config,
                       num_samples=num_samples,
                       scheduler=scheduler,
                       progress_reporter=reporter)
-
+    '''
     df_result = result.results_df
     loss_result = df_result['loss'].to_numpy()
     ind_min_loss = np.argmin(loss_result)
@@ -437,13 +467,7 @@ def hyp_tune(num_samples=10, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial
 
 
 if __name__ == "__main__":
-    if checkpoint==True:
-        if device==torch.device("cuda:0"):
-            hyp_tune(num_samples=num_samples, max_num_epochs=10, cpus_per_trial=4, gpus_per_trial=0.5)
-        else:
-            hyp_tune(num_samples=num_samples, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial=0)
+    if device==torch.device("cuda:0"):
+        hyp_tune(num_samples=num_samples, max_num_epochs=10, cpus_per_trial=4, gpus_per_trial=0.5, checkpoint=checkpoint)
     else:
-        if device==torch.device("cuda:0"):
-            hyp_tune(num_samples=num_samples, max_num_epochs=10, cpus_per_trial=4, gpus_per_trial=0.5, checkpoint=False)
-        else:
-            hyp_tune(num_samples=num_samples, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial=0, checkpoint=False)
+        hyp_tune(num_samples=num_samples, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial=0, checkpoint=checkpoint)

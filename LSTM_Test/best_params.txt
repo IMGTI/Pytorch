@@ -56,3 +56,130 @@ Randomized Data (0:F 1:T) = 1
 Maximum Number of Epochs Used = 10
 ----------------------------------------------------
 
+Date = 24_11_2020_12_30_08
+Loss = 0.015240049154663853
+Hidden Size = 8
+Number of layers = 3
+Sequence length = 40
+Batch Size = 11
+Learning rate = 0.02921643585360695
+Number for Moving Average = 2
+Dropout = 0.02549388206581022
+Bidirectional (0:F 1:T) = 1
+Stateful (0:F 1:T) = 0
+Randomized Data (0:F 1:T) = 1
+Maximum Number of Epochs Used = 10
+----------------------------------------------------
+
+Date = 24_11_2020_12_32_58
+Loss = 0.0061132170585838225
+Hidden Size = 4
+Number of layers = 1
+Sequence length = 27
+Batch Size = 22
+Learning rate = 0.0010887233395244307
+Number for Moving Average = 2
+Dropout = 0.02887666360281918
+Bidirectional (0:F 1:T) = 1
+Stateful (0:F 1:T) = 0
+Randomized Data (0:F 1:T) = 1
+Number of Samples = 2Maximum Number of Epochs Used = 10
+
+----------------------------------------------------
+
+Date = 24_11_2020_12_39_13
+Loss = 0.0009198048755440153
+Hidden Size = 9
+Number of layers = 1
+Sequence length = 12
+Batch Size = 30
+Learning rate = 0.000480287433985576
+Number for Moving Average = 2
+Dropout = 0.011233895527706546
+Bidirectional (0:F 1:T) = 0
+Stateful (0:F 1:T) = 0
+Randomized Data (0:F 1:T) = 1
+Number of Samples = 2Maximum Number of Epochs Used = 10
+
+----------------------------------------------------
+
+Date = 24_11_2020_13_24_13
+Loss = 0.0054945689001782
+Hidden Size = 9
+Number of layers = 3
+Sequence length = 66
+Batch Size = 24
+Learning rate = 0.011453091876514816
+Number for Moving Average = 2
+Dropout = 0.048530496955457615
+Bidirectional (0:F 1:T) = 1
+Stateful (0:F 1:T) = 0
+Randomized Data (0:F 1:T) = 1
+Number of Samples = 2Maximum Number of Epochs Used = 10
+
+----------------------------------------------------
+
+Date = 24_11_2020_13_48_26
+Loss = 0.003524327972204302
+Hidden Size = 2
+Number of layers = 1
+Sequence length = 40
+Batch Size = 12
+Learning rate = 0.02841624924714172
+Number for Moving Average = 2
+Dropout = 0.03755708223858143
+Bidirectional (0:F 1:T) = 0
+Stateful (0:F 1:T) = 0
+Randomized Data (0:F 1:T) = 1
+Number of Samples = 1Maximum Number of Epochs Used = 10
+
+----------------------------------------------------
+
+Date = 24_11_2020_14_01_28
+Loss = 0.0008382215131912718
+Hidden Size = 4
+Number of layers = 2
+Sequence length = 13
+Batch Size = 48
+Learning rate = 0.008997196507901668
+Number for Moving Average = 2
+Dropout = 0.046273157592814494
+Bidirectional (0:F 1:T) = 0
+Stateful (0:F 1:T) = 0
+Randomized Data (0:F 1:T) = 1
+Number of Samples = 3Maximum Number of Epochs Used = 10
+
+----------------------------------------------------
+
+Date = 24_11_2020_14_46_45
+Loss = 0.00522362577992127
+Hidden Size = 7
+Number of layers = 1
+Sequence length = 24
+Batch Size = 24
+Learning rate = 0.0021206942378866065
+Number for Moving Average = 2
+Dropout = 0.02655894215096752
+Bidirectional (0:F 1:T) = 1
+Stateful (0:F 1:T) = 0
+Randomized Data (0:F 1:T) = 1
+Number of Samples = 3Maximum Number of Epochs Used = 10
+
+----------------------------------------------------
+
+Date = 24_11_2020_14_56_13
+Loss = 0.0008804421795739236
+Hidden Size = 7
+Number of layers = 2
+Sequence length = 21
+Batch Size = 43
+Learning rate = 0.00702022760073054
+Number for Moving Average = 2
+Dropout = 0.03340981521661865
+Bidirectional (0:F 1:T) = 1
+Stateful (0:F 1:T) = 0
+Randomized Data (0:F 1:T) = 1
+Number of Samples = 3Maximum Number of Epochs Used = 10
+
+----------------------------------------------------
+
