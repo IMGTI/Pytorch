@@ -41,3 +41,18 @@ Randomized Data (0:F 1:T) = 1
 Maximum Number of Epochs Used = 10
 ----------------------------------------------------
 
+Date = 24_11_2020_12_06_36
+Loss = 0.0005713196869296751
+Hidden Size = 4
+Number of layers = 1
+Sequence length = 11
+Batch Size = 48
+Learning rate = 0.09433882520996753
+Number for Moving Average = 2
+Dropout = 0.04902699021744534
+Bidirectional (0:F 1:T) = 0
+Stateful (0:F 1:T) = 0
+Randomized Data (0:F 1:T) = 1
+Maximum Number of Epochs Used = 10
+----------------------------------------------------
+

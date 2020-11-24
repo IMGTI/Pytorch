@@ -1,1 +1,1 @@
-C:\Users\imglt\ray_results\DEFAULT\DEFAULT_9541d_00000_0_bd=0,bs=48,do=0.049027,hs=4,lr=0.094339,nl=1,sl=11_2020-11-24_12-06-09\checkpoint_2
+C:\Users\imglt\ray_results\DEFAULT\DEFAULT_36eaa_00003_3_bd=1,bs=11,do=0.025494,hs=8,lr=0.029216,nl=3,sl=40_2020-11-24_12-12-29\checkpoint_2
