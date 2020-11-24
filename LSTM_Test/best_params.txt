@@ -26,3 +26,18 @@ Stateful (0:F 1:T) = 0
 Randomized Data (0:F 1:T) = 1
 ----------------------------------------------------
 
+Date = 24_11_2020_12_04_44
+Loss = 0.001428476611856029
+Hidden Size = 5
+Number of layers = 1
+Sequence length = 15
+Batch Size = 23
+Learning rate = 0.022587557770616475
+Number for Moving Average = 2
+Dropout = 0.017130018637659488
+Bidirectional (0:F 1:T) = 0
+Stateful (0:F 1:T) = 0
+Randomized Data (0:F 1:T) = 1
+Maximum Number of Epochs Used = 10
+----------------------------------------------------
+

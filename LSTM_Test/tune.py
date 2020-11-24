@@ -30,13 +30,13 @@ def arg_parser(argv):
     # Set number of samples
     num_samples = 100
     try:
-        opts, args = getopt.getopt(argv,"hn:d:",["nsamples=","device="])
+        opts, args = getopt.getopt(argv,"hn:d:c:",["nsamples=","device=", "chckpt="])
     except getopt.GetoptError:
-        print('argparser.py -n <number_samples>')
+        print('argparser.py -n <number_samples> -d <cpu/gpu> -c <chckpt>')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print('argparser.py -n <number_samples> -d <cpu/gpu>')
+            print('argparser.py -n <number_samples> -d <cpu/gpu> -c <chckpt>')
             sys.exit()
         elif opt in ("-n", "--nsamples"):
             num_samples = int(arg)
@@ -45,10 +45,15 @@ def arg_parser(argv):
                 device = torch.device(arg)
             elif arg=='gpu':
                 device = torch.device("cuda:0")
-    return num_samples, device
+        elif opt in ("-c", "--chckpt"):
+            if arg==True:
+                checkpoint = True
+            else:
+                checkpoint = False
+    return num_samples, device, checkpoint
 
 if __name__ == "__main__":
-    num_samples, device = arg_parser(sys.argv[1:])
+    num_samples, device, checkpoint = arg_parser(sys.argv[1:])
 else:
     num_samples = 10
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -91,7 +96,7 @@ def load_data(config, data_dir):
     fig_num = 1
     file = data_path + '/Figura_de_control/Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
 
-    times, defs = ext_data(os.path.abspath(data_dir + '/' + file))
+    times, defs = ext_data(data_dir + '/' + file)
     times, defs = data_smooth(times, defs, N_avg=config["na"])
 
     return times, defs
@@ -243,7 +248,8 @@ def train_model(config, checkpoint_dir=None, data_dir="", validate=True):
                     f.write(json.dumps({"step": start}))
                     f.close()
                 # Save path for checkpoint_dir
-                with open(os.path.join(os.getcwd(), "checkpoint_dir"), "w") as f_check_dir:
+                path_checkpoint_dir = 'D:/Documents/GitHub/Pytorch/LSTM_Test'
+                with open(os.path.join(path_checkpoint_dir, "checkpoint_dir.txt"), "w") as f_check_dir:
                     f_check_dir.write(checkpoint_dir)
                     f_check_dir.close()
 
@@ -309,7 +315,8 @@ def train_model(config, checkpoint_dir=None, data_dir="", validate=True):
                     f.write(json.dumps({"step": start}))
                     f.close()
                 # Save path for checkpoint_dir
-                with open(os.path.join(os.getcwd(), "checkpoint_dir"), "w") as f_check_dir:
+                path_checkpoint_dir = 'D:/Documents/GitHub/Pytorch/LSTM_Test'
+                with open(os.path.join(path_checkpoint_dir, "checkpoint_dir.txt"), "w") as f_check_dir:
                     f_check_dir.write(checkpoint_dir)
                     f_check_dir.close()
 
@@ -317,15 +324,18 @@ def train_model(config, checkpoint_dir=None, data_dir="", validate=True):
             tune.report(loss=loss4report)
     pass
 
-def hyp_tune(num_samples=10, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial=1):
+def hyp_tune(num_samples=10, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial=1,
+             checkpoint=True):
+    # Data directory
+    data_dir = 'D:/Documents/GitHub/Pytorch/LSTM_Test'
     # Checkpoint directory
+    chck_path = 'D:/Documents/GitHub/Pytorch/LSTM_Test'
     try:
-        with open(os.path.join(os.getcwd(), "checkpoint_dir"), "r") as f:
+        with open(os.path.join(chck_path, "checkpoint_dir.txt"), "r") as f:
             checkpoint_dir = f.read()
     except:
         checkpoint_dir = None
-    # Data directory
-    data_dir = os.path.abspath(os.getcwd())
+
     # Configuration for raytune
     config = {
               # Model Parameters
@@ -351,16 +361,16 @@ def hyp_tune(num_samples=10, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial
                               reduction_factor=2)
     reporter = CLIReporter(
                            metric_columns=["loss", "training_iteration"])
-    try:
+    if checkpoint:
         result = tune.run(
-                      partial(train_model, checkpoint_dir=checkpoint_dir ,data_dir=data_dir),
+                      partial(train_model, checkpoint_dir=checkpoint_dir, data_dir=data_dir),
                       restore=checkpoint_dir,
                       resources_per_trial={"cpu": cpus_per_trial, "gpu": gpus_per_trial},
                       config=config,
                       num_samples=num_samples,
                       scheduler=scheduler,
                       progress_reporter=reporter)
-    except:
+    else:
         result = tune.run(
                       partial(train_model, data_dir=data_dir),
                       resources_per_trial={"cpu": cpus_per_trial, "gpu": gpus_per_trial},
@@ -385,7 +395,8 @@ def hyp_tune(num_samples=10, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial
                    df_result.iloc[ind_min_loss]['config.do'],
                    df_result.iloc[ind_min_loss]['config.bd'],
                    df_result.iloc[ind_min_loss]['config.st'],
-                   df_result.iloc[ind_min_loss]['config.rd']]
+                   df_result.iloc[ind_min_loss]['config.rd'],
+                   df_result.iloc[ind_min_loss]['config.max_nepochs']]
     print('Best configuration parameters:')
     print('------------------------------')
     print(' Loss = ', best_config[0], '\n',
@@ -425,7 +436,13 @@ def hyp_tune(num_samples=10, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial
 
 
 if __name__ == "__main__":
-    if device==torch.device("cuda:0"):
-        hyp_tune(num_samples=num_samples, max_num_epochs=10, cpus_per_trial=4, gpus_per_trial=0.5)
+    if checkpoint==True:
+        if device==torch.device("cuda:0"):
+            hyp_tune(num_samples=num_samples, max_num_epochs=10, cpus_per_trial=4, gpus_per_trial=0.5)
+        else:
+            hyp_tune(num_samples=num_samples, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial=0)
     else:
-        hyp_tune(num_samples=num_samples, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial=0)
+        if device==torch.device("cuda:0"):
+            hyp_tune(num_samples=num_samples, max_num_epochs=10, cpus_per_trial=4, gpus_per_trial=0.5, checkpoint=False)
+        else:
+            hyp_tune(num_samples=num_samples, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial=0, checkpoint=False)

@@ -1,0 +1,1 @@
+C:\Users\imglt\ray_results\DEFAULT\DEFAULT_9541d_00000_0_bd=0,bs=48,do=0.049027,hs=4,lr=0.094339,nl=1,sl=11_2020-11-24_12-06-09\checkpoint_2
