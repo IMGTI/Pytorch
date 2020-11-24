@@ -203,7 +203,7 @@ def train_model(config, checkpoint_dir="", data_dir="", validate=True):
         defsY = defsY[:ind_val]
 
     if config["bs"]==-1:
-        for epoch in range(10):
+        for epoch in range(config["max_nepochs"]):
             optimizer.zero_grad()
 
             outputs, hidden = lstm(defsX.to(device))
@@ -247,7 +247,7 @@ def train_model(config, checkpoint_dir="", data_dir="", validate=True):
             batches = batches[:-1]
             print("Removing last batch because of invalid batch size")
 
-        for epoch in range(10):
+        for epoch in range(config["max_nepochs"]):
             hidden = None
             running_loss = 0.0
             val_running_loss = 0.0
@@ -294,6 +294,7 @@ def hyp_tune(num_samples=10, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial
     data_dir = os.path.abspath(os.getcwd())
     # Configuration for raytune
     config = {
+              # Model Parameters
               "na": 2,#tune.sample_from(lambda _: np.random.randint(2, 25)),#23#2
               "do": tune.sample_from(lambda _: np.random.uniform(0.01, 0.05)),#0.0289
               "hs": tune.sample_from(lambda _: np.random.randint(1, 10)),#9
@@ -304,6 +305,8 @@ def hyp_tune(num_samples=10, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial
               "bd": tune.sample_from(lambda _: np.random.randint(0,2)),#1
               "st": 0,#tune.sample_from(lambda _: np.random.randint(0,2)),#0
               "rd": 1,#tune.sample_from(lambda _: np.random.randint(0,2))#1
+              # Training Parameters
+              "max_nepochs": max_num_epochs
               }
 
     scheduler = ASHAScheduler(
@@ -351,7 +354,8 @@ def hyp_tune(num_samples=10, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial
           'Dropout = ', best_config[7], '\n',
           'Bidirectional (0:F 1:T) = ', best_config[8], '\n',
           'Stateful (0:F 1:T) = ', best_config[9], '\n',
-          'Randomized Data (0:F 1:T) = ', best_config[10])
+          'Randomized Data (0:F 1:T) = ', best_config[10], '\n',
+          'Maximum Number of Epochs Used = ', best_config[11])
 
     # Store best parameters in file
     best_params_file = open('best_params.txt', 'a')
@@ -367,7 +371,8 @@ def hyp_tune(num_samples=10, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial
     best_params_file.write('Dropout = ' + str(best_config[7]) + '\n')
     best_params_file.write('Bidirectional (0:F 1:T) = ' + str(best_config[8]) + '\n')
     best_params_file.write('Stateful (0:F 1:T) = ' + str(best_config[9]) + '\n')
-    best_params_file.write('Randomized Data (0:F 1:T) = ' + str(best_config[10]))
+    best_params_file.write('Randomized Data (0:F 1:T) = ' + str(best_config[10]) + '\n')
+    best_params_file.write('Maximum Number of Epochs Used = ' + str(best_config[11]))
     best_params_file.write('\n')
     best_params_file.write('----------------------------------------------------' + '\n')
     best_params_file.write('\n')
@@ -377,6 +382,6 @@ def hyp_tune(num_samples=10, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial
 
 if __name__ == "__main__":
     if device==torch.device("cuda:0"):
-        hyp_tune(num_samples=num_samples, max_num_epochs=5, cpus_per_trial=4, gpus_per_trial=0.5)
+        hyp_tune(num_samples=num_samples, max_num_epochs=10, cpus_per_trial=4, gpus_per_trial=0.5)
     else:
-        hyp_tune(num_samples=num_samples, max_num_epochs=5, cpus_per_trial=1, gpus_per_trial=0)
+        hyp_tune(num_samples=num_samples, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial=0)
