@@ -1,0 +1,14 @@
+{
+  "bd": 0,
+  "bs": 18,
+  "data_dir": "D:/Documents/GitHub/Pytorch/LSTM_Test",
+  "do": 0.044466648047876284,
+  "hs": 5,
+  "lr": 0.042374899709372284,
+  "max_nepochs": 10,
+  "na": 2,
+  "nl": 2,
+  "rd": 1,
+  "sl": 18,
+  "st": 0
+}

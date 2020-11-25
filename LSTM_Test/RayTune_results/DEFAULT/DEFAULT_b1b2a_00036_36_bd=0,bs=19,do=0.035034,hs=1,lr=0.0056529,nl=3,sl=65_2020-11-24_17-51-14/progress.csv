@@ -1,0 +1,2 @@
+loss,time_this_iter_s,done,timesteps_total,episodes_total,training_iteration,experiment_id,date,timestamp,time_total_s,pid,hostname,node_ip,time_since_restore,timesteps_since_restore,iterations_since_restore,trial_id,experiment_tag
+0.5692318247756794,38.46028995513916,True,,,1,12dc2cc46b614a94b5995011c718e450,2020-11-24_17-51-59,1606251119,38.46028995513916,7592,ZEPHYR,192.168.100.3,38.46028995513916,0,1,b1b2a_00036,"36_bd=0,bs=19,do=0.035034,hs=1,lr=0.0056529,nl=3,sl=65"
