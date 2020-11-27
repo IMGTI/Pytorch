@@ -191,7 +191,7 @@ study = optimize_hyperparameters(
     train_dataloader,
     val_dataloader,
     model_path="optuna_test",
-    n_trials=50,#200,
+    n_trials=10,#200,
     max_epochs=10,#50,
     gradient_clip_val_range=(0.01, 1.0),
     hidden_size_range=(8, 128),
