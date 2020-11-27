@@ -11,6 +11,7 @@ import pandas as pd
 import numpy as np
 import torch
 import copy
+import pickle
 
 
 import pytorch_lightning as pl
@@ -190,8 +191,8 @@ study = optimize_hyperparameters(
     train_dataloader,
     val_dataloader,
     model_path="optuna_test",
-    n_trials=200,
-    max_epochs=50,
+    n_trials=50,#200,
+    max_epochs=10,#50,
     gradient_clip_val_range=(0.01, 1.0),
     hidden_size_range=(8, 128),
     hidden_continuous_size_range=(8, 128),
