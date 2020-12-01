@@ -12,6 +12,7 @@ import numpy as np
 import torch
 import copy
 import pickle
+import matplotlib.pyplot as plt
 
 
 import pytorch_lightning as pl
@@ -143,8 +144,8 @@ res = trainer.tuner.lr_find(
 )
 
 print(f"suggested learning rate: {res.suggestion()}")
-fig = res.plot(show=True, suggest=True)
-fig.show()
+#fig = res.plot(show=True, suggest=True)
+#fig.show()
 
 # configure network and trainer
 early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min")
@@ -152,7 +153,7 @@ lr_logger = LearningRateMonitor()  # log the learning rate
 logger = TensorBoardLogger("lightning_logs")  # logging results to a tensorboard
 
 trainer = pl.Trainer(
-    max_epochs=30,
+    max_epochs=10,
     gpus=1,
     weights_summary="top",
     gradient_clip_val=0.1,
@@ -191,7 +192,7 @@ study = optimize_hyperparameters(
     train_dataloader,
     val_dataloader,
     model_path="optuna_test",
-    n_trials=10,#200,
+    n_trials=2,#200,
     max_epochs=10,#50,
     gradient_clip_val_range=(0.01, 1.0),
     hidden_size_range=(8, 128),
@@ -203,6 +204,8 @@ study = optimize_hyperparameters(
     reduce_on_plateau_patience=4,
     use_learning_rate_finder=False,  # use Optuna to find ideal learning rate or use in-built learning rate finder
 )
+
+print('Si llega a A')
 
 # save study results - also we can resume tuning at a later point in time
 with open("test_study.pkl", "wb") as fout:
@@ -216,32 +219,45 @@ print(study.best_trial.params)
 best_model_path = trainer.checkpoint_callback.best_model_path
 best_tft = TemporalFusionTransformer.load_from_checkpoint(best_model_path)
 
+print('Si llega a B')
+
 # calcualte mean absolute error on validation set
 actuals = torch.cat([y for x, y in iter(val_dataloader)])
 predictions = best_tft.predict(val_dataloader)
 (actuals - predictions).abs().mean()
 
+print('Si llega a C')
+
 # raw predictions are a dictionary from which all kind of information including quantiles can be extracted
 raw_predictions, x = best_tft.predict(val_dataloader, mode="raw", return_x=True)
 
-for idx in range(10):  # plot 10 examples
-    best_tft.plot_prediction(x, raw_predictions, idx=idx, add_loss_to_title=True);
+print('Si llega a D')
 
+for idx in range(10):  # plot 10 examples
+    best_fig = best_tft.plot_prediction(x, raw_predictions, idx=idx, add_loss_to_title=True)
+    best_fig.savefig('D:\Documents\GitHub\Pytorch\Pytorch_forecasting\prueba_save_' + str(idx) + '.jpg')
+
+print('Si llega a E')
 
 # calcualte metric by which to display
 predictions = best_tft.predict(val_dataloader)
 mean_losses = SMAPE(reduction="none")(predictions, actuals).mean(1)
 indices = mean_losses.argsort(descending=True)  # sort losses
 for idx in range(10):  # plot 10 examples
-    best_tft.plot_prediction(x, raw_predictions, idx=indices[idx], add_loss_to_title=SMAPE());
+    best_tft.plot_prediction(x, raw_predictions, idx=indices[idx], add_loss_to_title=SMAPE())
 
+print('Si llega a F')
 
 predictions, x = best_tft.predict(val_dataloader, return_x=True)
 predictions_vs_actuals = best_tft.calculate_prediction_actual_by_variable(x, predictions)
-best_tft.plot_prediction_actual_by_variable(predictions_vs_actuals);
+best_tft.plot_prediction_actual_by_variable(predictions_vs_actuals)
+
+print('Si llega a G')
 
 # select last 24 months from data (max_encoder_length is 24)
 encoder_data = data[lambda x: x.time_idx > x.time_idx.max() - max_encoder_length]
+
+print('Si llega a H')
 
 # select last known data point and create decoder data from it by repeating it and incrementing the month
 last_data = data[lambda x: x.time_idx == x.time_idx.max()]
@@ -249,6 +265,7 @@ decoder_data = pd.concat(
     [last_data.assign(date=lambda x: x.date + pd.offsets.MonthBegin(i)) for i in range(1, max_prediction_length + 1)],
     ignore_index=True,
 )
+print('Si llega a I')
 
 # add time index consistent with "data"
 decoder_data["time_idx"] = decoder_data["date"].dt.year * 12 + decoder_data["date"].dt.month
@@ -260,16 +277,24 @@ decoder_data["month"] = decoder_data.date.dt.month.astype(str).astype("category"
 # combine encoder and decoder data
 new_prediction_data = pd.concat([encoder_data, decoder_data], ignore_index=True)
 
+print('Si llega a J')
+
 interpretation = best_tft.interpret_output(raw_predictions, reduction="sum")
 best_tft.plot_interpretation(interpretation)
+
+print('Si llega a K')
 
 dependency = best_tft.predict_dependency(
     val_dataloader.dataset, "discount_in_percent", np.linspace(0, 30, 30), show_progress_bar=True, mode="dataframe"
 )
+
+print('Si llega a L')
 
 # plotting median and 25% and 75% percentile
 agg_dependency = dependency.groupby("discount_in_percent").normalized_prediction.agg(
     median="median", q25=lambda x: x.quantile(0.25), q75=lambda x: x.quantile(0.75)
 )
 ax = agg_dependency.plot(y="median")
-ax.fill_between(agg_dependency.index, agg_dependency.q25, agg_dependency.q75, alpha=0.3);
+ax.fill_between(agg_dependency.index, agg_dependency.q25, agg_dependency.q75, alpha=0.3)
+
+print('Si llega a M')
