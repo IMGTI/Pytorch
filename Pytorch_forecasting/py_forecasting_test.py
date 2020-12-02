@@ -3,7 +3,7 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-os.chdir("../../..")
+#os.chdir("../../..")
 
 import warnings
 from pathlib import Path
@@ -13,6 +13,7 @@ import torch
 import copy
 import pickle
 import matplotlib.pyplot as plt
+import datetime as dt
 
 
 import pytorch_lightning as pl
@@ -27,10 +28,36 @@ from pytorch_forecasting.models.temporal_fusion_transformer.tuning import optimi
 
 from pytorch_forecasting.data.examples import get_stallion_data
 
-data = get_stallion_data()
+#data = get_stallion_data()
+
+# Path to data
+data_path = 'datos'
+
+fig_num = 1
+file = data_path + '/Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
+
+data = pd.read_excel(file, usecols=[0,1], names=['times', 'defs'])
+
+try:
+    times = np.array([dt.datetime.timestamp(x) for x in data['times']])
+except:
+    times = np.array(data['times'])
+
+# Convert times from seconds to days
+data["times"] = (times/(3600*24) -
+                (times/(3600*24))[0])
+
+data["defs"] = np.array(data['defs'])
 
 # add time index
-data["time_idx"] = data["date"].dt.year * 12 + data["date"].dt.month
+data["time_idx"] = data["times"].index
+
+# add constante column for group ids according to documentation
+data["groups_ids"] = np.array([str(x) for x in np.zeros(len(data["times"]))])
+
+'''
+# add time index
+data["time_idx"] = data["times"].dt.year * 12 + data["date"].dt.month
 data["time_idx"] -= data["time_idx"].min()
 
 # add additional features
@@ -56,8 +83,9 @@ special_days = [
 ]
 data[special_days] = data[special_days].apply(lambda x: x.map({0: "-", 1: x.name})).astype("category")
 #data.sample(10, random_state=521)
-
+'''
 #data.describe()
+print(data)
 
 max_prediction_length = 6
 max_encoder_length = 24
@@ -66,34 +94,35 @@ training_cutoff = data["time_idx"].max() - max_prediction_length
 training = TimeSeriesDataSet(
     data[lambda x: x.time_idx <= training_cutoff],
     time_idx="time_idx",
-    target="volume",
-    group_ids=["agency", "sku"],
+    target="defs",#"volume",
+    group_ids=["groups_ids"],#["agency", "sku"],
     min_encoder_length=max_encoder_length // 2,  # keep encoder length long (as it is in the validation set)
     max_encoder_length=max_encoder_length,
     min_prediction_length=1,
     max_prediction_length=max_prediction_length,
-    static_categoricals=["agency", "sku"],
-    static_reals=["avg_population_2017", "avg_yearly_household_income_2017"],
-    time_varying_known_categoricals=["special_days", "month"],
-    variable_groups={"special_days": special_days},  # group of categorical variables can be treated as one variable
-    time_varying_known_reals=["time_idx", "price_regular", "discount_in_percent"],
+    static_categoricals=["groups_ids"],#["agency", "sku"],
+    static_reals=[],#["avg_population_2017", "avg_yearly_household_income_2017"],
+    time_varying_known_categoricals=[],#["special_days", "month"],
+    variable_groups={},#{"special_days": special_days},  # group of categorical variables can be treated as one variable
+    time_varying_known_reals=["time_idx"],#["time_idx", "price_regular", "discount_in_percent"],
     time_varying_unknown_categoricals=[],
     time_varying_unknown_reals=[
-        "volume",
-        "log_volume",
-        "industry_volume",
-        "soda_volume",
-        "avg_max_temp",
-        "avg_volume_by_agency",
-        "avg_volume_by_sku",
+        "defs",#"volume",
+        #"log_volume",
+        #"industry_volume",
+        #"soda_volume",
+        #"avg_max_temp",
+        #"avg_volume_by_agency",
+        #"avg_volume_by_sku",
     ],
     target_normalizer=GroupNormalizer(
-        groups=["agency", "sku"], coerce_positive=1.0
+        groups=["groups_ids"], coerce_positive=1.0#["agency", "sku"], coerce_positive=1.0
     ),  # use softplus with beta=1.0 and normalize by group
     add_relative_time_idx=True,
     add_target_scales=True,
     add_encoder_length=True,
 )
+print(training)
 
 # create validation set (predict=True) which means to predict the last max_prediction_length points in time for each series
 validation = TimeSeriesDataSet.from_dataset(training, data, predict=True, stop_randomization=True)
@@ -144,8 +173,8 @@ res = trainer.tuner.lr_find(
 )
 
 print(f"suggested learning rate: {res.suggestion()}")
-#fig = res.plot(show=True, suggest=True)
-#fig.show()
+fig = res.plot(suggest=True)
+fig.savefig('lr_suggested.jpg')
 
 # configure network and trainer
 early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=1e-4, patience=10, verbose=False, mode="min")
@@ -153,7 +182,7 @@ lr_logger = LearningRateMonitor()  # log the learning rate
 logger = TensorBoardLogger("lightning_logs")  # logging results to a tensorboard
 
 trainer = pl.Trainer(
-    max_epochs=10,
+    max_epochs=1000,#10,
     gpus=1,
     weights_summary="top",
     gradient_clip_val=0.1,
@@ -233,9 +262,11 @@ raw_predictions, x = best_tft.predict(val_dataloader, mode="raw", return_x=True)
 
 print('Si llega a D')
 
+print('#######################', x)
+
 for idx in range(10):  # plot 10 examples
-    best_fig = best_tft.plot_prediction(x, raw_predictions, idx=idx, add_loss_to_title=True)
-    best_fig.savefig('D:\Documents\GitHub\Pytorch\Pytorch_forecasting\prueba_save_' + str(idx) + '.jpg')
+    best_fig_I = best_tft.plot_prediction(x, raw_predictions, idx=idx, add_loss_to_title=True)
+    best_fig_I.savefig('raw_predictions_I_' + str(idx) + '.jpg')
 
 print('Si llega a E')
 
@@ -244,14 +275,15 @@ predictions = best_tft.predict(val_dataloader)
 mean_losses = SMAPE(reduction="none")(predictions, actuals).mean(1)
 indices = mean_losses.argsort(descending=True)  # sort losses
 for idx in range(10):  # plot 10 examples
-    best_tft.plot_prediction(x, raw_predictions, idx=indices[idx], add_loss_to_title=SMAPE())
-
+    best_fig_II = best_tft.plot_prediction(x, raw_predictions, idx=indices[idx], add_loss_to_title=SMAPE())
+    best_fig_II.savefig('raw_predictions_II_' + str(idx) + '.jpg')
 print('Si llega a F')
 
 predictions, x = best_tft.predict(val_dataloader, return_x=True)
 predictions_vs_actuals = best_tft.calculate_prediction_actual_by_variable(x, predictions)
-best_tft.plot_prediction_actual_by_variable(predictions_vs_actuals)
-
+best_fig_actual = best_tft.plot_prediction_actual_by_variable(predictions_vs_actuals)
+for key, val in best_fig_actual.items():
+    val.savefig('actual_' + str(key) + '_.jpg')
 print('Si llega a G')
 
 # select last 24 months from data (max_encoder_length is 24)
@@ -265,12 +297,22 @@ decoder_data = pd.concat(
     [last_data.assign(date=lambda x: x.date + pd.offsets.MonthBegin(i)) for i in range(1, max_prediction_length + 1)],
     ignore_index=True,
 )
+'''
+decoder_data = pd.concat(
+    [last_data.assign(date=lambda x: x.date + pd.offsets.MonthBegin(i)) for i in range(1, max_prediction_length + 1)],
+    ignore_index=True,
+)
+'''
 print('Si llega a I')
 
 # add time index consistent with "data"
 decoder_data["time_idx"] = decoder_data["date"].dt.year * 12 + decoder_data["date"].dt.month
 decoder_data["time_idx"] += encoder_data["time_idx"].max() + 1 - decoder_data["time_idx"].min()
-
+'''
+# add time index consistent with "data"
+decoder_data["time_idx"] = decoder_data["date"].dt.year * 12 + decoder_data["date"].dt.month
+decoder_data["time_idx"] += encoder_data["time_idx"].max() + 1 - decoder_data["time_idx"].min()
+'''
 # adjust additional time feature(s)
 decoder_data["month"] = decoder_data.date.dt.month.astype(str).astype("category")  # categories have be strings
 
@@ -280,8 +322,9 @@ new_prediction_data = pd.concat([encoder_data, decoder_data], ignore_index=True)
 print('Si llega a J')
 
 interpretation = best_tft.interpret_output(raw_predictions, reduction="sum")
-best_tft.plot_interpretation(interpretation)
-
+best_fig_interpretation = best_tft.plot_interpretation(interpretation)
+for key, val in best_fig_interpretation.items():
+    val.savefig('interpretation_' + str(key) + '_.jpg')
 print('Si llega a K')
 
 dependency = best_tft.predict_dependency(
@@ -295,6 +338,8 @@ agg_dependency = dependency.groupby("discount_in_percent").normalized_prediction
     median="median", q25=lambda x: x.quantile(0.25), q75=lambda x: x.quantile(0.75)
 )
 ax = agg_dependency.plot(y="median")
-ax.fill_between(agg_dependency.index, agg_dependency.q25, agg_dependency.q75, alpha=0.3)
+ax_fig = ax.fill_between(agg_dependency.index, agg_dependency.q25, agg_dependency.q75, alpha=0.3)
+
+ax_fig.savefig('dependency.jpg')
 
 print('Si llega a M')
