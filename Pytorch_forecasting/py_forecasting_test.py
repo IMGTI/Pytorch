@@ -85,7 +85,7 @@ data[special_days] = data[special_days].apply(lambda x: x.map({0: "-", 1: x.name
 #data.sample(10, random_state=521)
 '''
 #data.describe()
-print(data)
+#print(data)
 
 max_prediction_length = 6
 max_encoder_length = 24
@@ -122,7 +122,7 @@ training = TimeSeriesDataSet(
     add_target_scales=True,
     add_encoder_length=True,
 )
-print(training)
+#print(training)
 
 # create validation set (predict=True) which means to predict the last max_prediction_length points in time for each series
 validation = TimeSeriesDataSet.from_dataset(training, data, predict=True, stop_randomization=True)
@@ -182,10 +182,10 @@ lr_logger = LearningRateMonitor()  # log the learning rate
 logger = TensorBoardLogger("lightning_logs")  # logging results to a tensorboard
 
 trainer = pl.Trainer(
-    max_epochs=1000,#10,
+    max_epochs=10,#10,
     gpus=1,
     weights_summary="top",
-    gradient_clip_val=0.1,
+    gradient_clip_val=0.8847,#0.1,
     limit_train_batches=30,  # coment in for training, running valiation every 30 batches
     # fast_dev_run=True,  # comment in to check that networkor dataset has no serious bugs
     callbacks=[lr_logger, early_stop_callback],
@@ -195,11 +195,11 @@ trainer = pl.Trainer(
 
 tft = TemporalFusionTransformer.from_dataset(
     training,
-    learning_rate=0.03,
-    hidden_size=16,
+    learning_rate=0.01309,#0.03,
+    hidden_size=78,#16,
     attention_head_size=1,
-    dropout=0.1,
-    hidden_continuous_size=8,
+    dropout=0.21795,#0.1,
+    hidden_continuous_size=69,#8,
     output_size=7,  # 7 quantiles by default
     loss=QuantileLoss(),
     log_interval=10,  # uncomment for learning rate finder and otherwise, e.g. to 10 for logging every 10 batches
@@ -221,7 +221,7 @@ study = optimize_hyperparameters(
     train_dataloader,
     val_dataloader,
     model_path="optuna_test",
-    n_trials=2,#200,
+    n_trials=1,#200,
     max_epochs=10,#50,
     gradient_clip_val_range=(0.01, 1.0),
     hidden_size_range=(8, 128),
@@ -262,11 +262,14 @@ raw_predictions, x = best_tft.predict(val_dataloader, mode="raw", return_x=True)
 
 print('Si llega a D')
 
-print('#######################', x)
+#print('#######################', x)
 
 for idx in range(10):  # plot 10 examples
-    best_fig_I = best_tft.plot_prediction(x, raw_predictions, idx=idx, add_loss_to_title=True)
-    best_fig_I.savefig('raw_predictions_I_' + str(idx) + '.jpg')
+    try:
+        best_fig_I = best_tft.plot_prediction(x, raw_predictions, idx=idx, add_loss_to_title=True)
+        best_fig_I.savefig('raw_predictions_I_' + str(idx) + '.jpg')
+    except:
+        break
 
 print('Si llega a E')
 
@@ -275,8 +278,11 @@ predictions = best_tft.predict(val_dataloader)
 mean_losses = SMAPE(reduction="none")(predictions, actuals).mean(1)
 indices = mean_losses.argsort(descending=True)  # sort losses
 for idx in range(10):  # plot 10 examples
-    best_fig_II = best_tft.plot_prediction(x, raw_predictions, idx=indices[idx], add_loss_to_title=SMAPE())
-    best_fig_II.savefig('raw_predictions_II_' + str(idx) + '.jpg')
+    try:
+        best_fig_II = best_tft.plot_prediction(x, raw_predictions, idx=indices[idx], add_loss_to_title=SMAPE())
+        best_fig_II.savefig('raw_predictions_II_' + str(idx) + '.jpg')
+    except:
+        break
 print('Si llega a F')
 
 predictions, x = best_tft.predict(val_dataloader, return_x=True)
