@@ -8,11 +8,8 @@ import torch.optim as optim
 from torch.utils.data import random_split
 import torchvision
 import torchvision.transforms as transforms
-from ray import tune
-from ray.tune import CLIReporter
-from ray.tune.schedulers import ASHAScheduler
+import optuna
 from model import LSTM
-from sklearn.metrics import r2_score as r2s
 from torch.autograd import Variable
 from sklearn.preprocessing import StandardScaler
 import joblib
@@ -21,10 +18,10 @@ import pandas as pd
 import getopt
 import sys
 import datetime as dt
-import json
 
 ### Set RNG seeds
 
+global seed
 seed = 55
 
 np.random.seed(seed)  # Numpy
@@ -66,7 +63,7 @@ else:
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
-def load_data(config, data_dir):
+def load_data(na, data_dir):
     def ext_data(file):
         data = pd.read_excel(file, usecols=[0,1], names=['times', 'defs'])
 
@@ -104,7 +101,7 @@ def load_data(config, data_dir):
     file = data_path + '/Figura_de_control/Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
 
     times, defs = ext_data(data_dir + '/' + file)
-    times, defs = data_smooth(times, defs, N_avg=config["na"])
+    times, defs = data_smooth(times, defs, N_avg=na)
 
     return times, defs
 
@@ -170,57 +167,52 @@ def treat_data(times, defs, seq_length, random_win=False):
 
     return dataX, dataY, times_dataY, time_step, rev_rand
 
-def train_model(config, validate=True):
-    # Get data dir
-    data_dir = config["data_dir"]
-    '''
-    # Get checkpoint dir
-    checkpoint_dir = config["chck_dir"]
-    '''
+def train_model(trial, validate=True):
+    # Data directory
+    data_dir = 'D:/Documents/GitHub/Pytorch/LSTM_Test'
+
+    # Model Parameters
+    na = trial.suggest_int('na', 2, 2)
+    do = trial.suggest_uniform('do', 0.01, 0.05)
+    hs = trial.suggest_int('hs', 1, 10)
+    nl = trial.suggest_int('nl', 1, 4)
+    sl = trial.suggest_int('sl', 1, 100)
+    bs = trial.suggest_int('bs', 1, 50)
+    lr = trial.suggest_loguniform('lr', 1e-4, 1e-1)
+    bd = trial.suggest_int('bd', 0, 1)
+    st = trial.suggest_int('st', 0, 1)
+    rd = trial.suggest_int('rd', 0, 1)
+
+    # Training parameters
+    max_nepochs = trial.suggest_int('max_nepochs', 10, 10)
+
     # Transform num into bool for biderectionality
-    if config["bd"]==0:
+    if bd==0:
         bd = False
     else:
         bd = True
 
-    if config['st']==0:
+    if st==0:
         stateful = True
     else:
         stateful = False
 
-    if config['rd']==0:
+    if rd==0:
         rw = True
     else:
         rw = False
     # Load data
-    times, defs = load_data(config, data_dir)
-    defsX, defsY, times_dataY, time_step, rev_rand = treat_data(times, defs, config["sl"], random_win=rw)
+    times, defs = load_data(na, data_dir)
+    defsX, defsY, times_dataY, time_step, rev_rand = treat_data(times, defs, sl, random_win=rw)
 
     # Initialize model
-    lstm = LSTM(config["bs"],1,1,config["hs"],config["nl"],config["do"], bd)
+    lstm = LSTM(bs, 1, 1, hs, nl, do, bd, seed)
     # Send model to device
     lstm.to(device)
 
     criterion = torch.nn.MSELoss()    # mean-squared error for regression
-    optimizer = torch.optim.Adam(lstm.parameters(), lr=config["lr"])
-    '''
-    # load checkpoint
-    start = 0
-    if checkpoint_dir:
-        # Tune checkpoint
-        with open(os.path.join(checkpoint_dir, "tune_checkpoint")) as f:
-            state = json.loads(f.read())
-            if state["step"]==(config["max_nepochs"]-1):
-                start = 0
-            else:
-                start = state["step"] + 1
-        # Model checkpoint
-        if start!=0:
-            model_state, optimizer_state = torch.load(
-                os.path.join(checkpoint_dir, "model_checkpoint"))
-            lstm.load_state_dict(model_state)
-            optimizer.load_state_dict(optimizer_state)
-    '''
+    optimizer = torch.optim.Adam(lstm.parameters(), lr=lr)
+
     # Train the model
 
     # Define validation set and training set
@@ -231,9 +223,8 @@ def train_model(config, validate=True):
         defsX = defsX[:ind_val]
         defsY = defsY[:ind_val]
 
-    if config["bs"]==-1:
-        #for epoch in range(start, config["max_nepochs"]):
-        for epoch in range(config["max_nepochs"]):
+    if bs==-1:
+        for epoch in range(max_nepochs):
             optimizer.zero_grad()
 
             outputs, hidden = lstm(defsX.to(device))
@@ -254,42 +245,30 @@ def train_model(config, validate=True):
                 loss4report = val_loss.item()
                 # Initialize model in trainning mode again
                 lstm.train()
-            '''
-            # Save model
-            with tune.checkpoint_dir(epoch) as checkpoint_dir:
-                # Model checkpoint
-                path = os.path.join(checkpoint_dir, "model_checkpoint")
-                torch.save((lstm.state_dict(), optimizer.state_dict()), path)
-                # Tune checkpoint
-                path_tune = os.path.join(checkpoint_dir, "tune_checkpoint")
-                with open(path_tune, "w") as f:
-                    f.write(json.dumps({"step": epoch}))
-                    f.close()
-                # Save path for checkpoint_dir
-                path_checkpoint_dir = 'D:/Documents/GitHub/Pytorch/LSTM_Test'
-                with open(os.path.join(path_checkpoint_dir, "checkpoint_dir.txt"), "w") as f_check_dir:
-                    f_check_dir.write(checkpoint_dir)
-                    f_check_dir.close()
-            '''
-            # Report loss to tune
-            tune.report(loss=loss4report)
+
+            # Report loss to optuna
+            trial.report(loss4report, epoch)
+
+            # Handle pruning based on the intermediate value.
+            if trial.should_prune():
+                raise optuna.TrialPruned()
     else:
         batches = []
         ind = 0
         while True:
             try:
-                batches.append({'defsX':torch.index_select(defsX, 0, torch.tensor(np.int64(np.arange(ind,ind+config["bs"],1)))),
-                                'defsY':torch.index_select(defsY, 0, torch.tensor(np.int64(np.arange(ind,ind+config["bs"],1))))})
-                ind += config["bs"]
+                batches.append({'defsX':torch.index_select(defsX, 0, torch.tensor(np.int64(np.arange(ind,ind+bs,1)))),
+                                'defsY':torch.index_select(defsY, 0, torch.tensor(np.int64(np.arange(ind,ind+bs,1))))})
+                ind += bs
             except:
                 break
 
-        if (batches[-1]['defsX']).size(0)!=config["bs"]:
+        if (batches[-1]['defsX']).size(0)!=bs:
             batches = batches[:-1]
             print("Removing last batch because of invalid batch size")
 
-        #for epoch in range(start, config["max_nepochs"]):
-        for epoch in range(config["max_nepochs"]):
+
+        for epoch in range(max_nepochs):
             hidden = None
             running_loss = 0.0
             val_running_loss = 0.0
@@ -322,121 +301,47 @@ def train_model(config, validate=True):
                     lstm.train()
 
             loss4report = (val_running_loss/len(batches))
-            '''
-            # Save model
-            with tune.checkpoint_dir(epoch) as checkpoint_dir:
-                # Model checkpoint
-                path = os.path.join(checkpoint_dir, "model_checkpoint")
-                torch.save((lstm.state_dict(), optimizer.state_dict()), path)
-                # Tune checkpoint
-                path_tune = os.path.join(checkpoint_dir, "tune_checkpoint")
-                with open(path_tune, "w") as f:
-                    f.write(json.dumps({"step": epoch}))
-                    f.close()
-                # Save path for checkpoint_dir
-                path_checkpoint_dir = 'D:/Documents/GitHub/Pytorch/LSTM_Test'
-                with open(os.path.join(path_checkpoint_dir, "checkpoint_dir.txt"), "w") as f_check_dir:
-                    f_check_dir.write(checkpoint_dir)
-                    f_check_dir.close()
-            '''
-            # Report loss to tune
-            tune.report(loss=loss4report)
+
+            # Report loss to optuna
+            trial.report(loss4report, epoch)
+
+            # Handle pruning based on the intermediate value.
+            if trial.should_prune():
+                raise optuna.TrialPruned()
     pass
 
-def hyp_tune(num_samples=10, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial=1,
-             checkpoint=False):
-    # Data directory
-    data_dir = 'D:/Documents/GitHub/Pytorch/LSTM_Test'
-    '''
-    # Checkpoint directory
-    chck_path = 'D:/Documents/GitHub/Pytorch/LSTM_Test'
-    try:
-        with open(os.path.join(chck_path, "checkpoint_dir.txt"), "r") as f:
-            checkpoint_dir = f.read()
-    except:
-        checkpoint_dir = None
-    '''
-    # Configuration for raytune
-    config = {
-              # Model Parameters
-              "na": 2,#tune.sample_from(lambda _: np.random.randint(2, 25)),#23#2
-              "do": tune.sample_from(lambda _: np.random.uniform(0.01, 0.05)),#0.0289
-              "hs": tune.sample_from(lambda _: np.random.randint(1, 10)),#9
-              "nl": tune.sample_from(lambda _: np.random.randint(1, 4)),#1
-              "sl": tune.sample_from(lambda _: np.random.randint(1,100)),#9
-              "bs": tune.sample_from(lambda _: np.random.randint(1,50)),#7
-              "lr": tune.loguniform(1e-4, 1e-1),#0.0009
-              "bd": tune.sample_from(lambda _: np.random.randint(0,2)),#1
-              "st": 0,#tune.sample_from(lambda _: np.random.randint(0,2)),#0
-              "rd": 1,#tune.sample_from(lambda _: np.random.randint(0,2))#1
-              # Training Parameters
-              "max_nepochs": max_num_epochs,
-              # Data Parameters
-              "data_dir": data_dir,
-              #"chck_dir": checkpoint_dir
-              }
+def hyp_tune(num_samples=10, max_num_epochs=10):
+    # Set sampler
+    sampler = optuna.samplers.TPESampler()
 
-    scheduler = ASHAScheduler(
-                              metric="loss",
-                              mode="min",
-                              max_t=max_num_epochs,
-                              grace_period=1,
-                              reduction_factor=2)
-    reporter = CLIReporter(
-                           metric_columns=["loss", "training_iteration"])
+    # Create optuna study
+    study = optuna.create_study(pruner=optuna.pruners.MedianPruner(), sampler=sampler,
+                                direction='minimize')
 
-    result = tune.run(
-                  partial(train_model),
-                  resources_per_trial={"cpu": cpus_per_trial, "gpu": gpus_per_trial},
-                  checkpoint_freq=1,
-                  checkpoint_at_end=True,
-                  reuse_actors=True,
-                  local_dir='./RayTune_results',
-                  config=config,
-                  num_samples=num_samples,
-                  scheduler=scheduler,
-                  progress_reporter=reporter,
-                  resume=checkpoint)
-    '''
-    if checkpoint:
-        result = tune.run(
-                      partial(train_model),
-                      restore=checkpoint_dir,
-                      resources_per_trial={"cpu": cpus_per_trial, "gpu": gpus_per_trial},
-                      config=config,
-                      num_samples=num_samples,
-                      scheduler=scheduler,
-                      progress_reporter=reporter)
-    else:
-        result = tune.run(
-                      partial(train_model),
-                      resources_per_trial={"cpu": cpus_per_trial, "gpu": gpus_per_trial},
-                      config=config,
-                      num_samples=num_samples,
-                      scheduler=scheduler,
-                      progress_reporter=reporter)
-    '''
-    df_result = result.results_df
-    loss_result = df_result['loss'].to_numpy()
-    ind_min_loss = np.argmin(loss_result)
-    min_loss = np.min(loss_result)
+    # Begin optimization
+    study.optimize(train_model, n_trials=num_samples, show_progress_bar=True, n_jobs=1,
+                   gc_after_trial=True)
 
-    min_loss_trial = df_result.iloc[ind_min_loss]
-    best_config = [df_result.iloc[ind_min_loss]['loss'],
-                   df_result.iloc[ind_min_loss]['config.hs'],
-                   df_result.iloc[ind_min_loss]['config.nl'],
-                   df_result.iloc[ind_min_loss]['config.sl'],
-                   df_result.iloc[ind_min_loss]['config.bs'],
-                   df_result.iloc[ind_min_loss]['config.lr'],
-                   df_result.iloc[ind_min_loss]['config.na'],
-                   df_result.iloc[ind_min_loss]['config.do'],
-                   df_result.iloc[ind_min_loss]['config.bd'],
-                   df_result.iloc[ind_min_loss]['config.st'],
-                   df_result.iloc[ind_min_loss]['config.rd'],
-                   df_result.iloc[ind_min_loss]['config.max_nepochs']]
+    # Dump into pickle file the results
+    joblib.dump(study, 'optuna.pkl')
+    df_result = study.trials_dataframe().drop(['state','datetime_start','datetime_complete','system_attrs'], axis=1)
+    best_trial_params = study.best_params
+
+    best_config = [best_trial_params['value'],
+                   best_trial_params['hs'],
+                   best_trial_params['nl'],
+                   best_trial_params['sl'],
+                   best_trial_params['bs'],
+                   best_trial_params['lr'],
+                   best_trial_params['na'],
+                   best_trial_params['do'],
+                   best_trial_params['bd'],
+                   best_trial_params['st'],
+                   best_trial_params['rd'],
+                   best_trial_params['max_nepochs']]
     print('Best configuration parameters:')
     print('------------------------------')
-    print(' Loss = ', best_config[0], '\n',
+    print(' Validation Loss = ', best_config[0], '\n',
           'Hidden Size = ', best_config[1], '\n',
           'Number of layers = ', best_config[2], '\n',
           'Sequence length = ', best_config[3], '\n',
@@ -450,7 +355,7 @@ def hyp_tune(num_samples=10, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial
           'Maximum Number of Epochs Used = ', best_config[11])
 
     # Store best parameters in file
-    best_params_file = open('best_params.txt', 'a')
+    best_params_file = open('best_params_optuna.txt', 'a')
 
     best_params_file.write('Date = ' + dt.datetime.now().strftime("%d_%m_%Y_%H_%M_%S") + '\n')
     best_params_file.write('Loss = ' + str(best_config[0]) + '\n')
@@ -475,6 +380,6 @@ def hyp_tune(num_samples=10, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial
 
 if __name__ == "__main__":
     if device==torch.device("cuda:0"):
-        hyp_tune(num_samples=num_samples, max_num_epochs=10, cpus_per_trial=4, gpus_per_trial=0.5, checkpoint=checkpoint)
+        hyp_tune(num_samples=num_samples, max_num_epochs=10)
     else:
-        hyp_tune(num_samples=num_samples, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial=0, checkpoint=checkpoint)
+        hyp_tune(num_samples=num_samples, max_num_epochs=10)
