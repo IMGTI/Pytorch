@@ -178,10 +178,10 @@ def train_model(trial):
     # Model Parameters
     na = trial.suggest_int('na', 2, 2)
     do = trial.suggest_uniform('do', 0.01, 0.05)
-    hs = trial.suggest_int('hs', 1, 10)
-    nl = trial.suggest_int('nl', 1, 4)
-    sl = trial.suggest_int('sl', 1, 100)
-    bs = trial.suggest_int('bs', 1, 50)
+    hs = trial.suggest_int('hs', 1, 100)#10)
+    nl = trial.suggest_int('nl', 1, 10)#4)
+    sl = trial.suggest_int('sl', 1, 200)#100)
+    bs = trial.suggest_int('bs', 1, 100)#50)
     lr = trial.suggest_loguniform('lr', 1e-4, 1e-1)
     bd = trial.suggest_int('bd', 0, 1)
     st = trial.suggest_int('st', 0, 1)
@@ -192,9 +192,9 @@ def train_model(trial):
 
     # Transform num into bool for biderectionality
     if bd==0:
-        bd = False
+        bid = False
     else:
-        bd = True
+        bid = True
 
     if st==0:
         stateful = True
@@ -210,7 +210,7 @@ def train_model(trial):
     defsX, defsY, times_dataY, time_step, rev_rand = treat_data(times, defs, sl, random_win=rw)
 
     # Initialize model
-    lstm = LSTM(bs, 1, 1, hs, nl, do, bd, seed)
+    lstm = LSTM(bs, 1, 1, hs, nl, do, bid, seed)
     # Send model to device
     lstm.to(device)
 
