@@ -18,6 +18,7 @@ import pandas as pd
 import getopt
 import sys
 import datetime as dt
+from tqdm import tqdm
 
 ### Set RNG seeds
 
@@ -227,7 +228,7 @@ def train_model(trial):
         defsY = defsY[:ind_val]
 
     if bs==-1:
-        for epoch in range(max_nepochs):
+        for epoch in tqdm(range(max_nepochs), total=max_nepochs):
             optimizer.zero_grad()
 
             outputs, hidden = lstm(defsX.to(device))
@@ -274,7 +275,7 @@ def train_model(trial):
             print("Removing last batch because of invalid batch size")
 
 
-        for epoch in range(max_nepochs):
+        for epoch in tqdm(range(max_nepochs), total=max_nepochs):
             hidden = None
             running_loss = 0.0
             val_running_loss = 0.0
@@ -326,7 +327,7 @@ def hyp_tune(num_samples=10, max_num_epochs=10):
                                 direction='minimize')
 
     # Begin optimization
-    study.optimize(train_model, n_trials=num_samples, n_jobs=2, gc_after_trial=True)
+    study.optimize(train_model, n_trials=num_samples, n_jobs=1, gc_after_trial=True)
 
     # Dump into pickle file the results
     joblib.dump(study, 'optuna.pkl')
