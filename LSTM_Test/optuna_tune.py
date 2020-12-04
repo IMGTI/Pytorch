@@ -167,9 +167,12 @@ def treat_data(times, defs, seq_length, random_win=False):
 
     return dataX, dataY, times_dataY, time_step, rev_rand
 
-def train_model(trial, validate=True):
+def train_model(trial):
     # Data directory
     data_dir = 'D:/Documents/GitHub/Pytorch/LSTM_Test'
+
+    # Make validation while training
+    validate = True
 
     # Model Parameters
     na = trial.suggest_int('na', 2, 2)
@@ -184,7 +187,7 @@ def train_model(trial, validate=True):
     rd = trial.suggest_int('rd', 0, 1)
 
     # Training parameters
-    max_nepochs = trial.suggest_int('max_nepochs', 10, 10)
+    max_nepochs = trial.suggest_int('max_nepochs', 1,1)#10, 10)
 
     # Transform num into bool for biderectionality
     if bd==0:
@@ -258,7 +261,10 @@ def train_model(trial, validate=True):
         while True:
             try:
                 batches.append({'defsX':torch.index_select(defsX, 0, torch.tensor(np.int64(np.arange(ind,ind+bs,1)))),
-                                'defsY':torch.index_select(defsY, 0, torch.tensor(np.int64(np.arange(ind,ind+bs,1))))})
+                                'defsY':torch.index_select(defsY, 0, torch.tensor(np.int64(np.arange(ind,ind+bs,1)))),
+                                'val_defsX':torch.index_select(val_defsX, 0, torch.tensor(np.int64(np.arange(ind,ind+bs,1)))),
+                                'val_defsY':torch.index_select(val_defsY, 0, torch.tensor(np.int64(np.arange(ind,ind+bs,1))))})
+
                 ind += bs
             except:
                 break
@@ -292,8 +298,8 @@ def train_model(trial, validate=True):
                 with torch.no_grad():
                     # Initialize model in testing mode
                     lstm.eval()
-                    val_pred, val_hidden = lstm(val_defsX.to(device))
-                    val_loss = criterion(val_pred.to(device), val_defsY.to(device))
+                    val_pred, val_hidden = lstm(batch['val_defsX'].to(device))
+                    val_loss = criterion(val_pred.to(device), batch['val_defsY'].to(device))
 
                     val_running_loss += val_loss.item()
 
@@ -308,7 +314,8 @@ def train_model(trial, validate=True):
             # Handle pruning based on the intermediate value.
             if trial.should_prune():
                 raise optuna.TrialPruned()
-    pass
+
+    return loss4report
 
 def hyp_tune(num_samples=10, max_num_epochs=10):
     # Set sampler
@@ -319,13 +326,13 @@ def hyp_tune(num_samples=10, max_num_epochs=10):
                                 direction='minimize')
 
     # Begin optimization
-    study.optimize(train_model, n_trials=num_samples, show_progress_bar=True, n_jobs=1,
-                   gc_after_trial=True)
+    study.optimize(train_model, n_trials=num_samples, n_jobs=1, gc_after_trial=True)
 
     # Dump into pickle file the results
     joblib.dump(study, 'optuna.pkl')
-    df_result = study.trials_dataframe().drop(['state','datetime_start','datetime_complete','system_attrs'], axis=1)
+    df_result = study.trials_dataframe()
     best_trial_params = study.best_params
+    print(df_result)
 
     best_config = [best_trial_params['value'],
                    best_trial_params['hs'],

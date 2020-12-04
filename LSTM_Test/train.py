@@ -13,10 +13,10 @@ class Train(object):
         # RNG Seed
         np.random.seed(seed)  # Numpy
         torch.manual_seed(seed)  # Pytorch
-        
+
         # Initialize the model
         self.lstm = LSTM(batch_size, num_classes, input_size, hidden_size, num_layers,
-                         dropout, bidirectional)
+                         dropout, bidirectional, seed)
 
         # Print model summary
         #print("Number of Learnable parameters =", sum(p.numel() for p in self.lstm.parameters()))
@@ -92,7 +92,10 @@ class Train(object):
             while True:
                 try:
                     batches.append({'defsX':torch.index_select(defsX, 0, torch.tensor(np.int64(np.arange(ind,ind+batch_size,1)))),
-                                    'defsY':torch.index_select(defsY, 0, torch.tensor(np.int64(np.arange(ind,ind+batch_size,1))))})
+                                    'defsY':torch.index_select(defsY, 0, torch.tensor(np.int64(np.arange(ind,ind+batch_size,1)))),
+                                    'val_defsX':torch.index_select(val_defsX, 0, torch.tensor(np.int64(np.arange(ind,ind+batch_size,1)))),
+                                    'val_defsY':torch.index_select(val_defsY, 0, torch.tensor(np.int64(np.arange(ind,ind+batch_size,1))))})
+
                     ind += batch_size
                 except:
                     break
@@ -125,8 +128,8 @@ class Train(object):
                     with torch.no_grad():
                         # Initialize model in testing mode
                         self.lstm.eval()
-                        val_pred, val_hidden = self.lstm(val_defsX.to(self.device))
-                        val_loss = self.criterion(val_pred.to(self.device), val_defsY.to(self.device))
+                        val_pred, val_hidden = self.lstm(batch['val_defsX'].to(self.device))
+                        val_loss = self.criterion(val_pred.to(self.device), batch['val_defsY'].to(self.device))
 
                         val_running_loss += val_loss.item()
 

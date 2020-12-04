@@ -280,7 +280,10 @@ def train_model(config, validate=True):
         while True:
             try:
                 batches.append({'defsX':torch.index_select(defsX, 0, torch.tensor(np.int64(np.arange(ind,ind+config["bs"],1)))),
-                                'defsY':torch.index_select(defsY, 0, torch.tensor(np.int64(np.arange(ind,ind+config["bs"],1))))})
+                                'defsY':torch.index_select(defsY, 0, torch.tensor(np.int64(np.arange(ind,ind+config["bs"],1)))),
+                                'val_defsX':torch.index_select(val_defsX, 0, torch.tensor(np.int64(np.arange(ind,ind+config["bs"],1)))),
+                                'val_defsY':torch.index_select(val_defsY, 0, torch.tensor(np.int64(np.arange(ind,ind+config["bs"],1))))})
+
                 ind += config["bs"]
             except:
                 break
@@ -314,8 +317,8 @@ def train_model(config, validate=True):
                 with torch.no_grad():
                     # Initialize model in testing mode
                     lstm.eval()
-                    val_pred, val_hidden = lstm(val_defsX.to(device))
-                    val_loss = criterion(val_pred.to(device), val_defsY.to(device))
+                    val_pred, val_hidden = lstm(batch['val_defsX'].to(device))
+                    val_loss = criterion(val_pred.to(device), batch['val_defsY'].to(device))
 
                     val_running_loss += val_loss.item()
 

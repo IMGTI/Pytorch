@@ -15,7 +15,7 @@ class Test(object):
 
         # Initialize the model
         self.lstm = LSTM(batch_size, num_classes, input_size, hidden_size, num_layers,
-                         dropout, bidirectional)
+                         dropout, bidirectional, seed)
         # Path to state dictionary
         self.state_dict_path = state_dict_path
         # Path and name for plots
