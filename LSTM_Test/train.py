@@ -9,7 +9,11 @@ from model import LSTM
 
 class Train(object):
     def __init__(self, batch_size, num_classes, input_size, hidden_size, num_layers, dropout,
-                 bidirectional, state_dict_path, current, params_name, stateful=False):
+                 bidirectional, state_dict_path, current, params_name, seed, stateful=False):
+        # RNG Seed
+        np.random.seed(seed)  # Numpy
+        torch.manual_seed(seed)  # Pytorch
+        
         # Initialize the model
         self.lstm = LSTM(batch_size, num_classes, input_size, hidden_size, num_layers,
                          dropout, bidirectional)

@@ -8,7 +8,10 @@ from sklearn.preprocessing import StandardScaler
 import joblib
 
 class Data(object):
-    def __init__(self):
+    def __init__(self, seed):
+        # RNG Seed
+        np.random.seed(seed)  # Numpy
+        torch.manual_seed(seed)  # Pytorch
         pass
 
     def smooth(self, data, N_avg):
