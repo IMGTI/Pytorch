@@ -1,11 +1,16 @@
 import os
 import datetime as dt
-import torch
 from data import Data
 from train import Train
 from test import Test
 import getopt
 import sys
+import torch
+import numpy as np
+
+### Set RNG seeds
+
+seed = 55
 
 ### Parse line arguments
 def arg_parser(argv):
@@ -150,7 +155,7 @@ if train_arg:
     #file = data_path + '/datos_26102020/datos_26102020_fig_' + str(fig_num) + '.xlsx'
     #file = 'prueba_serie.xlsx'
 
-    data = Data()
+    data = Data(seed)
     data.ext_data(file)
     data.data_smooth(N_avg=n_avg)
     data.plot_data(current, params_name)
@@ -158,7 +163,7 @@ if train_arg:
 
     ## Train with data
     train = Train(batch_size, num_classes, input_size, hidden_size, num_layers, dropout,
-                  bidirectional, state_dict_path, current, params_name, stateful=stateful)
+                  bidirectional, state_dict_path, current, params_name, seed, stateful=stateful)
     train.train_model(batch_size, learning_rate, num_epochs, data.times_dataY,
                       data.dataX, data.dataY, validate=validate)
 
@@ -166,7 +171,7 @@ if train_arg:
 if test_arg:
     if inputfile!='':
         # Extract data from input file
-        data = Data()
+        data = Data(seed)
         data.ext_data(inputfile)
         data.data_smooth(N_avg=n_avg)
 
@@ -178,7 +183,7 @@ if test_arg:
         ind_test = -1000#-fut_pred#5000#1000#len(dataX)-1
 
     test = Test(batch_size, num_classes, input_size, hidden_size, num_layers, dropout,
-                bidirectional, state_dict_path, current, params_name)
+                bidirectional, state_dict_path, current, params_name, seed)
 
     # Reorder data to original state just for test and train forcing
     if train_arg and rw:

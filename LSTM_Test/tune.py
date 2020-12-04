@@ -23,6 +23,13 @@ import sys
 import datetime as dt
 import json
 
+### Set RNG seeds
+
+seed = 55
+
+np.random.seed(seed)  # Numpy
+torch.manual_seed(seed)  # Pytorch
+
 ### Parse line arguments
 def arg_parser(argv):
     # Set device (Send to GPU if possible)

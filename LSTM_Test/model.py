@@ -4,7 +4,11 @@ from torch.autograd import Variable
 
 class LSTM(nn.Module):
     def __init__(self, batch_size, num_classes, input_size, hidden_size, num_layers, dropout,
-                 bidirectional):
+                 bidirectional, seed):
+        # RNG Seed
+        torch.manual_seed(seed)  # Pytorch
+
+        # Inherit LSTM class
         super(LSTM, self).__init__()
 
         self.num_classes = num_classes

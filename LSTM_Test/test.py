@@ -8,7 +8,11 @@ from model import LSTM
 
 class Test(object):
     def __init__(self, batch_size, num_classes, input_size, hidden_size, num_layers, dropout,
-                 bidirectional, state_dict_path, current, params_name):
+                 bidirectional, state_dict_path, current, params_name, seed):
+        # RNG Seed
+        np.random.seed(seed)  # Numpy
+        torch.manual_seed(seed)  # Pytorch
+
         # Initialize the model
         self.lstm = LSTM(batch_size, num_classes, input_size, hidden_size, num_layers,
                          dropout, bidirectional)
