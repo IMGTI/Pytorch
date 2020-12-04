@@ -187,7 +187,7 @@ def train_model(trial):
     rd = trial.suggest_int('rd', 0, 1)
 
     # Training parameters
-    max_nepochs = trial.suggest_int('max_nepochs', 1,1)#10, 10)
+    max_nepochs = trial.suggest_int('max_nepochs', 10, 10)
 
     # Transform num into bool for biderectionality
     if bd==0:
@@ -326,15 +326,14 @@ def hyp_tune(num_samples=10, max_num_epochs=10):
                                 direction='minimize')
 
     # Begin optimization
-    study.optimize(train_model, n_trials=num_samples, n_jobs=1, gc_after_trial=True)
+    study.optimize(train_model, n_trials=num_samples, n_jobs=2, gc_after_trial=True)
 
     # Dump into pickle file the results
     joblib.dump(study, 'optuna.pkl')
-    df_result = study.trials_dataframe()
+    #df_result = study.trials_dataframe()
     best_trial_params = study.best_params
-    print(df_result)
 
-    best_config = [best_trial_params['value'],
+    best_config = [study.best_value,
                    best_trial_params['hs'],
                    best_trial_params['nl'],
                    best_trial_params['sl'],
@@ -365,7 +364,7 @@ def hyp_tune(num_samples=10, max_num_epochs=10):
     best_params_file = open('best_params_optuna.txt', 'a')
 
     best_params_file.write('Date = ' + dt.datetime.now().strftime("%d_%m_%Y_%H_%M_%S") + '\n')
-    best_params_file.write('Loss = ' + str(best_config[0]) + '\n')
+    best_params_file.write('Validation Loss = ' + str(best_config[0]) + '\n')
     best_params_file.write('Hidden Size = ' + str(best_config[1]) + '\n')
     best_params_file.write('Number of layers = ' + str(best_config[2]) + '\n')
     best_params_file.write('Sequence length = ' + str(best_config[3]) + '\n')

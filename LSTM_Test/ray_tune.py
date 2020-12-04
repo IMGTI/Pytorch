@@ -457,7 +457,7 @@ def hyp_tune(num_samples=10, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial
     best_params_file = open('best_params_tune.txt', 'a')
 
     best_params_file.write('Date = ' + dt.datetime.now().strftime("%d_%m_%Y_%H_%M_%S") + '\n')
-    best_params_file.write('Loss = ' + str(best_config[0]) + '\n')
+    best_params_file.write('Validation Loss = ' + str(best_config[0]) + '\n')
     best_params_file.write('Hidden Size = ' + str(best_config[1]) + '\n')
     best_params_file.write('Number of layers = ' + str(best_config[2]) + '\n')
     best_params_file.write('Sequence length = ' + str(best_config[3]) + '\n')
