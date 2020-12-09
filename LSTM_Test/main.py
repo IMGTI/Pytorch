@@ -75,12 +75,12 @@ num_classes = 1
 bidirectional = False#False#True
 dropout = 0#0.02912#0.02898
 # Stateful
-stateful = True#False#True
+stateful = False#True#False#True
 
 ## Data parameters
 n_avg = 2#23#2
 # Random windows for training
-rw = False#True#False
+rw = True#False#True#False
 #if rw:
 #    stateful = False
 #else:
@@ -150,9 +150,9 @@ if train_arg:
 
     #file = 'Figura de Control.xlsx'
     #file = 'prueba_serie.xlsx'
-    fig_num = 2
-    file = data_path + '/Figura_de_control/Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
-    #file = data_path + '/datos_26102020/datos_26102020_fig_' + str(fig_num) + '.xlsx'
+    fig_num = 1
+    #file = data_path + '/Figura_de_control/Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
+    file = data_path + '/datos_26102020/datos_26102020_fig_' + str(fig_num) + '.xlsx'
     #file = 'prueba_serie.xlsx'
 
     data = Data(seed)
