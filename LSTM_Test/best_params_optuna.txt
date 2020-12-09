@@ -30,3 +30,20 @@ Number of Samples = 100Maximum Number of Epochs Used = 10
 
 ----------------------------------------------------
 
+Date = 05_12_2020_08_27_33
+Validation Loss = 1.3521421935455743e-05
+Hidden Size = 8
+Number of layers = 1
+Sequence length = 10
+Batch Size = 25
+Learning rate = 0.03390899215886905
+Number for Moving Average = 2
+Dropout = 0.029128810216555334
+Bidirectional (0:F 1:T) = 0
+Stateful (0:F 1:T) = 1
+Randomized Data (0:F 1:T) = 0
+Number of Samples = 1000
+Maximum Number of Epochs Used = 10
+
+----------------------------------------------------
+

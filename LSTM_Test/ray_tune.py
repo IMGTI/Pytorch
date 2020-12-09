@@ -468,7 +468,7 @@ def hyp_tune(num_samples=10, max_num_epochs=10, cpus_per_trial=1, gpus_per_trial
     best_params_file.write('Bidirectional (0:F 1:T) = ' + str(best_config[8]) + '\n')
     best_params_file.write('Stateful (0:F 1:T) = ' + str(best_config[9]) + '\n')
     best_params_file.write('Randomized Data (0:F 1:T) = ' + str(best_config[10]) + '\n')
-    best_params_file.write('Number of Samples = ' + str(num_samples))
+    best_params_file.write('Number of Samples = ' + str(num_samples) + '\n')
     best_params_file.write('Maximum Number of Epochs Used = ' + str(best_config[11]) + '\n')
     best_params_file.write('\n')
     best_params_file.write('----------------------------------------------------' + '\n')
