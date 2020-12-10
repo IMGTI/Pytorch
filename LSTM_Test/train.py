@@ -6,6 +6,7 @@ import os
 from tqdm import tqdm
 import numpy as np
 from model import LSTM
+from pytorchtools import EarlyStopping
 
 class Train(object):
     def __init__(self, batch_size, num_classes, input_size, hidden_size, num_layers, dropout,
@@ -34,6 +35,10 @@ class Train(object):
 
     def train_model(self, batch_size, learning_rate, num_epochs, times, defsX, defsY,
                     validate=True):
+        # Initialize the early stopping object
+        patience = 20
+        early_stopping = EarlyStopping(patience=patience, verbose=True)
+
         # Define validation set and training set
         if validate:
             # Select 25% of data as validation
@@ -77,6 +82,13 @@ class Train(object):
                     val_loss = self.criterion(val_pred.to(self.device), val_defsY.to(self.device))
                     # Initialize model in trainning mode again
                     self.lstm.train()
+
+                # Early stop if validation loss increase
+                early_stopping(val_loss, self.lstm)
+
+                if early_stopping.early_stop:
+                    print("Early stopping...")
+                    break
 
                 loss4plot.append(loss.item())
                 val_loss4plot.append(val_loss.item())
@@ -135,6 +147,13 @@ class Train(object):
 
                         # Initialize model in trainning mode again
                         self.lstm.train()
+
+                # Early stop if validation loss increase
+                early_stopping(val_running_loss/len(batches), self.lstm)
+
+                if early_stopping.early_stop:
+                    print("Early stopping...")
+                    break
 
                 loss4plot.append(running_loss/len(batches))
                 val_loss4plot.append(val_running_loss/len(batches))
