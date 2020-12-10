@@ -87,7 +87,9 @@ class Train(object):
                 early_stopping(val_loss, self.lstm)
 
                 if early_stopping.early_stop:
+                    print("-----------------")
                     print("Early stopping...")
+                    print("-----------------")
                     break
 
                 loss4plot.append(loss.item())
@@ -152,7 +154,9 @@ class Train(object):
                 early_stopping(val_running_loss/len(batches), self.lstm)
 
                 if early_stopping.early_stop:
+                    print("-----------------")
                     print("Early stopping...")
+                    print("-----------------")
                     break
 
                 loss4plot.append(running_loss/len(batches))
