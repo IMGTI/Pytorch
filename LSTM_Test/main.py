@@ -17,11 +17,12 @@ def arg_parser(argv):
     train_arg = True
     test_arg = False
     num_epochs = 100
-    inputfile = ''
+    test_file = ''
+    train_file = ''
     try:
-        opts, args = getopt.getopt(argv,"hFt:i:n:",["train=","ifile=","nepoch="])
+        opts, args = getopt.getopt(argv,"hFt:r:e:n:",["train=","trfile=","tefile=","nepoch="])
     except getopt.GetoptError:
-        print('argparser.py -t <True> -i <inputfile>')
+        print('argparser.py -t <True> -r <train_file> -e <test_file>')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
@@ -29,20 +30,23 @@ def arg_parser(argv):
             print('-t: Train network (True/False)')
             print('-F: Force training and testing (-t True will not test)')
             print('-n: Number of epochs to use in training')
-            print('-i: Input file for testing')
+            print('-r: Input file for training')
+            print('-e: Input file for testing')
             print('-h: Show help')
             print('--------- Example usage ----------')
             print('For training:')
-            print('argparser.py (-t True)/(-F) -n <epochs>')
+            print('argparser.py (-t True)/(-F) -r <trfile> -n <epochs>')
             print('For testing:')
-            print('argparser.py -t False -i <inputfile>')
+            print('argparser.py -t False -e <test_file>')
             sys.exit()
         elif opt == '-F':
             train_arg = True
             test_arg = True
             print('Forcing training and testing...')
-        elif opt in ("-i", "--ifile"):
-            inputfile = arg
+        elif opt in ("-r", "--trfile"):
+            train_file = arg
+        elif opt in ("-e", "--tefile"):
+            test_file = arg
         elif opt in ("-n", "--nepoch="):
             num_epochs = int(arg)
         elif opt in ("-t", "--train"):
@@ -52,14 +56,19 @@ def arg_parser(argv):
             else:
                 train_arg = False
                 test_arg = True
-    return (train_arg, test_arg, inputfile, num_epochs)
+    if train_file=='' and test_file=='':
+        print('---------------------------------------------------')
+        print('Please, enter a valid file for training or testing.')
+        print('---------------------------------------------------')
+    return (train_arg, test_arg, train_file, test_file, num_epochs)
 
 if __name__ == "__main__":
-   train_arg, test_arg, inputfile, n_epochs = arg_parser(sys.argv[1:])
+   train_arg, test_arg, train_file, test_file, n_epochs = arg_parser(sys.argv[1:])
 
 print('Train =', train_arg)
 print('Test =', test_arg)
-print('Input file =', inputfile)
+print('Train input file =', train_file)
+print('Test input file =', test_file)
 
 ### Define the Hyperparameters
 
@@ -150,12 +159,13 @@ if train_arg:
 
     #file = 'Figura de Control.xlsx'
     #file = 'prueba_serie.xlsx'
-    fig_num = 5
+    #fig_num = 5
     #file = data_path + '/Figura_de_control/Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
     #file = data_path + '/datos_26102020/datos_26102020_fig_' + str(fig_num) + '.xlsx'
     #file = data_path + '/11_d16_Copia_de_PARED_SUR/11_d16_Copia_de_PARED_SUR_fig_' + str(fig_num) + '.xlsx'
-    file = data_path + '/Fallamiento_Sur/Fallamiento_Sur_fig_' + str(fig_num) + '.xlsx'
+    #file = data_path + '/Fallamiento_Sur/Fallamiento_Sur_fig_' + str(fig_num) + '.xlsx'
     #file = 'prueba_serie.xlsx'
+    file = train_file
 
     data = Data(seed)
     data.ext_data(file)
@@ -171,10 +181,10 @@ if train_arg:
 
 ### Test
 if test_arg:
-    if inputfile!='':
+    if test_file!='':
         # Extract data from input file
         data = Data(seed)
-        data.ext_data(inputfile)
+        data.ext_data(test_file)
         data.data_smooth(N_avg=n_avg)
 
         # Use last seq_length-data
@@ -200,7 +210,7 @@ params_file = open(current + '/params.txt', 'w')
 params_file.write('current  = ' + str(current) + '\n')
 params_file.write('train_arg  = ' + str(train_arg) + '\n')
 params_file.write('test_arg  = ' + str(test_arg) + '\n')
-params_file.write('inputfile  = ' + str(inputfile) + '\n')
+params_file.write('test_file  = ' + str(test_file) + '\n')
 params_file.write('ind_test  = ' + str(ind_test) + '\n')
 if train_arg:
     params_file.write('file  = ' + str(file) + '\n')
