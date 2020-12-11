@@ -36,7 +36,7 @@ class Train(object):
     def train_model(self, batch_size, learning_rate, num_epochs, times, defsX, defsY,
                     validate=True):
         # Initialize the early stopping object
-        patience = 20
+        patience = 10#20
         early_stopping = EarlyStopping(patience=patience, verbose=True)
 
         # Define validation set and training set
