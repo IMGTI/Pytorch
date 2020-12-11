@@ -12,7 +12,7 @@ np.random.seed(seed=seed)
 def arg_parser(argv):
     mode = 'Train'
     try:
-        opts, args = getopt.getopt(argv,"hm",["mode="])
+        opts, args = getopt.getopt(argv,"hm:",["mode="])
     except getopt.GetoptError:
         print('argparser.py -m <Train/Test>')
         sys.exit(2)

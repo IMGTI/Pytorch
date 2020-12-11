@@ -90,10 +90,10 @@ stateful = False#True#False#True
 n_avg = 2#23#2
 # Random windows for training
 rw = True#False#True#False
-#if rw:
-#    stateful = False
-#else:
-#    stateful = True
+if rw:
+    stateful = False
+else:
+    stateful = True
 
 ## Test parameters
 fut_pred = 10#84#21  # Number of predictions

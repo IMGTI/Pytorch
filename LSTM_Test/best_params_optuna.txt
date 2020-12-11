@@ -40,8 +40,8 @@ Learning rate = 0.03390899215886905
 Number for Moving Average = 2
 Dropout = 0.029128810216555334
 Bidirectional (0:F 1:T) = 0
-Stateful (0:F 1:T) = 1
-Randomized Data (0:F 1:T) = 0
+Stateful (0:F 1:T) = 0
+Randomized Data (0:F 1:T) = 1
 Number of Samples = 1000
 Maximum Number of Epochs Used = 10
 

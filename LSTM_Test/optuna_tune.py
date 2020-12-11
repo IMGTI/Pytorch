@@ -196,12 +196,12 @@ def train_model(trial):
     else:
         bid = True
 
-    if st==0:
+    if st==1:
         stateful = True
     else:
         stateful = False
 
-    if rd==0:
+    if rd==1:
         rw = True
     else:
         rw = False
