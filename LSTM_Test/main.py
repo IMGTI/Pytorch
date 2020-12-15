@@ -171,7 +171,7 @@ if train_arg:
     data.ext_data(file)
     data.data_smooth(N_avg=n_avg)
     data.plot_data(current, params_name)
-    data.treat_data(train_size, seq_length, random_win=rw)
+    data.treat_data(train_size, seq_length, current, random_win=rw)
 
     ## Train with data
     train = Train(batch_size, num_classes, input_size, hidden_size, num_layers, dropout,

@@ -22,27 +22,42 @@ class Data(object):
 
     def ext_data(self, file):
         def fill_data(y):
+            # Look for nans
             ind_fill = np.where(np.isnan(y))[0]
 
-            # Look for nans
             if len(ind_fill)==0:
                 return y
             else:
-                # Select boundary values
-                try:
-                    boundaries = (y[ind_fill[0]-1], y[ind_fill[-1]+1])
-                except:
+                # Form groups of ids
+                ind_fill_groups = []
+
+                i = 0
+                for ind, val in enumerate(ind_fill):
+                    if ind!=0:
+                        if np.absolute(ind_fill[ind-1]-ind_fill[ind])>1:
+                            ind_inicial = i
+                            ind_final = ind
+                            # Add index group
+                            ind_fill_groups.append(ind_fill[ind_inicial:ind_final])
+                            # Set inicial index to new one
+                            i = ind_final
+                if ind_fill_groups==[]:
+                    ind_fill_groups.append(ind_fill)
+
+                for ind_fill in ind_fill_groups:
+                    # Select boundary values
                     try:
-                        boundaries = (y[ind_fill[-1]+1], y[ind_fill[-1]+1])
+                        boundaries = (y[ind_fill[0]-1], y[ind_fill[-1]+1])
                     except:
-                        boundaries = (y[ind_fill[0]-1], y[ind_fill[0]-1])
+                        try:
+                            boundaries = (y[ind_fill[-1]+1], y[ind_fill[-1]+1])
+                        except:
+                            boundaries = (y[ind_fill[0]-1], y[ind_fill[0]-1])
 
-                # Fill with random data from mean between boundaries
-                m_bound = (boundaries[0] + boundaries[1])/2
-
-                for ind in ind_fill:
-                    fill = np.random.uniform(boundaries[0], boundaries[1])
-                    y[ind] = fill
+                    # Fill with random data between boundaries
+                    for ind in ind_fill:
+                        fill = np.random.uniform(boundaries[0], boundaries[1])
+                        y[ind] = fill
 
             return y
 
@@ -123,7 +138,7 @@ class Data(object):
         fig1.savefig(current + "/defs_vs_times" + params_name + ".jpg")
         pass
 
-    def scaling(self, data):
+    def scaling(self, data, current=None):
         # Reshape for scaling
         data = self.reshape_data(data)
         # Load scaler file if exists (if not, model is not trained)
@@ -131,14 +146,19 @@ class Data(object):
         try:
             self.scaler = joblib.load(sc_filename)
             data_sc = self.scaler.transform(data)
+            # Save scaler in current working directory
+            if current:
+                joblib.dump(self.scaler, current + '/' + sc_filename)
         except:
             print('Scaler save file not found. Probably due to not trained model. ')
 
             self.scaler = StandardScaler()
             data_sc = self.scaler.fit_transform(data)
 
-            # Save scaler for later use in test
+            # Save scaler for later use in test and in current working directory
             joblib.dump(self.scaler, sc_filename)
+            if current:
+                joblib.dump(self.scaler, current + '/' + sc_filename)
         return data_sc
 
     def select_lastwin(self, seq_length, ind_test):
@@ -157,11 +177,11 @@ class Data(object):
         pass
 
 
-    def treat_data(self, train_size, seq_length, random_win=False):
+    def treat_data(self, train_size, seq_length, current, random_win=False):
         # Load data into sequences
         training_set = self.defs
 
-        training_data = self.scaling(training_set)
+        training_data = self.scaling(training_set, current=current)
 
         # Treat data
         x, y = self.sliding_windows(training_data, seq_length)

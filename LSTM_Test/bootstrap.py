@@ -54,7 +54,7 @@ def augment_data(file_name, source_folder_name, target_folder_name):
         pass
 
     # Read figures from excel
-    data = pd.read_excel(source_folder_name + '/' + file_name, usecols=[0,ind], names=['times', 'defs'])
+    data = pd.read_excel(source_folder_name + '/' + file_name, usecols=[0,1], names=['times', 'defs'])
 
     # Copy file from source to target
     if file_name not in os.listdir(target_folder_name):
@@ -65,7 +65,7 @@ def augment_data(file_name, source_folder_name, target_folder_name):
     # Scale with random coefficient
     sc_coef = np.random.random()
 
-    data['defs'] *= sc_coef
+    data['defs'] = sc_coef*np.array(data['defs'])
 
     # Create new excel with figures
 
@@ -80,10 +80,9 @@ def augment_data(file_name, source_folder_name, target_folder_name):
 data_folder = 'datos/1_All_data'
 augmented_data_folder = 'datos/1_All_data_augmented'
 
-# Sub data folders
-data_folders = np.array(os.listdir(data_folder))
-
 if aug==True:
+    # Sub data folders
+    data_folders = np.array(os.listdir(data_folder))
     # Folder's names
     source_folder_name = data_folder
     target_folder_name = augmented_data_folder
@@ -94,8 +93,12 @@ if aug==True:
         while ind<=5:
             augment_data(file_name, source_folder_name , target_folder_name)
             ind += 1
-    data_folders = np.array(os.listdir(target_folder_name))
+    data_folder = target_folder_name
+    data_folders = np.array(os.listdir(data_folder))
+else:
+    print('Using Augmented Data Folder...')
     data_folder = augmented_data_folder
+    data_folders = np.array(os.listdir(data_folder))
 
 # Shuffle files in data folders
 np.random.shuffle(data_folders)
