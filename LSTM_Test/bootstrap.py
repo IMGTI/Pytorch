@@ -62,7 +62,7 @@ def augment_data(file_name, source_folder_name, target_folder_name):
         data.to_excel(writer, index=False)
         writer.save()
 
-    # Scale with random coefficient
+    # Scale with random factor
     sc_coef = np.random.random()
 
     data['defs'] = sc_coef*np.array(data['defs'])
@@ -81,6 +81,8 @@ data_folder = 'datos/1_All_data'
 augmented_data_folder = 'datos/1_All_data_augmented'
 
 if aug==True:
+    # Number of augmented files
+    num_aug = 10
     # Sub data folders
     data_folders = np.array(os.listdir(data_folder))
     # Folder's names
@@ -90,7 +92,7 @@ if aug==True:
     print('Beginning Data Augmentation...')
     for file_name in tqdm(data_folders, total=len(data_folders)):
         ind = 1
-        while ind<=5:
+        while ind<=num_aug:
             augment_data(file_name, source_folder_name , target_folder_name)
             ind += 1
     data_folder = target_folder_name
