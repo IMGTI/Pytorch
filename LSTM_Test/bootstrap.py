@@ -61,18 +61,23 @@ def augment_data(file_name, source_folder_name, target_folder_name):
         writer = ExcelWriter(target_folder_name + '/' + file_name[:-5] + '.xlsx',  datetime_format='dd-mm-yy hh:mm')
         data.to_excel(writer, index=False)
         writer.save()
-
+    '''
     # Scale with random factor
-    #sc_coef = np.random.random()
+    sc_coef = np.random.random()
 
-    #data['defs'] = sc_coef*np.array(data['defs'])
-
-    # Invert deformation
-    data['defs'] = (-1.0)*np.array(data['defs'])
+    data['defs'] = sc_coef*np.array(data['defs'])
 
     # Create new excel with figures
 
     writer = ExcelWriter(target_folder_name + '/' + file_name[:-5] + '_sc_' + str(sc_coef) + '.xlsx',  datetime_format='dd-mm-yy hh:mm')
+    '''
+
+    # Invert deformation
+    data['defs'] = (-1.0)*np.array(data['defs'])  # num_aug must be 1
+
+    # Create new excel with figures
+
+    writer = ExcelWriter(target_folder_name + '/' + file_name[:-5] + '_invert.xlsx',  datetime_format='dd-mm-yy hh:mm')
 
     data.to_excel(writer, index=False)
     writer.save()
@@ -85,7 +90,7 @@ augmented_data_folder = 'datos/1_All_data_augmented'
 
 if aug==True:
     # Number of augmented files
-    num_aug = 10
+    num_aug = 1#10
     # Sub data folders
     data_folders = np.array(os.listdir(data_folder))
     # Folder's names
