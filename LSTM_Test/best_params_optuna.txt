@@ -48,3 +48,47 @@ Patience = 10
 
 ----------------------------------------------------
 
+Last parameters search, for stateful and stateless only
+
+----------------------------------------------------
+
+# STATEFUL
+
+Date = 13_12_2020_04_11_07
+Validation Loss = 4.899077786830105e-05
+Hidden Size = 4
+Number of layers = 1 
+Sequence length = 9
+Batch Size = 18
+Learning rate = 0.02851334506227548
+Number for Moving Average = 2
+Dropout = 0.018553793581586833
+Bidirectional (0:F 1:T) = 0
+Stateful (0:F 1:T) = 1
+Randomized Data (0:F 1:T) = 0 
+Number of Samples = 1000
+Maximum Number of Epochs Used = 10 
+Patience = 10
+
+----------------------------------------------------
+
+# STATELESS
+
+Date = 16_12_2020_07_07_55
+Validation Loss = 6.155151247535708e-05
+Hidden Size = 9
+Number of layers = 1
+Sequence length = 50
+Batch Size = 30
+Learning rate = 0.023649198126350336
+Number for Moving Average = 2
+Dropout = 0.01564773889452274
+Bidirectional (0:F 1:T) = 1
+Stateful (0:F 1:T) = 0
+Randomized Data (0:F 1:T) = 1 
+Number of Samples = 1000
+Maximum Number of Epochs Used = 10
+Patience = 10
+
+----------------------------------------------------
+

@@ -108,12 +108,12 @@ np.random.shuffle(data_folders)
 if mode=='Train':
     print('Initializing Training Mode...')
     num_epochs = 9999
-    for data_file in data_folders:
+    for data_file in tqdm(data_folders, total=len(data_folders)):
         # Call main.py
         os.system('python .\main.py -F -r ' + data_folder + '/' + data_file + ' -n ' + str(num_epochs))
 
 else:
     print('Initializing Testing Mode...')
-    for data_file in data_folders:
+    for data_file in tqdm(data_folders, total=len(data_folders)):
         # Call main.py
         os.system('python .\main.py -t False -e ' + data_folder + '/' + data_file)

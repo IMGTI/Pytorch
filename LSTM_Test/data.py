@@ -26,7 +26,7 @@ class Data(object):
             ind_fill = np.where(np.isnan(y))[0]
 
             if len(ind_fill)==0:
-                return y
+                return y, None
             else:
                 # Form groups of ids
                 ind_fill_groups = []
@@ -59,7 +59,15 @@ class Data(object):
                         fill = np.random.uniform(boundaries[0], boundaries[1])
                         y[ind] = fill
 
-            return y
+                # Return indices of NaNs at the beginning and at the end
+                ind_beg = 0
+                ind_end = len(y)-1
+                if ind_fill_groups[0][0]==0:
+                    ind_beg = ind_fill_groups[0][-1]  # Last index of first group
+                if ind_fill_groups[-1][-1]==(len(y)-1):
+                    ind_end = ind_fill_groups[-1][0]  # First index of last group
+
+                return y, (ind_beg, ind_end)
 
         data = pd.read_excel(file, usecols=[0,1], names=['times', 'defs'])
 
@@ -72,7 +80,12 @@ class Data(object):
         self.times = (times/(3600*24) -
                       (times/(3600*24))[0])
 
-        self.defs = fill_data(np.array(data['defs']))
+        self.defs, ind_beg_end = fill_data(np.array(data['defs']))
+
+        # Erase NaNs values at the beginning and at the end
+        if ind_beg_end:
+            self.defs = self.defs[ind_beg_end[0]:ind_beg_end[1]]
+            self.times = self.times[ind_beg_end[0]:ind_beg_end[1]]
         pass
 
     def data_smooth(self, N_avg=2):
