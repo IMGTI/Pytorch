@@ -63,9 +63,12 @@ def augment_data(file_name, source_folder_name, target_folder_name):
         writer.save()
 
     # Scale with random factor
-    sc_coef = np.random.random()
+    #sc_coef = np.random.random()
 
-    data['defs'] = sc_coef*np.array(data['defs'])
+    #data['defs'] = sc_coef*np.array(data['defs'])
+
+    # Invert deformation
+    data['defs'] = (-1.0)*np.array(data['defs'])
 
     # Create new excel with figures
 
