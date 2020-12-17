@@ -74,33 +74,33 @@ print('Test input file =', test_file)
 
 ## Net parameters
 num_epochs = n_epochs#10
-learning_rate = 0.033908#0.0076#0.0009539191097038075
+learning_rate = 0.033908#0.028513#0.0236491#0.033908
 input_size = 1
-batch_size = 25#31#7   # Batch size is automatically handled in model
+batch_size = 25#18#30#25   # Batch size is automatically handled in model
                     # if -1 then uses 1 batch of full data-length size
-hidden_size = 8#6#9
-num_layers = 1#2#1#3#1
+hidden_size = 8#4#9#8
+num_layers = 1
 num_classes = 1
-bidirectional = False#False#True
-dropout = 0#0.02912#0.02898
+bidirectional = False#False#True#False
+dropout = 0
 # Stateful
-stateful = False#True#False#True
+stateful = False#True#False#False
 
 ## Data parameters
-n_avg = 2#23#2
+n_avg = 2
 # Random windows for training
-rw = True#False#True#False
+rw = True#False#True#True
 if rw:
     stateful = False
 else:
     stateful = True
 
 ## Test parameters
-fut_pred = 10#84#21  # Number of predictions
+fut_pred = 10#9#50#10  # Number of predictions
 
 ## Train parameters
 validate = True
-seq_length = 10#84#9    # Train Window
+seq_length = 10#9#50#10    # Train Window
                      # 1h = 12
                      # 5min = 1
 train_size = -fut_pred  # Not necessarily equal to fut_pred
