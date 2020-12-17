@@ -96,7 +96,7 @@ def load_data(na, data_dir):
         return times, defs
 
     # Path to data
-    data_path = 'datos'
+    data_path = '../../Datos_Radares'
 
     fig_num = 1
     file = data_path + '/Figura_de_control/Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'

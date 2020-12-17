@@ -61,7 +61,7 @@ def augment_data(file_name, source_folder_name, target_folder_name):
         writer = ExcelWriter(target_folder_name + '/' + file_name[:-5] + '.xlsx',  datetime_format='dd-mm-yy hh:mm')
         data.to_excel(writer, index=False)
         writer.save()
-    
+
     # Scale with random factor
     sc_coef = np.random.random()
 
@@ -85,8 +85,8 @@ def augment_data(file_name, source_folder_name, target_folder_name):
 
 
 # Main data folder
-data_folder = 'datos/1_All_data'
-augmented_data_folder = 'datos/1_All_data_augmented'
+data_folder = '../../Datos_Radares/1_All_data'
+augmented_data_folder = '../../Datos_Radares/1_All_data_augmented'
 
 if aug==True:
     # Number of augmented files

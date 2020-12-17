@@ -151,20 +151,11 @@ except:
 state_dict_path = 'state_dict'
 
 # Path to data
-data_path = 'datos'
+data_path = '../../Datos_Radares'
 
 ### Train
 if train_arg:
     ## Extract data for training
-
-    #file = 'Figura de Control.xlsx'
-    #file = 'prueba_serie.xlsx'
-    #fig_num = 5
-    #file = data_path + '/Figura_de_control/Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
-    #file = data_path + '/datos_26102020/datos_26102020_fig_' + str(fig_num) + '.xlsx'
-    #file = data_path + '/11_d16_Copia_de_PARED_SUR/11_d16_Copia_de_PARED_SUR_fig_' + str(fig_num) + '.xlsx'
-    #file = data_path + '/Fallamiento_Sur/Fallamiento_Sur_fig_' + str(fig_num) + '.xlsx'
-    #file = 'prueba_serie.xlsx'
     file = train_file
 
     data = Data(seed)
