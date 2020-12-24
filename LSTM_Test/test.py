@@ -89,33 +89,30 @@ class Test(object):
         data_source = pd.read_excel(path_source, usecols=[0,1], names=['old_times', 'old_defs'])
 
         # Select data until index used for prediction
-        old_times = data_source['old_times'].iloc[:ind_source+1]
-        old_defs = np.array(data_source['old_defs'])[:ind_source+1]
-
-        # Format source time
-        try:
-            old_times = np.array([dt.datetime.timestamp(x) for x in old_times])
-        except:
-            old_times = np.array(old_times)
+        data_source = data_source.iloc[:ind_source+1]
 
         # Add initial new time (final source time)
-        new_times += old_times[-1]/(24*60*60)  # Seconds to days
-
-        old_times = np.array([dt.datetime.fromtimestamp(x).strftime("%d/%m/%Y %H:%M") for x in old_times])
+        new_times += (dt.datetime.timestamp(data_source['old_times'].iloc[-1]))/(24*60*60)  # Seconds to days
 
         # Format new time (remember times was in days, must be converted to seconds)
-        new_times = np.array([dt.datetime.fromtimestamp(x*24*60*60).strftime("%d/%m/%Y %H:%M") for x in new_times])
+        new_times = np.array([dt.datetime.fromtimestamp(x*24*60*60) for x in new_times])
 
-        # Create dictionary for later saving
-        df_orig = pd.DataFrame({'Time': old_times,
-                                'Deformation': old_defs})
-        df_pred = pd.DataFrame({'Time': np.hstack([old_times, new_times]),
-                                'Deformation': np.hstack([old_defs, new_defs])})
+        # Create dictionaries to save as excel files
+
+        # Prediction dictionary
+        df = data_source.copy()
+        df = df.iloc[:len(new_times)]
+        df['old_times'], df['old_defs'] = new_times, new_defs
+        # Append prediction dictionary to source data copy dictionary
+        data_pred = data_source.copy()
+        data_pred = data_pred.append(df)
+        data_pred = data_pred.rename(columns={'old_times':'new_times', 'old_defs':'new_defs'})
+
         # Create excel file
-        writer_orig = ExcelWriter(self.current + '/original.xlsx',  datetime_format='dd-mm-yy hh:mm')
-        writer_pred = ExcelWriter(self.current + '/predicted.xlsx',  datetime_format='dd-mm-yy hh:mm')
-        df_orig.to_excel(writer_orig, index=False)
-        df_pred.to_excel(writer_pred, index=False)
+        writer_orig = ExcelWriter(self.current + '/original.xlsx',  datetime_format='dd/mm/yyyy hh:mm')
+        writer_pred = ExcelWriter(self.current + '/predicted.xlsx',  datetime_format='dd/mm/yyyy hh:mm')
+        data_source.to_excel(writer_orig, index=False)
+        data_pred.to_excel(writer_pred, index=False)
         writer_orig.save()
         writer_pred.save()
         pass
@@ -226,5 +223,5 @@ class Test(object):
                               seq_length, fut_pred)
 
             ## Add predicted data to excel file
-            new_data = (self.times_predictions.reshape(-1)[1:], data_predict.reshape(-1)[1:])  # Dont repeat first sample
+            new_data = (self.times_predictions.reshape(-1)[1:]-times[-1], data_predict.reshape(-1)[1:])  # Dont repeat first sample
             self.add_pred_to_data(ind_test, new_data)
