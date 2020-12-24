@@ -5,6 +5,8 @@ import datetime as dt
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import r2_score as r2s
 from model import LSTM
+import pandas as pd
+from pandas import ExcelWriter
 
 class Test(object):
     def __init__(self, batch_size, num_classes, input_size, hidden_size, num_layers, dropout,
@@ -75,6 +77,23 @@ class Test(object):
         self.rev_rand = ind
         pass
 
+    def add_to_data(self, source, new_data):
+        new_times, new_defs = new_data
+        old_times, old_defs = source
+        # Create dictionary for later saving
+        df_orig = pd.DataFrame({'Time': old_times,
+                                'Deformation': old_defs})
+        df_pred = pd.DataFrame({'Time': np.hstack([old_times, new_times]),
+                                'Deformation': np.hstack([old_defs, new_defs])})
+        # Create excel file
+        writer_orig = ExcelWriter(self.current + '/original.xlsx',  datetime_format='dd-mm-yy hh:mm')
+        writer_pred = ExcelWriter(self.current + '/predicted.xlsx',  datetime_format='dd-mm-yy hh:mm')
+        df_orig.to_excel(writer_orig, index=False)
+        df_pred.to_excel(writer_pred, index=False)
+        writer_orig.save()
+        writer_pred.save()
+        pass
+
     def test_model(self, ind_test, seq_length, fut_pred, times, defsX, defsY, sc=None):
         # Load model
         self.load_model()
@@ -123,6 +142,7 @@ class Test(object):
                               [self.times[ind_test:ind_test+(fut_pred+1)],self.times_predictions],
                               [dataY_plot[ind_test-1:ind_test-1+(fut_pred+1)],data_predict],
                               seq_length, fut_pred)
+
             ## Fitting whole model
 
             train_predict, hidden_train_predict = self.lstm(defsX.to(self.device))  # Should be the same length as dataX
@@ -178,3 +198,8 @@ class Test(object):
                               [np.hstack([self.times[:-1], self.times_predictions])[:len(dataY_plot)],self.times_predictions],
                               [dataY_plot,data_predict],
                               seq_length, fut_pred)
+
+            ## Add predicted data to excel file
+            source = (times.reshape(-1), sc.inverse_transform(defsX).reshape(-1))
+            new_data = (self.times_predictions.reshape(-1)[1:], data_predict.reshape(-1)[1:])  # Dont repeat first sample
+            self.add_to_data(source, new_data)
