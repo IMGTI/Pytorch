@@ -186,7 +186,7 @@ if test_arg:
         ind_test = -1000#-fut_pred#5000#1000#len(dataX)-1
 
     test = Test(batch_size, num_classes, input_size, hidden_size, num_layers, dropout,
-                bidirectional, state_dict_path, current, params_name, seed)
+                bidirectional, state_dict_path, current, params_name, seed, tfile=test_file)
 
     # Reorder data to original state just for test and train forcing
     if train_arg and rw:

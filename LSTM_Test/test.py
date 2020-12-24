@@ -10,10 +10,14 @@ from pandas import ExcelWriter
 
 class Test(object):
     def __init__(self, batch_size, num_classes, input_size, hidden_size, num_layers, dropout,
-                 bidirectional, state_dict_path, current, params_name, seed):
+                 bidirectional, state_dict_path, current, params_name, seed, tfile=''):
         # RNG Seed
         np.random.seed(seed)  # Numpy
         torch.manual_seed(seed)  # Pytorch
+
+        # Save test file
+        if tfile!='':
+            self.test_file = tfile
 
         # Initialize the model
         self.lstm = LSTM(batch_size, num_classes, input_size, hidden_size, num_layers,
@@ -77,9 +81,31 @@ class Test(object):
         self.rev_rand = ind
         pass
 
-    def add_to_data(self, source, new_data):
+    def add_pred_to_data(self, ind_source, new_data):
         new_times, new_defs = new_data
-        old_times, old_defs = source
+
+        # Read source file
+        path_source = '../../Datos_Radares/1_All_data/' + self.test_file
+        data_source = pd.read_excel(path_source, usecols=[0,1], names=['old_times', 'old_defs'])
+
+        # Select data until index used for prediction
+        old_times = data_source['old_times'].iloc[:ind_source+1]
+        old_defs = np.array(data_source['old_defs'])[:ind_source+1]
+
+        # Format source time
+        try:
+            old_times = np.array([dt.datetime.timestamp(x) for x in old_times])
+        except:
+            old_times = np.array(old_times)
+
+        # Add initial new time (final source time)
+        new_times += old_times[-1]/(24*60*60)  # Seconds to days
+
+        old_times = np.array([dt.datetime.fromtimestamp(x).strftime("%d/%m/%Y %H:%M") for x in old_times])
+
+        # Format new time (remember times was in days, must be converted to seconds)
+        new_times = np.array([dt.datetime.fromtimestamp(x*24*60*60).strftime("%d/%m/%Y %H:%M") for x in new_times])
+
         # Create dictionary for later saving
         df_orig = pd.DataFrame({'Time': old_times,
                                 'Deformation': old_defs})
@@ -200,6 +226,5 @@ class Test(object):
                               seq_length, fut_pred)
 
             ## Add predicted data to excel file
-            source = (times.reshape(-1), sc.inverse_transform(defsX).reshape(-1))
             new_data = (self.times_predictions.reshape(-1)[1:], data_predict.reshape(-1)[1:])  # Dont repeat first sample
-            self.add_to_data(source, new_data)
+            self.add_pred_to_data(ind_test, new_data)
