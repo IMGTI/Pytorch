@@ -111,8 +111,8 @@ class Test(object):
         # Create excel file
         writer_orig = ExcelWriter(self.current + '/original.xlsx',  datetime_format='dd/mm/yyyy hh:mm')
         writer_pred = ExcelWriter(self.current + '/predicted.xlsx',  datetime_format='dd/mm/yyyy hh:mm')
-        data_source.to_excel(writer_orig, index=False)
-        data_pred.to_excel(writer_pred, index=False)
+        data_source.to_excel(writer_orig, sheet_name='old_defs', index=False)
+        data_pred.to_excel(writer_pred, sheet_name='new_defs', index=False)
         writer_orig.save()
         writer_pred.save()
         pass
