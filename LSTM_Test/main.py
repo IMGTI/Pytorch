@@ -179,11 +179,11 @@ if test_arg:
         data.data_smooth(N_avg=n_avg)
 
         # Use last seq_length-data
-        ind_test = -1002#-fut_pred-2#-seq_length#-1
+        ind_test = -2*seq_length-2#-1002#-fut_pred-2#-seq_length#-1
         data.select_lastwin(seq_length, ind_test)
     else:
         # Use custom selected input from train data
-        ind_test = -1000#-fut_pred#5000#1000#len(dataX)-1
+        ind_test = -2*seq_length#-1000#-fut_pred#5000#1000#len(dataX)-1
 
     test = Test(batch_size, num_classes, input_size, hidden_size, num_layers, dropout,
                 bidirectional, state_dict_path, current, params_name, seed, tfile=test_file)
