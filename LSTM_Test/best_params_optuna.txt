@@ -92,3 +92,24 @@ Patience = 10
 
 ----------------------------------------------------
 
+ULTIMOS CON BIDIR Y RW A OPTIMIZAR
+
+Date = 01_01_2021_06_31_23
+Validation Loss = 7.07143606923711e-07
+Hidden Size = 10
+Number of layers = 1
+Sequence length = 64
+Batch Size = 25
+Learning rate = 0.0027813727720450653
+Number for Moving Average = 2
+Dropout = 0.013747276926729456
+Bidirectional (0:F 1:T) = 0
+Stateful (0:F 1:T) = 1
+Randomized Data (0:F 1:T) = 0
+Number of Samples = 2000
+Maximum Number of Epochs Used = 10
+
+----------------------------------------------------
+
+
+
