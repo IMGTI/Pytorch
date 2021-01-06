@@ -14,6 +14,7 @@ def ext_mounts(data):
     return datasets
 
 def ext_data(file_name):
+    data_wo_mounts = True
     ind = 1
     while True:
         try:
@@ -21,20 +22,27 @@ def ext_data(file_name):
             data = pd.read_excel(file_name, usecols=[0,ind], names=['times', 'defs'])
 
             # Extract mounts (erase artifacts)
-            datasets = ext_mounts(data)
+            if data_wo_mounts:
+                datasets = ext_mounts(data)
 
-            # If datasets is empty, then there is no data, so break
-            if datasets=={}:
-                break
+                # If datasets is empty, then there is no data, so break
+                if datasets=={}:
+                    break
 
-            for ind_data, data in datasets.items():
-                # Create new excel with figures
+                for ind_data, data in datasets.items():
+                    # Create new excel with figures
 
-                writer = ExcelWriter(file_name[:-5] + '_fig_' + str(ind) + '_data_' + str(ind_data) + '.xlsx',  datetime_format='dd-mm-yy hh:mm')
+                    writer = ExcelWriter(file_name[:-5] + '_fig_' + str(ind) + '_data_' + str(ind_data) + '.xlsx',  datetime_format='dd-mm-yy hh:mm')
+
+                    data.to_excel(writer, index=False)
+                    writer.save()
+            else:
+                if np.isnan(data['defs'].values[0]) or data['defs'].values[0]=='':
+                    break
+                writer = ExcelWriter(file_name[:-5] + '_fig_' + str(ind) + '.xlsx',  datetime_format='dd-mm-yy hh:mm')
 
                 data.to_excel(writer, index=False)
                 writer.save()
-
 
             ind += 1
         except:

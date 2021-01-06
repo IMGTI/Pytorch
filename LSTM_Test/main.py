@@ -73,34 +73,34 @@ print('Test input file =', test_file)
 ### Define the Hyperparameters
 
 ## Net parameters
-num_epochs = n_epochs#10
-learning_rate = 0.033908#0.028513#0.0236491#0.033908
+num_epochs = n_epochs
+learning_rate = 0.033908
 input_size = 1
-batch_size = 25#18#30#25   # Batch size is automatically handled in model
+batch_size = 25   # Batch size is automatically handled in model
                     # if -1 then uses 1 batch of full data-length size
-hidden_size = 8#4#9#8
+hidden_size = 8
 num_layers = 1
 num_classes = 1
-bidirectional = False#False#True#False
+bidirectional = False
 dropout = 0
 # Stateful
-stateful = False#True#False#False
+stateful = False
 
 ## Data parameters
 n_avg = 2
 # Random windows for training
-rw = True#False#True#True
+rw = True
 if rw:
     stateful = False
 else:
     stateful = True
 
 ## Test parameters
-fut_pred = 10#9#50#10  # Number of predictions
+fut_pred = 10  # Number of predictions
 
 ## Train parameters
 validate = True
-seq_length = 10#9#50#10    # Train Window
+seq_length = 10    # Train Window
                      # 1h = 12
                      # 5min = 1
 train_size = -fut_pred  # Not necessarily equal to fut_pred
