@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 from torch.autograd import Variable
+from torch.nn import functional as F
 
 class LSTM(nn.Module):
     def __init__(self, batch_size, num_classes, input_size, hidden_size, num_layers, dropout,
@@ -27,10 +28,8 @@ class LSTM(nn.Module):
 
         # CNN-LSTM
 
-        import torch.nn.functional as F
-
         self.kernel_size = 1
-        self.num_filters_cnn = 6
+        self.num_filters_cnn = 20#6
 
         self.conv1 = nn.Conv1d(1, self.num_filters_cnn, self.kernel_size)   # kernel size 1 <=> filter 1x1
         self.pool = nn.MaxPool1d(2, 2)
@@ -42,7 +41,8 @@ class LSTM(nn.Module):
         self.fc = nn.Linear(self.hidden_size*self.ways, self.num_classes)
 
     def forward(self, x, hidden=None):
-        x = x.view(-1, 1, x.size()[-1])  # Change input shape for in_channels=1
+        x = x.view(-1, 1, x.size()[1])  # Change input shape for in_channels=1
+                                        # x.size()[1]==window_size
         x = self.pool(F.relu(self.conv1(x)))
         x = x.view(-1, 5, self.num_filters_cnn) # Reshape output to show each filter output per sequence
 
