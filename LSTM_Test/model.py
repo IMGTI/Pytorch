@@ -28,13 +28,15 @@ class LSTM(nn.Module):
 
         # CNN-LSTM
 
-        self.kernel_size = 1
-        self.num_filters_cnn = 20#6
+        self.kernel_size = 2
+        self.filters_number = 30
 
-        self.conv1 = nn.Conv1d(1, self.num_filters_cnn, self.kernel_size)   # kernel size 1 <=> filter 1x1
-        self.pool = nn.MaxPool1d(2, 2)
+        self.conv1 = nn.Conv1d(1, self.filters_number, self.kernel_size)   # kernel size 1 <=> filter 1x1
+        self.conv2 = nn.Conv1d(self.filters_number, self.filters_number, self.kernel_size)
+        self.conv3 = nn.Conv1d(self.filters_number, self.filters_number, self.kernel_size)
+        #self.pool = nn.MaxPool1d(2, 2)
 
-        self.lstm = nn.LSTM(input_size=self.num_filters_cnn, hidden_size=hidden_size,
+        self.lstm = nn.LSTM(input_size=self.filters_number, hidden_size=hidden_size,
                             num_layers=num_layers, batch_first=True,
                             dropout=dropout, bidirectional=bidirectional)
 
@@ -43,8 +45,12 @@ class LSTM(nn.Module):
     def forward(self, x, hidden=None):
         x = x.view(-1, 1, x.size()[1])  # Change input shape for in_channels=1
                                         # x.size()[1]==window_size
-        x = self.pool(F.relu(self.conv1(x)))
-        x = x.view(-1, 5, self.num_filters_cnn) # Reshape output to show each filter output per sequence
+        #x = self.pool(F.relu(self.conv1(x)))
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
+        x = F.relu(self.conv3(x))
+        x = torch.transpose(x, 1, 2) # Reshape output to show each filter output per sequence
+                                     # because LSTM needs that input shape
 
         # Propagate input through LSTM
         if hidden:
@@ -58,7 +64,7 @@ class LSTM(nn.Module):
 
         return out, hidden
 
-'''
+        '''
         # LSTM
 
         self.lstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size,
@@ -79,4 +85,4 @@ class LSTM(nn.Module):
         out = self.fc(ula[:,-1,:])
 
         return out, hidden
-'''
+        '''
