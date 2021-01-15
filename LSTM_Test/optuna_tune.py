@@ -9,7 +9,7 @@ from torch.utils.data import random_split
 import torchvision
 import torchvision.transforms as transforms
 import optuna
-from model import LSTM
+from model import CNNLSTM
 from torch.autograd import Variable
 from sklearn.preprocessing import StandardScaler
 import joblib
@@ -99,7 +99,7 @@ def load_data(na, data_dir):
     data_path = '../../Datos_Radares'
 
     fig_num = 1
-    file = data_path + '/Figura_de_control/Figura_de_control_desde_feb_fig' + str(fig_num) + '.xlsx'
+    file = data_path + '/Figura_de_control/Figura_de_control_desde_feb_fig_' + str(fig_num) + '.xlsx'
 
     times, defs = ext_data(data_dir + '/' + file)
     times, defs = data_smooth(times, defs, N_avg=na)
@@ -180,12 +180,14 @@ def train_model(trial):
     do = trial.suggest_uniform('do', 0.01, 0.05)
     hs = trial.suggest_int('hs', 1, 100)#10)
     nl = trial.suggest_int('nl', 1, 10)#4)
-    sl = trial.suggest_int('sl', 1, 200)#100)
+    sl = trial.suggest_int('sl', 15, 200)#100)
     bs = trial.suggest_int('bs', 1, 100)#50)
     lr = trial.suggest_loguniform('lr', 1e-4, 1e-1)
     bd = trial.suggest_int('bd', 0, 1)
     st = trial.suggest_int('st', 0, 1)
     rd = trial.suggest_int('rd', 0, 1)
+    fil = trial.suggest_int('fn', 1, 30)
+    ker = trial.suggest_int('ks', 1, 5)
 
     # Training parameters
     max_nepochs = trial.suggest_int('max_nepochs', 10, 10)
@@ -210,7 +212,8 @@ def train_model(trial):
     defsX, defsY, times_dataY, time_step, rev_rand = treat_data(times, defs, sl, random_win=rw)
 
     # Initialize model
-    lstm = LSTM(bs, 1, 1, hs, nl, do, bid, seed)
+    #lstm = LSTM(bs, 1, 1, hs, nl, do, bid, seed)
+    lstm = CNNLSTM(bs, 1, 1, hs, nl, do, bid, fil, ker, seed)
     # Send model to device
     lstm.to(device)
 
@@ -345,6 +348,8 @@ def hyp_tune(num_samples=10, max_num_epochs=10):
                    best_trial_params['bd'],
                    best_trial_params['st'],
                    best_trial_params['rd'],
+                   best_trial_params['ks'],
+                   best_trial_params['fn'],
                    best_trial_params['max_nepochs']]
     print('Best configuration parameters:')
     print('------------------------------')
@@ -359,7 +364,9 @@ def hyp_tune(num_samples=10, max_num_epochs=10):
           'Bidirectional (0:F 1:T) = ', best_config[8], '\n',
           'Stateful (0:F 1:T) = ', best_config[9], '\n',
           'Randomized Data (0:F 1:T) = ', best_config[10], '\n',
-          'Maximum Number of Epochs Used = ', best_config[11])
+          'Kernel Size = ', best_config[11], '\n',
+          'Number of Filters = ', best_config[12], '\n',
+          'Maximum Number of Epochs Used = ', best_config[13])
 
     # Store best parameters in file
     best_params_file = open('best_params_optuna.txt', 'a')
@@ -376,8 +383,10 @@ def hyp_tune(num_samples=10, max_num_epochs=10):
     best_params_file.write('Bidirectional (0:F 1:T) = ' + str(best_config[8]) + '\n')
     best_params_file.write('Stateful (0:F 1:T) = ' + str(best_config[9]) + '\n')
     best_params_file.write('Randomized Data (0:F 1:T) = ' + str(best_config[10]) + '\n')
+    best_params_file.write('Kernel Size = ' + str(best_config[11]) + '\n')
+    best_params_file.write('Number of Filters = ' + str(best_config[12]) + '\n')
     best_params_file.write('Number of Samples = ' + str(num_samples) + '\n')
-    best_params_file.write('Maximum Number of Epochs Used = ' + str(best_config[11]) + '\n')
+    best_params_file.write('Maximum Number of Epochs Used = ' + str(best_config[13]) + '\n')
     best_params_file.write('\n')
     best_params_file.write('----------------------------------------------------' + '\n')
     best_params_file.write('\n')
