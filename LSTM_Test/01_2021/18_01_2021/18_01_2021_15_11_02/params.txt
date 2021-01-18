@@ -1,0 +1,4 @@
+current  = 01_2021/18_01_2021/18_01_2021_15_11_02
+train_arg  = True
+test_arg  = False
+test_file  = 

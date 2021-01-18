@@ -6,6 +6,7 @@ import datetime as dt
 from torch.autograd import Variable
 from sklearn.preprocessing import StandardScaler
 import joblib
+import os
 
 class Data(object):
     def __init__(self, seed):
@@ -198,18 +199,48 @@ class Data(object):
 
         # Treat data
         x, y = self.sliding_windows(training_data, seq_length)
-        if random_win:
-            x, y = self.random_win(x, y)
+        #if random_win:
+        #    x, y = self.random_win(x, y)
 
-        self.dataX = Variable(torch.Tensor(np.array(x)))
-        self.dataY = Variable(torch.Tensor(np.array(y)))
+        #self.dataX = Variable(torch.Tensor(np.array(x)))
+        #self.dataY = Variable(torch.Tensor(np.array(y)))
+        self.dataX = np.array(x)
+        self.dataY = np.array(y)
 
-        self.trainX = Variable(torch.Tensor(np.array(x[0:train_size])))
-        self.trainY = Variable(torch.Tensor(np.array(y[0:train_size])))
+        #self.trainX = Variable(torch.Tensor(np.array(x[0:train_size])))
+        #self.trainY = Variable(torch.Tensor(np.array(y[0:train_size])))
 
-        self.testX = Variable(torch.Tensor(np.array(x[train_size:])))
-        self.testY = Variable(torch.Tensor(np.array(y[train_size:])))
+        #self.testX = Variable(torch.Tensor(np.array(x[train_size:])))
+        #self.testY = Variable(torch.Tensor(np.array(y[train_size:])))
 
         # Times according with dataX and dataY dimensions
-        time_step = np.absolute(self.times[0] - self.times[1])
-        self.times_dataY = (self.times + (seq_length*time_step))[:-seq_length-1]
+        #time_step = np.absolute(self.times[0] - self.times[1])
+        #self.times_dataY = (self.times + (seq_length*time_step))[:-seq_length-1]
+
+    def data_loader(self, data_path, n_avg, current, params_name, train_size, seq_length, random_win=False):
+        from tqdm import tqdm
+        for ind, file in enumerate(tqdm(os.listdir(data_path), total=len(os.listdir(data_path)))):
+            self.ext_data(data_path + '/' + file)
+            self.data_smooth(N_avg=n_avg)
+            self.plot_data(current, params_name + '_dataset_' + str(ind))
+            self.treat_data(train_size, seq_length, current, random_win=rw)
+
+            if ind==0:
+                self.alldataX = self.dataX
+                self.alldataY = self.dataY
+            else:
+                self.alldataX = np.vstack([self.alldataX, self.dataX])
+                self.alldataY = np.vstack([self.alldataY, self.dataY])
+
+        # Randomized all windows
+        if random_win:
+            self.alldataX, self.alldataY = self.random_win(self.alldataX, self.alldataY)
+
+        self.times_dataY = np.arange(len(self.alldataY))
+        self.alldataX = Variable(torch.Tensor(np.array(self.alldataX)))
+        self.alldataY = Variable(torch.Tensor(np.array(self.alldataY)))
+
+        self.dataX = self.alldataX
+        self.dataY = self.alldataY
+
+        pass

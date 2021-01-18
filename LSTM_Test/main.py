@@ -96,12 +96,12 @@ else:
     stateful = True
 
 ## Test parameters
-fut_pred = 897#10  # Number of predictions
+fut_pred = 10  # Number of predictions
 
 ## Train parameters
 validate = True
-patience = 10
-seq_length = 897#10    # Train Window
+patience = 20#10
+seq_length = 10    # Train Window
                      # 1h = 12
                      # 5min = 1
 train_size = -fut_pred  # Not necessarily equal to fut_pred
@@ -161,10 +161,12 @@ if train_arg:
     file = train_file
 
     data = Data(seed)
-    data.ext_data(file)
-    data.data_smooth(N_avg=n_avg)
-    data.plot_data(current, params_name)
-    data.treat_data(train_size, seq_length, current, random_win=rw)
+    #data.ext_data(file)
+    #data.data_smooth(N_avg=n_avg)
+    #data.plot_data(current, params_name)
+    #data.treat_data(train_size, seq_length, current, random_win=rw)
+    data_path = '../../Datos_Radares/Prueba_all_data'
+    data.data_loader(data_path, n_avg, current, params_name, train_size, seq_length, random_win=rw)
 
     ## Train with data
     train = Train(batch_size, num_classes, input_size, hidden_size, num_layers, dropout,

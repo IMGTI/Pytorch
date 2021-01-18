@@ -9,7 +9,7 @@ from torch.utils.data import random_split
 import torchvision
 import torchvision.transforms as transforms
 import optuna
-from model import CNNLSTM
+from model import LSTM#CNNLSTM
 from torch.autograd import Variable
 from sklearn.preprocessing import StandardScaler
 import joblib
@@ -64,46 +64,35 @@ else:
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
-def load_data(na, data_dir):
-    def ext_data(file):
-        data = pd.read_excel(file, usecols=[0,1], names=['times', 'defs'])
 
-        try:
-            times = np.array([dt.datetime.timestamp(x) for x in data['times']])
-        except:
-            times = np.array(data['times'])
+def ext_data(file):
+    data = pd.read_excel(file, usecols=[0,1], names=['times', 'defs'])
 
-        # Convert times from seconds to days
-        times = (times/(3600*24) -
-                 (times/(3600*24))[0])
+    try:
+        times = np.array([dt.datetime.timestamp(x) for x in data['times']])
+    except:
+        times = np.array(data['times'])
 
-        defs = np.array(data['defs'])
-        return times, defs
+    # Convert times from seconds to days
+    times = (times/(3600*24) -
+             (times/(3600*24))[0])
 
-    def data_smooth(times, defs, N_avg=2):
-        def mov_avg(x, N):
-            cumsum = np.cumsum(np.insert(x, 0, 0))
-            return (cumsum[N:] - cumsum[:-N]) / float(N)
+    defs = np.array(data['defs'])
+    return times, defs
 
-        # Apply Moving average
+def data_smooth(times, defs, N_avg=2):
+    def mov_avg(x, N):
+        cumsum = np.cumsum(np.insert(x, 0, 0))
+        return (cumsum[N:] - cumsum[:-N]) / float(N)
 
-        #N_avg = 2#5#2     # 2 para hacer una linea recta (tendencia) y al menos
-                          # 5 puntos para tendencia valida (entonces con N_avg=2
-                          # se logran 2-3 smooth ptos por cada 5)
+    # Apply Moving average
 
-        times = mov_avg(times, N_avg)
-        defs = mov_avg(defs, N_avg)
-        return times, defs
+    #N_avg = 2#5#2     # 2 para hacer una linea recta (tendencia) y al menos
+                      # 5 puntos para tendencia valida (entonces con N_avg=2
+                      # se logran 2-3 smooth ptos por cada 5)
 
-    # Path to data
-    data_path = '../../Datos_Radares'
-
-    fig_num = 1
-    file = data_path + '/Figura_de_control/Figura_de_control_desde_feb_fig_' + str(fig_num) + '.xlsx'
-
-    times, defs = ext_data(data_dir + '/' + file)
-    times, defs = data_smooth(times, defs, N_avg=na)
-
+    times = mov_avg(times, N_avg)
+    defs = mov_avg(defs, N_avg)
     return times, defs
 
 def treat_data(times, defs, seq_length, random_win=False):
@@ -153,24 +142,58 @@ def treat_data(times, defs, seq_length, random_win=False):
 
     # Treat data
     x, y = sliding_windows(training_data, seq_length)
-    if random_win:
-        x, y, rev_rand = random_win(x, y)
+    #if random_win:
+    #    x, y, rev_rand = random_win(x, y)
 
-    dataX = Variable(torch.Tensor(np.array(x)))
-    dataY = Variable(torch.Tensor(np.array(y)))
+    #dataX = Variable(torch.Tensor(np.array(x)))
+    #dataY = Variable(torch.Tensor(np.array(y)))
+    dataX = np.array(x)
+    dataY = np.array(y)
 
-    trainX = Variable(torch.Tensor(np.array(x)))
-    trainY = Variable(torch.Tensor(np.array(y)))
+    #trainX = Variable(torch.Tensor(np.array(x)))
+    #trainY = Variable(torch.Tensor(np.array(y)))
 
     # Times according with dataX and dataY dimensions
-    time_step = np.absolute(times[0] - times[1])
-    times_dataY = (times + (seq_length*time_step))[:-seq_length-1]
+    #time_step = np.absolute(times[0] - times[1])
+    #times_dataY = (times + (seq_length*time_step))[:-seq_length-1]
 
-    return dataX, dataY, times_dataY, time_step, rev_rand
+    #return dataX, dataY, times_dataY, time_step, rev_rand
+    return dataX, dataY
+
+def data_loader(data_path, n_avg, seq_length, random_win=False):
+    def random_win(x, y):
+        ind_rand = np.random.permutation(len(y))
+        rev_rand = np.argsort(ind_rand)
+        return x[ind_rand], y[ind_rand], rev_rand
+    for ind, file in enumerate(os.listdir(data_path)):
+        times, defs = ext_data(data_path + '/' + file)
+        times, defs = data_smooth(times, defs, N_avg=n_avg)
+        dataX, dataY = treat_data(times, defs, seq_length, random_win=random_win)
+
+        if ind==0:
+            alldataX = dataX
+            alldataY = dataY
+        else:
+            alldataX = np.vstack([alldataX, dataX])
+            alldataY = np.vstack([alldataY, dataY])
+
+    # Randomized all windows
+    if random_win:
+        alldataX, alldataY, rev_rand = random_win(alldataX, alldataY)
+
+    times_dataY = np.arange(len(alldataY))
+    alldataX = Variable(torch.Tensor(np.array(alldataX)))
+    alldataY = Variable(torch.Tensor(np.array(alldataY)))
+
+    dataX = alldataX
+    dataY = alldataY
+
+    return dataX, dataY, times_dataY
 
 def train_model(trial):
     # Data directory
-    data_dir = 'D:/Documents/GitHub/Pytorch/LSTM_Test'
+    #data_dir = 'D:/Documents/GitHub/Pytorch/LSTM_Test'
+    data_path = 'D:/Documents/GitHub/Datos_Radares/Prueba_all_data'
 
     # Make validation while training
     validate = True
@@ -184,10 +207,10 @@ def train_model(trial):
     bs = trial.suggest_int('bs', 1, 100)#50)
     lr = trial.suggest_loguniform('lr', 1e-4, 1e-1)
     bd = trial.suggest_int('bd', 0, 1)
-    st = trial.suggest_int('st', 0, 1)
-    rd = trial.suggest_int('rd', 0, 1)
-    fil = trial.suggest_int('fn', 1, 30)
-    ker = trial.suggest_int('ks', 1, 5)
+    st = trial.suggest_int('st', 0, 0)#0, 1)
+    rd = trial.suggest_int('rd', 1, 1)#0, 1)
+    #fil = trial.suggest_int('fn', 1, 30)
+    #ker = trial.suggest_int('ks', 1, 5)
 
     # Training parameters
     max_nepochs = trial.suggest_int('max_nepochs', 10, 10)
@@ -208,12 +231,14 @@ def train_model(trial):
     else:
         rw = False
     # Load data
-    times, defs = load_data(na, data_dir)
-    defsX, defsY, times_dataY, time_step, rev_rand = treat_data(times, defs, sl, random_win=rw)
+
+    #times, defs = load_data(na, data_dir)
+    #defsX, defsY, times_dataY, time_step, rev_rand = treat_data(times, defs, sl, random_win=rw)
+    defsX, defsY, times_dataY = data_loader(data_path, na, sl, random_win=rw)
 
     # Initialize model
-    #lstm = LSTM(bs, 1, 1, hs, nl, do, bid, seed)
-    lstm = CNNLSTM(bs, 1, 1, hs, nl, do, bid, fil, ker, seed)
+    lstm = LSTM(bs, 1, 1, hs, nl, do, bid, seed)
+    #lstm = CNNLSTM(bs, 1, 1, hs, nl, do, bid, fil, ker, seed)
     # Send model to device
     lstm.to(device)
 
@@ -348,8 +373,8 @@ def hyp_tune(num_samples=10, max_num_epochs=10):
                    best_trial_params['bd'],
                    best_trial_params['st'],
                    best_trial_params['rd'],
-                   best_trial_params['ks'],
-                   best_trial_params['fn'],
+                   #best_trial_params['ks'],
+                   #best_trial_params['fn'],
                    best_trial_params['max_nepochs']]
     print('Best configuration parameters:')
     print('------------------------------')
@@ -364,9 +389,10 @@ def hyp_tune(num_samples=10, max_num_epochs=10):
           'Bidirectional (0:F 1:T) = ', best_config[8], '\n',
           'Stateful (0:F 1:T) = ', best_config[9], '\n',
           'Randomized Data (0:F 1:T) = ', best_config[10], '\n',
-          'Kernel Size = ', best_config[11], '\n',
-          'Number of Filters = ', best_config[12], '\n',
-          'Maximum Number of Epochs Used = ', best_config[13])
+          'Maximum Number of Epochs Used = ', best_config[11])
+          #'Kernel Size = ', best_config[11], '\n',
+          #'Number of Filters = ', best_config[12], '\n',
+          #'Maximum Number of Epochs Used = ', best_config[13])
 
     # Store best parameters in file
     best_params_file = open('best_params_optuna.txt', 'a')
@@ -383,10 +409,12 @@ def hyp_tune(num_samples=10, max_num_epochs=10):
     best_params_file.write('Bidirectional (0:F 1:T) = ' + str(best_config[8]) + '\n')
     best_params_file.write('Stateful (0:F 1:T) = ' + str(best_config[9]) + '\n')
     best_params_file.write('Randomized Data (0:F 1:T) = ' + str(best_config[10]) + '\n')
-    best_params_file.write('Kernel Size = ' + str(best_config[11]) + '\n')
-    best_params_file.write('Number of Filters = ' + str(best_config[12]) + '\n')
     best_params_file.write('Number of Samples = ' + str(num_samples) + '\n')
-    best_params_file.write('Maximum Number of Epochs Used = ' + str(best_config[13]) + '\n')
+    best_params_file.write('Maximum Number of Epochs Used = ' + str(best_config[11]) + '\n')
+    #best_params_file.write('Kernel Size = ' + str(best_config[11]) + '\n')
+    #best_params_file.write('Number of Filters = ' + str(best_config[12]) + '\n')
+    #best_params_file.write('Number of Samples = ' + str(num_samples) + '\n')
+    #best_params_file.write('Maximum Number of Epochs Used = ' + str(best_config[13]) + '\n')
     best_params_file.write('\n')
     best_params_file.write('----------------------------------------------------' + '\n')
     best_params_file.write('\n')
