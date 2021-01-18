@@ -96,11 +96,12 @@ else:
     stateful = True
 
 ## Test parameters
-fut_pred = 10  # Number of predictions
+fut_pred = 897#10  # Number of predictions
 
 ## Train parameters
 validate = True
-seq_length = 10    # Train Window
+patience = 10
+seq_length = 897#10    # Train Window
                      # 1h = 12
                      # 5min = 1
 train_size = -fut_pred  # Not necessarily equal to fut_pred
@@ -118,7 +119,8 @@ params_name = ('_e' + str(num_epochs) +
                '_na' + str(n_avg) +
                '_rw' + str(rw) +
                '_drp' + str(dropout) +
-               '_stf' + str(stateful))
+               '_stf' + str(stateful) +
+               '_pat' + str(patience))
 
 ### Create directory for each run and different hyperparameters
 
@@ -168,7 +170,7 @@ if train_arg:
     train = Train(batch_size, num_classes, input_size, hidden_size, num_layers, dropout,
                   bidirectional, state_dict_path, current, params_name, seed, stateful=stateful)
     train.train_model(batch_size, learning_rate, num_epochs, data.times_dataY,
-                      data.dataX, data.dataY, validate=validate)
+                      data.dataX, data.dataY, validate=validate, patience=patience)
 
 ### Test
 if test_arg:
@@ -224,5 +226,6 @@ params_file.write('fut_pred  = ' + str(fut_pred) + '\n')
 params_file.write('validate  = ' + str(validate) + '\n')
 params_file.write('seq_length  = ' + str(seq_length) + '\n')
 params_file.write('train_size  = ' + str(train_size) + '\n')
+params_file.write('patience  = ' + str(patience) + '\n')
 
 params_file.close()

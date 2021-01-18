@@ -111,5 +111,20 @@ Maximum Number of Epochs Used = 10
 
 ----------------------------------------------------
 
+Date = 18_01_2021_09_31_00
+Validation Loss = 5.178395391070012e-06
+Hidden Size = 8
+Number of layers = 1
+Sequence length = 897
+Batch Size = 25
+Learning rate = 0.03390899215886905
+Number for Moving Average = 2
+Dropout = 0.029128810216555334
+Bidirectional (0:F 1:T) = 0
+Stateful (0:F 1:T) = 0
+Randomized Data (0:F 1:T) = 1
+Number of Samples = 1000
+Maximum Number of Epochs Used = 10
+Patience = 10
 
 
