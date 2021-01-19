@@ -64,8 +64,55 @@ else:
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
-
 def ext_data(file):
+    def fill_data(y):
+        # Look for nans
+        ind_fill = np.where(np.isnan(y))[0]
+
+        if len(ind_fill)==0:
+            return y, None
+        else:
+            # Form groups of ids
+            ind_fill_groups = []
+
+            i = 0
+            for ind, val in enumerate(ind_fill):
+                if ind!=0:
+                    if np.absolute(ind_fill[ind-1]-ind_fill[ind])>1:
+                        ind_inicial = i
+                        ind_final = ind
+                        # Add index group
+                        ind_fill_groups.append(ind_fill[ind_inicial:ind_final])
+                        # Set inicial index to new one
+                        i = ind_final
+            if ind_fill_groups==[]:
+                ind_fill_groups.append(ind_fill)
+
+            for ind_fill in ind_fill_groups:
+                # Select boundary values
+                try:
+                    boundaries = (y[ind_fill[0]-1], y[ind_fill[-1]+1])
+                except:
+                    try:
+                        boundaries = (y[ind_fill[-1]+1], y[ind_fill[-1]+1])
+                    except:
+                        boundaries = (y[ind_fill[0]-1], y[ind_fill[0]-1])
+
+                # Fill with random data between boundaries
+                for ind in ind_fill:
+                    fill = np.random.uniform(boundaries[0], boundaries[1])
+                    y[ind] = fill
+
+            # Return indices of NaNs at the beginning and at the end
+            ind_beg = 0
+            ind_end = len(y)-1
+            if ind_fill_groups[0][0]==0:
+                ind_beg = ind_fill_groups[0][-1]  # Last index of first group
+            if ind_fill_groups[-1][-1]==(len(y)-1):
+                ind_end = ind_fill_groups[-1][0]  # First index of last group
+
+            return y, (ind_beg, ind_end)
+
     data = pd.read_excel(file, usecols=[0,1], names=['times', 'defs'])
 
     try:
@@ -77,7 +124,13 @@ def ext_data(file):
     times = (times/(3600*24) -
              (times/(3600*24))[0])
 
-    defs = np.array(data['defs'])
+    defs, ind_beg_end = fill_data(np.array(data['defs']))
+
+    # Erase NaNs values at the beginning and at the end
+    if ind_beg_end:
+        defs = defs[ind_beg_end[0]:ind_beg_end[1]]
+        times = times[ind_beg_end[0]:ind_beg_end[1]]
+
     return times, defs
 
 def data_smooth(times, defs, N_avg=2):
@@ -95,11 +148,7 @@ def data_smooth(times, defs, N_avg=2):
     defs = mov_avg(defs, N_avg)
     return times, defs
 
-def treat_data(times, defs, seq_length, random_win=False):
-    def random_win(x, y):
-        ind_rand = np.random.permutation(len(y))
-        rev_rand = np.argsort(ind_rand)
-        return x[ind_rand], y[ind_rand], rev_rand
+def treat_data(times, defs, seq_length):
     def reshape_data(data):
         # Reshape data array from 1D to 2D
         data = data.reshape(-1, 1)
@@ -142,22 +191,10 @@ def treat_data(times, defs, seq_length, random_win=False):
 
     # Treat data
     x, y = sliding_windows(training_data, seq_length)
-    #if random_win:
-    #    x, y, rev_rand = random_win(x, y)
 
-    #dataX = Variable(torch.Tensor(np.array(x)))
-    #dataY = Variable(torch.Tensor(np.array(y)))
     dataX = np.array(x)
     dataY = np.array(y)
 
-    #trainX = Variable(torch.Tensor(np.array(x)))
-    #trainY = Variable(torch.Tensor(np.array(y)))
-
-    # Times according with dataX and dataY dimensions
-    #time_step = np.absolute(times[0] - times[1])
-    #times_dataY = (times + (seq_length*time_step))[:-seq_length-1]
-
-    #return dataX, dataY, times_dataY, time_step, rev_rand
     return dataX, dataY
 
 def data_loader(data_path, n_avg, seq_length, random_win=False):
@@ -168,11 +205,11 @@ def data_loader(data_path, n_avg, seq_length, random_win=False):
     for ind, file in enumerate(os.listdir(data_path)):
         times, defs = ext_data(data_path + '/' + file)
         times, defs = data_smooth(times, defs, N_avg=n_avg)
-        dataX, dataY = treat_data(times, defs, seq_length, random_win=random_win)
+        dataX, dataY = treat_data(times, defs, seq_length)
 
         if ind==0:
-            alldataX = dataX
-            alldataY = dataY
+            alldataX = dataX.copy()
+            alldataY = dataY.copy()
         else:
             alldataX = np.vstack([alldataX, dataX])
             alldataY = np.vstack([alldataY, dataY])
@@ -185,8 +222,8 @@ def data_loader(data_path, n_avg, seq_length, random_win=False):
     alldataX = Variable(torch.Tensor(np.array(alldataX)))
     alldataY = Variable(torch.Tensor(np.array(alldataY)))
 
-    dataX = alldataX
-    dataY = alldataY
+    dataX = alldataX.detach().clone()
+    dataY = alldataY.detach().clone()
 
     return dataX, dataY, times_dataY
 
@@ -200,7 +237,7 @@ def train_model(trial):
 
     # Model Parameters
     na = trial.suggest_int('na', 2, 2)
-    do = trial.suggest_uniform('do', 0.01, 0.05)
+    do = trial.suggest_uniform('do', 0, 0)#0.01, 0.05)
     hs = trial.suggest_int('hs', 1, 100)#10)
     nl = trial.suggest_int('nl', 1, 10)#4)
     sl = trial.suggest_int('sl', 15, 200)#100)
@@ -232,13 +269,12 @@ def train_model(trial):
         rw = False
     # Load data
 
-    #times, defs = load_data(na, data_dir)
-    #defsX, defsY, times_dataY, time_step, rev_rand = treat_data(times, defs, sl, random_win=rw)
     defsX, defsY, times_dataY = data_loader(data_path, na, sl, random_win=rw)
 
     # Initialize model
     lstm = LSTM(bs, 1, 1, hs, nl, do, bid, seed)
     #lstm = CNNLSTM(bs, 1, 1, hs, nl, do, bid, fil, ker, seed)
+    
     # Send model to device
     lstm.to(device)
 
@@ -249,7 +285,7 @@ def train_model(trial):
 
     # Define validation set and training set
     if validate:
-        ind_val = int(len(defsY) * 0.25)  # Select 25% of data as validation
+        ind_val = int(len(defsY) * 0.75)  # Select 25% of data as validation
         val_defsX = defsX[ind_val:]
         val_defsY = defsY[ind_val:]
         defsX = defsX[:ind_val]

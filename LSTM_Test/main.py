@@ -161,10 +161,6 @@ if train_arg:
     file = train_file
 
     data = Data(seed)
-    #data.ext_data(file)
-    #data.data_smooth(N_avg=n_avg)
-    #data.plot_data(current, params_name)
-    #data.treat_data(train_size, seq_length, current, random_win=rw)
     data_path = '../../Datos_Radares/Prueba_all_data'
     data.data_loader(data_path, n_avg, current, params_name, train_size, seq_length, random_win=rw)
 

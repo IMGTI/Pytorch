@@ -191,7 +191,7 @@ class Data(object):
         pass
 
 
-    def treat_data(self, train_size, seq_length, current, random_win=False):
+    def treat_data(self, train_size, seq_length, current):
         # Load data into sequences
         training_set = self.defs
 
@@ -199,23 +199,9 @@ class Data(object):
 
         # Treat data
         x, y = self.sliding_windows(training_data, seq_length)
-        #if random_win:
-        #    x, y = self.random_win(x, y)
 
-        #self.dataX = Variable(torch.Tensor(np.array(x)))
-        #self.dataY = Variable(torch.Tensor(np.array(y)))
         self.dataX = np.array(x)
         self.dataY = np.array(y)
-
-        #self.trainX = Variable(torch.Tensor(np.array(x[0:train_size])))
-        #self.trainY = Variable(torch.Tensor(np.array(y[0:train_size])))
-
-        #self.testX = Variable(torch.Tensor(np.array(x[train_size:])))
-        #self.testY = Variable(torch.Tensor(np.array(y[train_size:])))
-
-        # Times according with dataX and dataY dimensions
-        #time_step = np.absolute(self.times[0] - self.times[1])
-        #self.times_dataY = (self.times + (seq_length*time_step))[:-seq_length-1]
 
     def data_loader(self, data_path, n_avg, current, params_name, train_size, seq_length, random_win=False):
         from tqdm import tqdm
@@ -223,11 +209,11 @@ class Data(object):
             self.ext_data(data_path + '/' + file)
             self.data_smooth(N_avg=n_avg)
             self.plot_data(current, params_name + '_dataset_' + str(ind))
-            self.treat_data(train_size, seq_length, current, random_win=rw)
+            self.treat_data(train_size, seq_length, current)
 
             if ind==0:
-                self.alldataX = self.dataX
-                self.alldataY = self.dataY
+                self.alldataX = self.dataX.copy()
+                self.alldataY = self.dataY.copy()
             else:
                 self.alldataX = np.vstack([self.alldataX, self.dataX])
                 self.alldataY = np.vstack([self.alldataY, self.dataY])
@@ -240,7 +226,7 @@ class Data(object):
         self.alldataX = Variable(torch.Tensor(np.array(self.alldataX)))
         self.alldataY = Variable(torch.Tensor(np.array(self.alldataY)))
 
-        self.dataX = self.alldataX
-        self.dataY = self.alldataY
+        self.dataX = self.alldataX.detach().clone()
+        self.dataY = self.alldataY.detach().clone()
 
         pass
