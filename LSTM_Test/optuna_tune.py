@@ -210,12 +210,7 @@ def data_loader(data_path, n_avg, seq_length, random_win=False):
         if ind==0:
             alldataX = dataX.copy()
             alldataY = dataY.copy()
-            print(len(alldataX))
         else:
-            print(len(alldataX))
-            print(len(alldataY))
-            print(len(dataX))
-            print(len(dataY))
             if len(alldataX)!=0 and len(dataX)!=0:
                 alldataX = np.vstack((alldataX, dataX))
                 alldataY = np.vstack((alldataY, dataY))
