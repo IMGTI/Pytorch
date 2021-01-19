@@ -210,9 +210,18 @@ def data_loader(data_path, n_avg, seq_length, random_win=False):
         if ind==0:
             alldataX = dataX.copy()
             alldataY = dataY.copy()
+            print(len(alldataX))
         else:
-            alldataX = np.vstack((alldataX, dataX))
-            alldataY = np.vstack((alldataY, dataY))
+            print(len(alldataX))
+            print(len(alldataY))
+            print(len(dataX))
+            print(len(dataY))
+            if len(alldataX)!=0 and len(dataX)!=0:
+                alldataX = np.vstack((alldataX, dataX))
+                alldataY = np.vstack((alldataY, dataY))
+            elif len(dataX)!=0:
+                alldataX = dataX.copy()
+                alldataY = dataY.copy()
 
     # Randomized all windows
     if random_win:
@@ -240,7 +249,7 @@ def train_model(trial):
     do = trial.suggest_uniform('do', 0, 0)#0.01, 0.05)
     hs = trial.suggest_int('hs', 1, 100)#10)
     nl = trial.suggest_int('nl', 1, 10)#4)
-    sl = trial.suggest_int('sl', 15, 200)#100)
+    sl = trial.suggest_int('sl', 10000, 10000)#15, 200)#100)
     bs = trial.suggest_int('bs', 1, 100)#50)
     lr = trial.suggest_loguniform('lr', 1e-4, 1e-1)
     bd = trial.suggest_int('bd', 0, 1)
