@@ -211,8 +211,8 @@ def data_loader(data_path, n_avg, seq_length, random_win=False):
             alldataX = dataX.copy()
             alldataY = dataY.copy()
         else:
-            alldataX = np.vstack([alldataX, dataX])
-            alldataY = np.vstack([alldataY, dataY])
+            alldataX = np.vstack((alldataX, dataX))
+            alldataY = np.vstack((alldataY, dataY))
 
     # Randomized all windows
     if random_win:
@@ -274,7 +274,7 @@ def train_model(trial):
     # Initialize model
     lstm = LSTM(bs, 1, 1, hs, nl, do, bid, seed)
     #lstm = CNNLSTM(bs, 1, 1, hs, nl, do, bid, fil, ker, seed)
-    
+
     # Send model to device
     lstm.to(device)
 

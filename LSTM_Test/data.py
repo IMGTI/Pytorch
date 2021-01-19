@@ -215,8 +215,8 @@ class Data(object):
                 self.alldataX = self.dataX.copy()
                 self.alldataY = self.dataY.copy()
             else:
-                self.alldataX = np.vstack([self.alldataX, self.dataX])
-                self.alldataY = np.vstack([self.alldataY, self.dataY])
+                self.alldataX = np.vstack((self.alldataX, self.dataX))
+                self.alldataY = np.vstack((self.alldataY, self.dataY))
 
         # Randomized all windows
         if random_win:
