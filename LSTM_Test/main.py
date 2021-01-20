@@ -18,11 +18,11 @@ def arg_parser(argv):
     test_arg = False
     num_epochs = 100
     test_file = ''
-    train_file = ''
+    data_path_arg = ''
     try:
-        opts, args = getopt.getopt(argv,"hFt:r:e:n:",["train=","trfile=","tefile=","nepoch="])
+        opts, args = getopt.getopt(argv,"hFt:r:e:n:",["train=","trdatapath=","tefile=","nepoch="])
     except getopt.GetoptError:
-        print('argparser.py -t <True> -r <train_file> -e <test_file>')
+        print('argparser.py -t <True> -r <data_path> -e <test_file>')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
@@ -30,12 +30,12 @@ def arg_parser(argv):
             print('-t: Train network (True/False)')
             print('-F: Force training and testing (-t True will not test)')
             print('-n: Number of epochs to use in training')
-            print('-r: Input file for training')
+            print('-r: Path of files for training')
             print('-e: Input file for testing')
             print('-h: Show help')
             print('--------- Example usage ----------')
             print('For training:')
-            print('argparser.py (-t True)/(-F) -r <trfile> -n <epochs>')
+            print('argparser.py (-t True)/(-F) -r <data_path> -n <epochs>')
             print('For testing:')
             print('argparser.py -t False -e <test_file>')
             sys.exit()
@@ -43,8 +43,8 @@ def arg_parser(argv):
             train_arg = True
             test_arg = True
             print('Forcing training and testing...')
-        elif opt in ("-r", "--trfile"):
-            train_file = arg
+        elif opt in ("-r", "--trdatapath"):
+            data_path_arg = arg
         elif opt in ("-e", "--tefile"):
             test_file = arg
         elif opt in ("-n", "--nepoch="):
@@ -56,18 +56,18 @@ def arg_parser(argv):
             else:
                 train_arg = False
                 test_arg = True
-    if train_file=='' and test_file=='':
+    if data_path_arg=='' and test_file=='':
         print('---------------------------------------------------')
         print('Please, enter a valid file for training or testing.')
         print('---------------------------------------------------')
-    return (train_arg, test_arg, train_file, test_file, num_epochs)
+    return (train_arg, test_arg, data_path_arg, test_file, num_epochs)
 
 if __name__ == "__main__":
-   train_arg, test_arg, train_file, test_file, n_epochs = arg_parser(sys.argv[1:])
+   train_arg, test_arg, data_path_arg, test_file, n_epochs = arg_parser(sys.argv[1:])
 
 print('Train =', train_arg)
 print('Test =', test_arg)
-print('Train input file =', train_file)
+print('Train input file =', data_path_arg)
 print('Test input file =', test_file)
 
 ### Define the Hyperparameters
@@ -158,10 +158,9 @@ data_path = '../../Datos_Radares'
 ### Train
 if train_arg:
     ## Extract data for training
-    file = train_file
-
     data = Data(seed)
-    data_path = '../../Datos_Radares/Prueba_all_data'
+    #data_path = '../../Datos_Radares/Prueba_all_data'
+    data_path = data_path_arg
     data.data_loader(data_path, n_avg, current, params_name, train_size, seq_length, random_win=rw)
 
     ## Train with data
