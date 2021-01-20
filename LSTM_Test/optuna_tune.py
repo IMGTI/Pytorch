@@ -241,10 +241,10 @@ def train_model(trial):
 
     # Model Parameters
     na = trial.suggest_int('na', 2, 2)
-    do = trial.suggest_uniform('do', 0, 0)#0.01, 0.05)
+    do = trial.suggest_uniform('do', 0.01, 0.05)
     hs = trial.suggest_int('hs', 1, 100)#10)
     nl = trial.suggest_int('nl', 1, 10)#4)
-    sl = trial.suggest_int('sl', 10000, 10000)#15, 200)#100)
+    sl = trial.suggest_int('sl', 15, 200)#100)
     bs = trial.suggest_int('bs', 1, 100)#50)
     lr = trial.suggest_loguniform('lr', 1e-4, 1e-1)
     bd = trial.suggest_int('bd', 0, 1)
