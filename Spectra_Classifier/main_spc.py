@@ -1,8 +1,8 @@
 import os
 import datetime as dt
-from data import Data
-from train import Train
-from test import Test
+from data_spc import Data
+from train_spc import Train
+from test_spc import Test
 import getopt
 import sys
 import torch
