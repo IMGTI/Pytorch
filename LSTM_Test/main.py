@@ -74,15 +74,15 @@ print('Test input file =', test_file)
 
 ## Net parameters
 num_epochs = n_epochs
-learning_rate = 0.033908
+learning_rate = 0.0003629#0.033908
 input_size = 1
-batch_size = 25   # Batch size is automatically handled in model
+batch_size = 23#25   # Batch size is automatically handled in model
                     # if -1 then uses 1 batch of full data-length size
-hidden_size = 8
-num_layers = 1
+hidden_size = 20#8
+num_layers = 4#1
 num_classes = 1
-bidirectional = False
-dropout = 0
+bidirectional = True#False
+dropout = 0.03364#0
 # Stateful
 stateful = False
 
@@ -95,16 +95,17 @@ if rw:
 else:
     stateful = True
 
-## Test parameters
-fut_pred = 10  # Number of predictions
-
 ## Train parameters
 validate = True
 patience = 20#10
-seq_length = 10    # Train Window
+seq_length = 38#10    # Train Window
                      # 1h = 12
                      # 5min = 1
-train_size = -fut_pred  # Not necessarily equal to fut_pred
+train_size = -seq_length  # Not necessarily equal to fut_pred or seq_length
+
+## Test parameters
+fut_pred = seq_length  # Number of predictions
+                       # Not necessarily equal to seq_length
 
 ## Parameters in name for .jpg files
 params_name = ('_e' + str(num_epochs) +
