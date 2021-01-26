@@ -11,7 +11,7 @@ from data_spc import Data
 
 class Train(object):
     def __init__(self, batch_size, num_classes, input_size, filters_number, kernel_size,
-                 state_dict_path, current, params_name, seed):
+                 state_dict_path, constituent, current, params_name, seed):
         # RNG Seed
         np.random.seed(seed)  # Numpy
         torch.manual_seed(seed)  # Pytorch
@@ -28,6 +28,9 @@ class Train(object):
         self.current = current
         self.params_name = params_name
 
+        # Contituent for using files related
+        self.constituent = constituent
+
         # Send net to GPU if possible
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         pass
@@ -39,6 +42,7 @@ class Train(object):
         # Define list for files to train
         listdir = np.array(os.listdir(data_path))
         files_list = listdir[['.spc' in x for x in listdir]]
+        labels_file = listdir[['.csv' in x for x in listdir]]
         # Randomize list
         ind_rand = np.random.permutation(len(files_list))
         files_list = files_list[ind_rand]
@@ -64,14 +68,37 @@ class Train(object):
         loss4plot = []
         val_loss4plot = []
 
-        if batch_size==-1:
-            for epoch in tqdm(range(num_epochs), total=num_epochs):
+        def divide_chunks(l, n):
+            # looping till length l
+            for i in range(0, len(l), n):
+                yield l[i:i + n]
+
+        # Create list of batches with file names only
+        batches = list(divide_chunks(files_list, batch_size))
+
+        if len(batches[-1])!=batch_size:
+            batches = batches[:-1]
+            print("Removing last batch because of invalid batch size")
+
+        batches = np.vstack(batches)
+
+        # Begin training
+        for epoch in tqdm(range(num_epochs), total=num_epochs):
+            running_loss = 0.0
+            val_running_loss = 0.0
+            for batch in batches:
+                data_batch = Data(seed).data_loader(batch, labels_file, data_path,
+                                                    self.constituent,
+                                                    self.current,
+                                                    self.params_name)
                 self.optimizer.zero_grad()
 
-                outputs, hidden = self.lstm(defsX.to(self.device))
+                outputs = self.cnn(batch['amplitude'].to(self.device))
 
                 # Obtain the value for the loss function
-                loss = self.criterion(outputs.to(self.device), defsY.to(self.device))
+                loss = self.criterion(outputs.to(self.device), batch['label'].to(self.device))
+
+                running_loss += loss.item()
 
                 loss.backward()
 
@@ -80,95 +107,31 @@ class Train(object):
                 with torch.no_grad():
                     # Initialize model in testing mode
                     self.lstm.eval()
-                    val_pred, val_hidden = self.lstm(val_defsX.to(self.device))
-                    val_loss = self.criterion(val_pred.to(self.device), val_defsY.to(self.device))
+                    val_pred, val_hidden = self.lstm(batch['val_defsX'].to(self.device))
+                    val_loss = self.criterion(val_pred.to(self.device), batch['val_defsY'].to(self.device))
+
+                    val_running_loss += val_loss.item()
+
                     # Initialize model in trainning mode again
                     self.lstm.train()
 
-                # Early stop if validation loss increase
-                early_stopping(val_loss, self.lstm)
+            # Early stop if validation loss increase
+            early_stopping(val_running_loss/len(batches), self.lstm)
 
-                if early_stopping.early_stop:
-                    print("-----------------")
-                    print("Early stopping...")
-                    print("-----------------")
-                    break
+            if early_stopping.early_stop:
+                print("-----------------")
+                print("Early stopping...")
+                print("-----------------")
+                break
 
-                loss4plot.append(loss.item())
-                val_loss4plot.append(val_loss.item())
+            loss4plot.append(running_loss/len(batches))
+            val_loss4plot.append(val_running_loss/len(batches))
 
-                # Plot loss vs epoch
-                self.plot_loss(fig_loss, epoch, loss4plot, val_loss4plot)
+            # Plot loss vs epoch
+            self.plot_loss(fig_loss, epoch, loss4plot, val_loss4plot)
 
-                # Save model
-                self.save_model(epoch, loss)
-        else:
-            batches = []
-            ind = 0
-            while True:
-                try:
-                    batches.append({'defsX':torch.index_select(defsX, 0, torch.tensor(np.int64(np.arange(ind,ind+batch_size,1)))),
-                                    'defsY':torch.index_select(defsY, 0, torch.tensor(np.int64(np.arange(ind,ind+batch_size,1)))),
-                                    'val_defsX':torch.index_select(val_defsX, 0, torch.tensor(np.int64(np.arange(ind,ind+batch_size,1)))),
-                                    'val_defsY':torch.index_select(val_defsY, 0, torch.tensor(np.int64(np.arange(ind,ind+batch_size,1))))})
-
-                    ind += batch_size
-                except:
-                    break
-
-            if (batches[-1]['defsX']).size(0)!=batch_size:
-                batches = batches[:-1]
-                print("Removing last batch because of invalid batch size")
-
-            for epoch in tqdm(range(num_epochs), total=num_epochs):
-                hidden = None
-                running_loss = 0.0
-                val_running_loss = 0.0
-                for batch in batches:
-                    self.optimizer.zero_grad()
-
-                    if self.stateful:
-                        outputs, hidden = self.lstm(batch['defsX'].to(self.device), hidden=hidden)
-                    else:
-                        outputs, hidden = self.lstm(batch['defsX'].to(self.device))
-
-                    # Obtain the value for the loss function
-                    loss = self.criterion(outputs.to(self.device), batch['defsY'].to(self.device))
-
-                    running_loss += loss.item()
-
-                    loss.backward()
-
-                    self.optimizer.step()
-
-                    with torch.no_grad():
-                        # Initialize model in testing mode
-                        self.lstm.eval()
-                        val_pred, val_hidden = self.lstm(batch['val_defsX'].to(self.device))
-                        val_loss = self.criterion(val_pred.to(self.device), batch['val_defsY'].to(self.device))
-
-                        val_running_loss += val_loss.item()
-
-                        # Initialize model in trainning mode again
-                        self.lstm.train()
-
-                # Early stop if validation loss increase
-                early_stopping(val_running_loss/len(batches), self.lstm)
-
-                if early_stopping.early_stop:
-                    print("-----------------")
-                    print("Early stopping...")
-                    print("-----------------")
-                    break
-
-                loss4plot.append(running_loss/len(batches))
-                val_loss4plot.append(val_running_loss/len(batches))
-
-                # Plot loss vs epoch
-                self.plot_loss(fig_loss, epoch, loss4plot, val_loss4plot)
-
-                # Save model
-                self.save_model(epoch, loss)
+            # Save model
+            self.save_model(epoch, loss)
         pass
 
     def save_model(self, epoch, loss):

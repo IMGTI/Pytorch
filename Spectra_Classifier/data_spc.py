@@ -92,6 +92,8 @@ class Data(object):
         pass
 
     def get_label(self, constituent, data_file_name, label_file_name):
+        # HACER SCALING (DISTINTO SCALING Y SCALER FILE PARA CADA COLUMNA DE DATOS)
+        # HACER ONE HOT ENCODING PARA LABELS QUE NO SON TAMBIEN IE, SI ES ALBITA YES, BIOTITA ES NO
         # Open file containing labels and other data
         label_file = pd.read_csv(label_file_name)
 
@@ -101,7 +103,7 @@ class Data(object):
 
         # Match labels by constituent
         ind_constituent = np.where(labels_sample["MEASCONSTITUENT"]==constituent)
-        labels_constituent = labels_sample.iloc[ind_constituent].values
+        labels_constituent = labels_sample.iloc[ind_constituent].values  # numpy array
 
         return labels_constituent
 
@@ -125,7 +127,7 @@ class Data(object):
             print('Scaler save file not found. Probably due to not trained model. ')
 
             self.scaler = StandardScaler()
-            data_sc = self.scaler.fit_transform(data)
+            data_sc = self.scaler.fit_transform(data)  # numpy array
 
             # Save scaler for later use in test and in current working directory
             joblib.dump(self.scaler, sc_filename)
@@ -135,12 +137,20 @@ class Data(object):
 
     def data_loader(self, files_list, labels_file, data_path, constituent, current, params_name):
         batch = {}
+        
         for ind, file in enumerate(tqdm(files_list, total=len(files_list))):
             # Extract data and labels
             self.ext_data(data_path + '/' + file)
             self.amp = self.scaling(self.amp, current=current)
             self.label = self.get_label(constituent, file, labels_file)
             # Add to batch
-            batch[file[:-4]] = {'amplitude':self.amp, 'label':self.label}
+            if ind==0:
+                batch = {'amplitude':[self.amp], 'label':[self.label]}
+            else:
+                batch['amplitude'].append(self.amp)
+                batch['label'].append(self.label)
+
+        batch['amplitude'] = Variable(torch.Tensor(batch['amplitude']))
+        batch['label'] = Variable(torch.Tensor(batch['label']))
 
         return batch
