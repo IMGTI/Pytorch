@@ -7,6 +7,7 @@ from sklearn.metrics import r2_score as r2s
 from model_spc import CNN
 import pandas as pd
 from pandas import ExcelWriter
+from data_spc import Data
 
 class Test(object):
     def __init__(self, batch_size, num_classes, input_size, hidden_size, num_layers, dropout,

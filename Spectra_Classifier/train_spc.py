@@ -7,17 +7,17 @@ from tqdm import tqdm
 import numpy as np
 from model_spc import CNN
 from pytorchtools import EarlyStopping
+from data_spc import Data
 
 class Train(object):
-    def __init__(self, batch_size, num_classes, input_size, hidden_size, num_layers, dropout,
-                 bidirectional, state_dict_path, current, params_name, seed, stateful=False):
+    def __init__(self, batch_size, num_classes, input_size, filters_number, kernel_size,
+                 state_dict_path, current, params_name, seed):
         # RNG Seed
         np.random.seed(seed)  # Numpy
         torch.manual_seed(seed)  # Pytorch
 
         # Initialize the model
-        self.lstm = LSTM(batch_size, num_classes, input_size, hidden_size, num_layers,
-                         dropout, bidirectional, seed)
+        self.cnn = CNN(input_size, num_classes, filters_number, kernel_size, seed)
 
         # Print model summary
         #print("Number of Learnable parameters =", sum(p.numel() for p in self.lstm.parameters()))
@@ -27,28 +27,31 @@ class Train(object):
         # Path and name for plots
         self.current = current
         self.params_name = params_name
-        self.stateful = stateful
 
         # Send net to GPU if possible
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         pass
 
-    def train_model(self, batch_size, learning_rate, num_epochs, times, defsX, defsY,
-                    validate=True, patience=10):
+    def train_model(self, data_path, batch_size, learning_rate, num_epochs, validate=True, patience=10):
         # Initialize the early stopping object
         early_stopping = EarlyStopping(patience=patience, verbose=True)
+
+        # Define list for files to train
+        listdir = np.array(os.listdir(data_path))
+        files_list = listdir[['.spc' in x for x in listdir]]
+        # Randomize list
+        ind_rand = np.random.permutation(len(files_list))
+        files_list = files_list[ind_rand]
 
         # Define validation set and training set
         if validate:
             # Select 25% of data as validation
-            ind_val = int(len(defsY) * 0.75)
-            val_defsX = defsX[ind_val:]
-            val_defsY = defsY[ind_val:]
-            defsX = defsX[:ind_val]
-            defsY = defsY[:ind_val]
+            ind_val = int(len(files_list) * 0.75)
+            training_list = files_list[:ind_val]
+            validation_list = files_list[ind_val:]
 
         # Send model to device
-        self.lstm.to(self.device)
+        self.cnn.to(self.device)
 
         self.criterion = torch.nn.MSELoss()    # mean-squared error for regression
         self.optimizer = torch.optim.Adam(self.lstm.parameters(), lr=learning_rate)
