@@ -96,25 +96,25 @@ class Data(object):
         self.rev_rand = np.argsort(ind_rand)
         return x[ind_rand], y[ind_rand]
 
-    def get_label(self, constituent, data_file_name, label_file_name):
+    def get_label(self, constituent, data_path, data_file_name, label_file_name):
         # HACER SCALING (DISTINTO SCALING Y SCALER FILE PARA CADA COLUMNA DE DATOS)
         # HACER ONE HOT ENCODING PARA LABELS QUE NO SON TAMBIEN IE, SI ES ALBITA YES, BIOTITA ES NO
         # Open file containing labels and other data
-        label_file = pd.read_csv(label_file_name)
+        label_file = pd.read_csv(data_path + "/" + label_file_name)
 
         # Match labels by sample
         ind_sample = np.where(label_file["SAMPLECODE"]==data_file_name[:-4])[0]
         labels_sample = label_file.iloc[ind_sample]
 
         # Match labels by constituent
-        ind_constituent = np.where(labels_sample["MEASCONSTITUENT"]==constituent)
-        labels_constituent = labels_sample.iloc[ind_constituent]["MEASMATCH"]#.values  # numpy array
+        ind_constituent = np.where(labels_sample["MEASCONSTITUENT"]==constituent)[0]
+        labels_constituent = labels_sample.iloc[ind_constituent]["MEASMATCH"].values[0]  # numpy array
         # One-hot encoding
-        if labels_constituent=='YES' or labels_constituent=='YES':
+        if labels_constituent=='YES' or labels_constituent=='yes' or labels_constituent=='Yes':
             labels_constituent = np.array([1,0,0])
-        elif labels_constituent=='POSSIBLE' or labels_constituent=='possible':
+        elif labels_constituent=='POSSIBLE' or labels_constituent=='possible' or labels_constituent=='Possible':
             labels_constituent = np.array([0,1,0])
-        elif labels_constituent=='NO' or labels_constituent=='no':
+        elif labels_constituent=='NO' or labels_constituent=='no' or labels_constituent=='No':
             labels_constituent = np.array([0,0,1])
 
         return labels_constituent
@@ -148,23 +148,25 @@ class Data(object):
         return data_sc
 
     def data_loader(self, data_path, constituent, current, random=False):
-        for ind, file in enumerate(tqdm(os.listdir(data_path), total=len(os.listdir(data_path)))):
-            if '.csv' not in file:
-                # Extract data and labels
-                self.ext_data(data_path + '/' + file)
-                self.amp = self.scaling(self.amp, current=current)
-                self.label = self.get_label(constituent, file, labels_file)
-                # Add to data
-                if ind==0:
+        files_list = os.listdir(data_path)
+        labels_file = np.array(files_list)[['.csv' in x for x in files_list]][0]
+        files_list.remove(labels_file)
+        for ind, file in enumerate(tqdm(files_list, total=len(files_list))):
+            # Extract data and labels
+            self.ext_data(data_path + '/' + file)
+            self.amp = self.scaling(self.amp, current=current)
+            self.label = self.get_label(constituent, data_path, file, labels_file)
+            # Add to data
+            if ind==0:
+                self.all_amp = self.amp.copy()
+                self.all_label = self.label.copy()
+            else:
+                if len(self.all_amp)!=0 and len(self.amp)!=0:
+                    self.all_amp = np.vstack((self.all_amp, self.amp))
+                    self.all_label = np.vstack((self.all_label, self.label))
+                elif len(self.amp)!=0:
                     self.all_amp = self.amp.copy()
                     self.all_label = self.label.copy()
-                else:
-                    if len(self.all_amp)!=0 and len(self.amp)!=0:
-                        self.all_amp = np.vstack((self.all_amp, self.amp))
-                        self.all_label = np.vstack((self.all_label, self.label))
-                    elif len(self.amp)!=0:
-                        self.all_amp = self.amp.copy()
-                        self.all_label = self.label.copy()
 
         # Randomized all windows
         if random:
