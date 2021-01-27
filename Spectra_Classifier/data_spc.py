@@ -124,6 +124,22 @@ class Data(object):
         data = data.reshape(-1, 1)
         return data
 
+    def reorder_windows(self, data, seq_length):
+        x = []
+
+        _x = data
+        x.append(_x)
+
+        return np.array(x)
+
+    def treat_data(self, current):
+        # Scale data
+        self.amp = self.scaling(self.amp, current=current)
+        # Reshape data into "windows" (just a reshape for working model)
+        self.amp = self.reorder_windows(self.amp, len(self.amp))
+
+        return self.amp
+
     def scaling(self, data, current=None):
         # Reshape for scaling
         data = self.reshape_data(data)
@@ -145,6 +161,7 @@ class Data(object):
             joblib.dump(self.scaler, sc_filename)
             if current:
                 joblib.dump(self.scaler, current + '/' + sc_filename)
+
         return data_sc
 
     def data_loader(self, data_path, constituent, current, random=False):
@@ -154,7 +171,7 @@ class Data(object):
         for ind, file in enumerate(tqdm(files_list, total=len(files_list))):
             # Extract data and labels
             self.ext_data(data_path + '/' + file)
-            self.amp = self.scaling(self.amp, current=current)
+            self.amp = self.treat_data(current=current)
             self.label = self.get_label(constituent, data_path, file, labels_file)
             # Add to data
             if ind==0:

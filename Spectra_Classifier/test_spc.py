@@ -21,8 +21,7 @@ class Test(object):
             self.test_file = tfile
 
         # Initialize the model
-        self.cnn = CNN(batch_size, num_classes, input_size, hidden_size, num_layers,
-                         dropout, bidirectional, seed)
+        self.cnn = CNN(input_size, num_classes, filters_number, kernel_size, seed)
         # Path to state dictionary
         self.state_dict_path = state_dict_path
         # Path and name for plots
@@ -62,29 +61,38 @@ class Test(object):
             correct = 0
             total = 0
             with torch.no_grad():
-                outputs = self.cnn(amp.to(self.device))
-                labels = np.where(label==1)[0][0]
-                _, predicted = torch.max(outputs.data, 1)
-                total += labels.size(0)
-                correct += (classes[predicted] == classes[labels]).sum().item()
+                for ind, input in enumerate(amp):
+                    # Reshape input as shape of batch (batch_size,data_size,channels)
+                    input = input.reshape(1, -1, 1)
 
-            print('Accuracy of the network on the 10000 test images: %d %%' % (
+                    outputs = self.cnn(input.to(self.device))
+                    labels = np.where(np.array(label)[ind]==1)[0][0]
+                    _, predicted = torch.max(outputs.data, 1)
+
+                    predicted = np.array(predicted.cpu())[0]
+                    if classes[predicted] == classes[labels]:
+                        correct += 1
+
+                    total += 1#labels.size(0)
+
+            print('Accuracy of the network on whole dataset: %d %%' % (
                 100 * correct / total))
 
         ### Data Test (Classification)
         except:
             # Classifier
             with torch.no_grad():
-                outputs = self.cnn(amp.to(self.device))
-                _, predicted = torch.max(outputs.data, 1)
-                try:
-                    ground_truth_labels = classes[label]
-                except:
-                    pass
-                predicted_labels = classes[predicted]
+                for input in amp:
+                    outputs = self.cnn(amp.to(self.device))
+                    _, predicted = torch.max(outputs.data, 1)
+                    try:
+                        ground_truth_labels = classes[label]
+                    except:
+                        pass
+                    predicted_labels = classes[predicted]
 
-                print('Predicted: ' + predicted_labels)
-                try:
-                    print('Ground Truth: ' + ground_truth_labels)
-                except:
-                    pass
+                    print('Predicted: ' + predicted_labels)
+                    try:
+                        print('Ground Truth: ' + ground_truth_labels)
+                    except:
+                        pass

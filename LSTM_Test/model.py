@@ -91,6 +91,7 @@ class CNNLSTM(nn.Module):
     def forward(self, x, hidden=None):
         x = x.view(-1, 1, x.size()[1])  # Change input shape for in_channels=1
                                         # x.size()[1]==window_size
+
         #x = self.pool(F.relu(self.conv1(x)))
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))

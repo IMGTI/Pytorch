@@ -9,8 +9,8 @@ from model_spc import CNN
 from pytorchtools import EarlyStopping
 
 class Train(object):
-    def __init__(self, batch_size,  input_size, num_classes, filters_number, kernel_size,
-                 state_dict_path, current, params_name, seed, stateful=False):
+    def __init__(self, batch_size, input_size, num_classes, filters_number, kernel_size,
+                 state_dict_path, current, params_name, seed):
         # RNG Seed
         np.random.seed(seed)  # Numpy
         torch.manual_seed(seed)  # Pytorch
@@ -82,7 +82,7 @@ class Train(object):
             val_running_loss = 0.0
             for batch in batches:
                 self.optimizer.zero_grad()
-
+                
                 outputs = self.cnn(batch['amp'].to(self.device))
 
                 # Obtain the value for the loss function

@@ -72,25 +72,25 @@ print('Test input file =', test_file)
 
 ### Classes
 
-classes = ['Albita',
-           'Alunita',
-           'Biotita',
-           'Ka_Pyr_Sm',
-           'Mus_Il_se',
-           'clor_cncl',
-           'se_gverde']
+constituent_types = ['Albita',
+                     'Alunita',
+                     'Biotita',
+                     'Ka_Pyr_Sm',
+                     'Mus_Il_se',
+                     'clor_cncl',
+                     'se_gverde']
 
 ind_constituent = 0
 
 ### Define the Hyperparameters
 
 ## Net parameters
-constituent = classes[ind_constituent]  # Select class model
+constituent = constituent_types[ind_constituent]  # Select class model
 
 num_epochs = n_epochs
 learning_rate = [0.033908,0.033908,0.033908,0.033908,0.033908,0.033908,0.033908][ind_constituent]
 input_size = 1
-batch_size = [10,10,10,10,10,10,10][ind_constituent]
+batch_size = [3,10,10,10,10,10,10][ind_constituent]
 num_classes = 3
 filters_number = [2,2,2,2,2,2,2][ind_constituent]
 kernel_size = [2,2,2,2,2,2,2][ind_constituent]
@@ -153,8 +153,8 @@ if train_arg:
     data.data_loader(data_path, constituent, current, random=rd)
 
     ## Train with data
-    train = Train(batch_size, num_classes, input_size, hidden_size, num_layers, dropout,
-                  bidirectional, state_dict_path, current, params_name, seed, stateful=stateful)
+    train = Train(batch_size,  input_size, num_classes, filters_number, kernel_size,
+                 state_dict_path, current, params_name, seed)
     train.train_model(batch_size, learning_rate, num_epochs, data.amp,
                     data.label, validate=validate, patience=patience)
 
@@ -164,33 +164,31 @@ if test_arg:
         # Extract data from input file
         data = Data(seed)
         data.ext_data(test_file)
-        self.label = 'N/A'
+        data.label = 'N/A'
 
     test = Test(batch_size, num_classes, input_size, filters_number, kernel_size,
                  state_dict_path, current, params_name, seed, tfile=test_file)
 
-    test.test_model(self.amp, self.label, sc=data.scaler)
+    test.test_model(data.amp, data.label, sc=data.scaler)
 
 # Store parameters and runtime info in file
 params_file = open(current + '/params.txt', 'w')
 
 params_file.write('current  = ' + str(current) + '\n')
 params_file.write('train_arg  = ' + str(train_arg) + '\n')
-params_file.write('test_arg  = ' + str(test_arg) + '\n')
-params_file.write('test_file  = ' + str(test_file) + '\n')
-params_file.write('ind_test  = ' + str(ind_test) + '\n')
 if train_arg:
-    params_file.write('file  = ' + str(file) + '\n')
+    params_file.write('train_file_path  = ' + str(data_path) + '\n')
     params_file.write('num_epochs  = ' + str(num_epochs) + '\n')
 else:
-    params_file.write('file  = ' + '\n')
+    params_file.write('train_file_path  = ' + '\n')
     params_file.write('num_epochs  = ' + '\n')
+params_file.write('test_arg  = ' + str(test_arg) + '\n')
+params_file.write('test_file  = ' + str(test_file) + '\n')
 params_file.write('learning_rate  = ' + str(learning_rate) + '\n')
 params_file.write('input_size  = ' + str(input_size) + '\n')
 params_file.write('batch_size  = ' + str(batch_size) + '\n')
 params_file.write('filters_number  = ' + str(filters_number) + '\n')
 params_file.write('kernel_size  = ' + str(kernel_size) + '\n')
-params_file.write('n_avg  = ' + str(n_avg) + '\n')
 params_file.write('rd  = ' + str(rd) + '\n')
 params_file.write('validate  = ' + str(validate) + '\n')
 params_file.write('patience  = ' + str(patience) + '\n')

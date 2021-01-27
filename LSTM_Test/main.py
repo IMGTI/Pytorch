@@ -199,15 +199,15 @@ params_file = open(current + '/params.txt', 'w')
 
 params_file.write('current  = ' + str(current) + '\n')
 params_file.write('train_arg  = ' + str(train_arg) + '\n')
+if train_arg:
+    params_file.write('train_file_path  = ' + str(data_path) + '\n')
+    params_file.write('num_epochs  = ' + str(num_epochs) + '\n')
+else:
+    params_file.write('train_file_path  = ' + '\n')
+    params_file.write('num_epochs  = ' + '\n')
 params_file.write('test_arg  = ' + str(test_arg) + '\n')
 params_file.write('test_file  = ' + str(test_file) + '\n')
 params_file.write('ind_test  = ' + str(ind_test) + '\n')
-if train_arg:
-    params_file.write('file  = ' + str(file) + '\n')
-    params_file.write('num_epochs  = ' + str(num_epochs) + '\n')
-else:
-    params_file.write('file  = ' + '\n')
-    params_file.write('num_epochs  = ' + '\n')
 params_file.write('learning_rate  = ' + str(learning_rate) + '\n')
 params_file.write('input_size  = ' + str(input_size) + '\n')
 params_file.write('batch_size  = ' + str(batch_size) + '\n')
