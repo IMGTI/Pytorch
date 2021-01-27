@@ -7,20 +7,19 @@ from tqdm import tqdm
 import numpy as np
 from model_spc import CNN
 from pytorchtools import EarlyStopping
-from data_spc import Data
 
 class Train(object):
-    def __init__(self, batch_size, num_classes, input_size, filters_number, kernel_size,
-                 state_dict_path, constituent, current, params_name, seed):
+    def __init__(self, batch_size,  input_size, num_classes, filters_number, kernel_size,
+                 state_dict_path, current, params_name, seed, stateful=False):
         # RNG Seed
         np.random.seed(seed)  # Numpy
         torch.manual_seed(seed)  # Pytorch
 
         # Initialize the model
-        self.cnn = CNN(input_size, num_classes, filters_number, kernel_size, seed)
+        self.cnn =  CNN(input_size, num_classes, filters_number, kernel_size, seed)
 
         # Print model summary
-        #print("Number of Learnable parameters =", sum(p.numel() for p in self.lstm.parameters()))
+        #print("Number of Learnable parameters =", sum(p.numel() for p in self.cnn.parameters()))
 
         # Path to state dictionary
         self.state_dict_path = state_dict_path
@@ -28,37 +27,29 @@ class Train(object):
         self.current = current
         self.params_name = params_name
 
-        # Contituent for using files related
-        self.constituent = constituent
-
         # Send net to GPU if possible
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         pass
 
-    def train_model(self, data_path, batch_size, learning_rate, num_epochs, validate=True, patience=10):
+    def train_model(self, batch_size, learning_rate, num_epochs, amp, label,
+                    validate=True, patience=10):
         # Initialize the early stopping object
         early_stopping = EarlyStopping(patience=patience, verbose=True)
-
-        # Define list for files to train
-        listdir = np.array(os.listdir(data_path))
-        files_list = listdir[['.spc' in x for x in listdir]]
-        labels_file = listdir[['.csv' in x for x in listdir]]
-        # Randomize list
-        ind_rand = np.random.permutation(len(files_list))
-        files_list = files_list[ind_rand]
 
         # Define validation set and training set
         if validate:
             # Select 25% of data as validation
-            ind_val = int(len(files_list) * 0.75)
-            training_list = files_list[:ind_val]
-            validation_list = files_list[ind_val:]
+            ind_val = int(len(label) * 0.75)
+            val_amp = amp[ind_val:]
+            val_label = label[ind_val:]
+            amp = amp[:ind_val]
+            label = label[:ind_val]
 
         # Send model to device
         self.cnn.to(self.device)
 
         self.criterion = torch.nn.MSELoss()    # mean-squared error for regression
-        self.optimizer = torch.optim.Adam(self.lstm.parameters(), lr=learning_rate)
+        self.optimizer = torch.optim.Adam(self.cnn.parameters(), lr=learning_rate)
 
         # Try to load the model and optimizer 's state dictionaries
         self.load_model()
@@ -68,32 +59,31 @@ class Train(object):
         loss4plot = []
         val_loss4plot = []
 
-        def divide_chunks(l, n):
-            # looping till length l
-            for i in range(0, len(l), n):
-                yield l[i:i + n]
+        batches = []
+        ind = 0
+        while True:
+            try:
+                batches.append({'amp':torch.index_select(amp, 0, torch.tensor(np.int64(np.arange(ind,ind+batch_size,1)))),
+                                'label':torch.index_select(label, 0, torch.tensor(np.int64(np.arange(ind,ind+batch_size,1)))),
+                                'val_amp':torch.index_select(val_amp, 0, torch.tensor(np.int64(np.arange(ind,ind+batch_size,1)))),
+                                'val_label':torch.index_select(val_label, 0, torch.tensor(np.int64(np.arange(ind,ind+batch_size,1))))})
 
-        # Create list of batches with file names only
-        batches = list(divide_chunks(files_list, batch_size))
+                ind += batch_size
+            except:
+                break
 
-        if len(batches[-1])!=batch_size:
+        if (batches[-1]['amp']).size(0)!=batch_size:
             batches = batches[:-1]
             print("Removing last batch because of invalid batch size")
 
-        batches = np.vstack(batches)
-
-        # Begin training
         for epoch in tqdm(range(num_epochs), total=num_epochs):
+            hidden = None
             running_loss = 0.0
             val_running_loss = 0.0
             for batch in batches:
-                data_batch = Data(seed).data_loader(batch, labels_file, data_path,
-                                                    self.constituent,
-                                                    self.current,
-                                                    self.params_name)
                 self.optimizer.zero_grad()
 
-                outputs = self.cnn(batch['amplitude'].to(self.device))
+                outputs = self.cnn(batch['amp'].to(self.device))
 
                 # Obtain the value for the loss function
                 loss = self.criterion(outputs.to(self.device), batch['label'].to(self.device))
@@ -106,17 +96,17 @@ class Train(object):
 
                 with torch.no_grad():
                     # Initialize model in testing mode
-                    self.lstm.eval()
-                    val_pred, val_hidden = self.lstm(batch['val_defsX'].to(self.device))
-                    val_loss = self.criterion(val_pred.to(self.device), batch['val_defsY'].to(self.device))
+                    self.cnn.eval()
+                    val_pred = self.cnn(batch['val_amp'].to(self.device))
+                    val_loss = self.criterion(val_pred.to(self.device), batch['val_label'].to(self.device))
 
                     val_running_loss += val_loss.item()
 
                     # Initialize model in trainning mode again
-                    self.lstm.train()
+                    self.cnn.train()
 
             # Early stop if validation loss increase
-            early_stopping(val_running_loss/len(batches), self.lstm)
+            early_stopping(val_running_loss/len(batches), self.cnn)
 
             if early_stopping.early_stop:
                 print("-----------------")
@@ -138,14 +128,14 @@ class Train(object):
         # Save state dict of model in main folder
         torch.save({
                     #'epoch': epoch,
-                    'model_state_dict': self.lstm.state_dict(),
+                    'model_state_dict': self.cnn.state_dict(),
                     'optimizer_state_dict': self.optimizer.state_dict(),
                     #'loss': loss,
                     }, self.state_dict_path)
         # Save state dict of model in current date folder
         torch.save({
                     #'epoch': epoch,
-                    'model_state_dict': self.lstm.state_dict(),
+                    'model_state_dict': self.cnn.state_dict(),
                     'optimizer_state_dict': self.optimizer.state_dict(),
                     #'loss': loss,
                     }, self.current + '/' + self.state_dict_path)
@@ -155,12 +145,12 @@ class Train(object):
         # Load state dict of model
         try:
             checkpoint = torch.load(self.state_dict_path)
-            self.lstm.load_state_dict(checkpoint['model_state_dict'])
+            self.cnn.load_state_dict(checkpoint['model_state_dict'])
             self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             #epoch = checkpoint['epoch']
             #loss = checkpoint['loss']
-            self.lstm.to(self.device)
-            self.lstm.train()
+            self.cnn.to(self.device)
+            self.cnn.train()
         except:
             print('State dict(s) missing')
         pass

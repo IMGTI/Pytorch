@@ -70,56 +70,47 @@ print('Test =', test_arg)
 print('Train input file =', data_path_arg)
 print('Test input file =', test_file)
 
+### Classes
+
+classes = ['Albita',
+           'Alunita',
+           'Biotita',
+           'Ka_Pyr_Sm',
+           'Mus_Il_se',
+           'clor_cncl',
+           'se_gverde']
+
+ind_constituent = 0
+
 ### Define the Hyperparameters
 
 ## Net parameters
+constituent = classes[ind_constituent]  # Select class model
+
 num_epochs = n_epochs
-learning_rate = 0.033908
+learning_rate = [0.033908,0.033908,0.033908,0.033908,0.033908,0.033908,0.033908][ind_constituent]
 input_size = 1
-batch_size = 25   # Batch size is automatically handled in model
-                    # if -1 then uses 1 batch of full data-length size
-hidden_size = 8
-num_layers = 1
-num_classes = 1
-bidirectional = False
-dropout = 0
-# Stateful
-stateful = False
+batch_size = [10,10,10,10,10,10,10][ind_constituent]
+num_classes = 3
+filters_number = [2,2,2,2,2,2,2][ind_constituent]
+kernel_size = [2,2,2,2,2,2,2][ind_constituent]
 
 ## Data parameters
-n_avg = 2
-# Random windows for training
-rw = True
-if rw:
-    stateful = False
-else:
-    stateful = True
-
-## Test parameters
-fut_pred = 10  # Number of predictions
+rd = True
 
 ## Train parameters
 validate = True
 patience = 20#10
-seq_length = 10    # Train Window
-                     # 1h = 12
-                     # 5min = 1
-train_size = -fut_pred  # Not necessarily equal to fut_pred
 
 ## Parameters in name for .jpg files
 params_name = ('_e' + str(num_epochs) +
                '_lr' + str(learning_rate) +
                '_b' + str(batch_size) +
+               '_fn' + str(filters_number) +
+               '_ks' + str(kernel_size) +
                '_i' + str(input_size) +
-               '_n' + str(num_layers) +
-               '_h' + str(hidden_size) +
                '_o' + str(num_classes) +
-               '_trw' + str(seq_length) +
-               '_bid' + str(bidirectional) +
-               '_na' + str(n_avg) +
-               '_rw' + str(rw) +
-               '_drp' + str(dropout) +
-               '_stf' + str(stateful) +
+               '_rd' + str(rd) +
                '_pat' + str(patience))
 
 ### Create directory for each run and different hyperparameters
@@ -150,7 +141,7 @@ except:
             pass
 
 # Path for state dictionary to save model's weights and parameters
-state_dict_path = 'state_dict'
+state_dict_path = 'state_dict_' + constituent
 
 # Path to data
 
@@ -158,15 +149,14 @@ state_dict_path = 'state_dict'
 if train_arg:
     ## Extract data for training
     data = Data(seed)
-    #data_path = '../../Datos_Radares/Prueba_all_data'
     data_path = data_path_arg
-    data.data_loader(data_path, n_avg, current, params_name, train_size, seq_length, random_win=rw)
+    data.data_loader(data_path, constituent, current, random=rd)
 
     ## Train with data
     train = Train(batch_size, num_classes, input_size, hidden_size, num_layers, dropout,
                   bidirectional, state_dict_path, current, params_name, seed, stateful=stateful)
-    train.train_model(batch_size, learning_rate, num_epochs, data.times_dataY,
-                      data.dataX, data.dataY, validate=validate, patience=patience)
+    train.train_model(batch_size, learning_rate, num_epochs, data.amp,
+                    data.label, validate=validate, patience=patience)
 
 ### Test
 if test_arg:
@@ -174,24 +164,12 @@ if test_arg:
         # Extract data from input file
         data = Data(seed)
         data.ext_data(test_file)
-        data.data_smooth(N_avg=n_avg)
+        self.label = 'N/A'
 
-        # Use last seq_length-data
-        ind_test = -2*seq_length-2#-1002#-fut_pred-2#-seq_length#-1
-        data.select_lastwin(seq_length, ind_test)
-    else:
-        # Use custom selected input from train data
-        ind_test = -2*seq_length#-1000#-fut_pred#5000#1000#len(dataX)-1
+    test = Test(batch_size, num_classes, input_size, filters_number, kernel_size,
+                 state_dict_path, current, params_name, seed, tfile=test_file)
 
-    test = Test(batch_size, num_classes, input_size, hidden_size, num_layers, dropout,
-                bidirectional, state_dict_path, current, params_name, seed, tfile=test_file)
-
-    # Reorder data to original state just for test and train forcing
-    if train_arg and rw:
-        test.include_rw(data.rev_rand)
-
-    test.test_model(ind_test, seq_length, fut_pred, data.times_dataY, data.dataX,
-                    data.dataY, sc=data.scaler)
+    test.test_model(self.amp, self.label, sc=data.scaler)
 
 # Store parameters and runtime info in file
 params_file = open(current + '/params.txt', 'w')
@@ -210,18 +188,12 @@ else:
 params_file.write('learning_rate  = ' + str(learning_rate) + '\n')
 params_file.write('input_size  = ' + str(input_size) + '\n')
 params_file.write('batch_size  = ' + str(batch_size) + '\n')
-params_file.write('hidden_size  = ' + str(hidden_size) + '\n')
-params_file.write('num_layers  = ' + str(num_layers) + '\n')
-params_file.write('num_classes  = ' + str(num_classes) + '\n')
-params_file.write('bidirectional  = ' + str(bidirectional) + '\n')
-params_file.write('dropout  = ' + str(dropout) + '\n')
-params_file.write('stateful  = ' + str(stateful) + '\n')
+params_file.write('filters_number  = ' + str(filters_number) + '\n')
+params_file.write('kernel_size  = ' + str(kernel_size) + '\n')
 params_file.write('n_avg  = ' + str(n_avg) + '\n')
-params_file.write('rw  = ' + str(rw) + '\n')
-params_file.write('fut_pred  = ' + str(fut_pred) + '\n')
+params_file.write('rd  = ' + str(rd) + '\n')
 params_file.write('validate  = ' + str(validate) + '\n')
-params_file.write('seq_length  = ' + str(seq_length) + '\n')
-params_file.write('train_size  = ' + str(train_size) + '\n')
 params_file.write('patience  = ' + str(patience) + '\n')
+params_file.write('constituent  = ' + str(constituent) + '\n')
 
 params_file.close()

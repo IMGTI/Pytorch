@@ -91,6 +91,11 @@ class Data(object):
 
         pass
 
+    def random_shuffle(self, x, y):
+        ind_rand = np.random.permutation(len(y))
+        self.rev_rand = np.argsort(ind_rand)
+        return x[ind_rand], y[ind_rand]
+
     def get_label(self, constituent, data_file_name, label_file_name):
         # HACER SCALING (DISTINTO SCALING Y SCALER FILE PARA CADA COLUMNA DE DATOS)
         # HACER ONE HOT ENCODING PARA LABELS QUE NO SON TAMBIEN IE, SI ES ALBITA YES, BIOTITA ES NO
@@ -103,7 +108,14 @@ class Data(object):
 
         # Match labels by constituent
         ind_constituent = np.where(labels_sample["MEASCONSTITUENT"]==constituent)
-        labels_constituent = labels_sample.iloc[ind_constituent].values  # numpy array
+        labels_constituent = labels_sample.iloc[ind_constituent]["MEASMATCH"]#.values  # numpy array
+        # One-hot encoding
+        if labels_constituent=='YES' or labels_constituent=='YES':
+            labels_constituent = np.array([1,0,0])
+        elif labels_constituent=='POSSIBLE' or labels_constituent=='possible':
+            labels_constituent = np.array([0,1,0])
+        elif labels_constituent=='NO' or labels_constituent=='no':
+            labels_constituent = np.array([0,0,1])
 
         return labels_constituent
 
@@ -135,22 +147,33 @@ class Data(object):
                 joblib.dump(self.scaler, current + '/' + sc_filename)
         return data_sc
 
-    def data_loader(self, files_list, labels_file, data_path, constituent, current, params_name):
-        batch = {}
-        
-        for ind, file in enumerate(tqdm(files_list, total=len(files_list))):
-            # Extract data and labels
-            self.ext_data(data_path + '/' + file)
-            self.amp = self.scaling(self.amp, current=current)
-            self.label = self.get_label(constituent, file, labels_file)
-            # Add to batch
-            if ind==0:
-                batch = {'amplitude':[self.amp], 'label':[self.label]}
-            else:
-                batch['amplitude'].append(self.amp)
-                batch['label'].append(self.label)
+    def data_loader(self, data_path, constituent, current, random=False):
+        for ind, file in enumerate(tqdm(os.listdir(data_path), total=len(os.listdir(data_path)))):
+            if '.csv' not in file:
+                # Extract data and labels
+                self.ext_data(data_path + '/' + file)
+                self.amp = self.scaling(self.amp, current=current)
+                self.label = self.get_label(constituent, file, labels_file)
+                # Add to data
+                if ind==0:
+                    self.all_amp = self.amp.copy()
+                    self.all_label = self.label.copy()
+                else:
+                    if len(self.all_amp)!=0 and len(self.amp)!=0:
+                        self.all_amp = np.vstack((self.all_amp, self.amp))
+                        self.all_label = np.vstack((self.all_label, self.label))
+                    elif len(self.amp)!=0:
+                        self.all_amp = self.amp.copy()
+                        self.all_label = self.label.copy()
 
-        batch['amplitude'] = Variable(torch.Tensor(batch['amplitude']))
-        batch['label'] = Variable(torch.Tensor(batch['label']))
+        # Randomized all windows
+        if random:
+            self.all_amp, self.all_label = self.random_shuffle(self.all_amp, self.all_label)
 
-        return batch
+        self.all_amp = Variable(torch.Tensor(np.array(self.all_amp)))
+        self.all_label = Variable(torch.Tensor(np.array(self.all_label)))
+
+        self.amp = self.all_amp.detach().clone()
+        self.label = self.all_label.detach().clone()
+
+        pass
