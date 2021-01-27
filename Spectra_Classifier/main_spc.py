@@ -163,7 +163,7 @@ if test_arg:
     if test_file!='':
         # Extract data from input file
         data = Data(seed)
-        data.ext_data(test_file)
+        data.test_data_loader(test_file, constituent, current)
         data.label = 'N/A'
 
     test = Test(batch_size, num_classes, input_size, filters_number, kernel_size,

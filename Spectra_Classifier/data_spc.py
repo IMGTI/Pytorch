@@ -164,6 +164,16 @@ class Data(object):
 
         return data_sc
 
+    def test_data_loader(self, test_file, constituent, current):
+        # Extract data and labels
+        self.ext_data(test_file)  # Include path
+        self.amp = self.treat_data(current=current)
+        self.label = 'N/A'
+
+        self.amp = Variable(torch.Tensor(np.array(self.amp)))
+
+        pass
+
     def data_loader(self, data_path, constituent, current, random=False):
         files_list = os.listdir(data_path)
         labels_file = np.array(files_list)[['.csv' in x for x in files_list]][0]
