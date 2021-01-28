@@ -182,7 +182,11 @@ class Data(object):
             # Extract data and labels
             self.ext_data(data_path + '/' + file)
             self.amp = self.treat_data(current=current)
-            self.label = self.get_label(constituent, data_path, file, labels_file)
+            # Skip data without proper label
+            try:
+                self.label = self.get_label(constituent, data_path, file, labels_file)
+            except:
+                continue
             # Add to data
             if ind==0:
                 self.all_amp = self.amp.copy()
