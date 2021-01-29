@@ -65,7 +65,7 @@ class Train(object):
 
         return weights_for_samples
 
-    def train_model(self, batch_size, learning_rate, num_epochs, amp, label,
+    def train_model(self, batch_size, learning_rate, num_epochs, amp, label, samp_per_cls,
                     validate=True, patience=10):
         # Initialize the early stopping object
         early_stopping = EarlyStopping(patience=patience, verbose=True)
@@ -82,7 +82,7 @@ class Train(object):
         # Send model to device
         self.cnn.to(self.device)
 
-        self.criterion = torch.nn.MSELoss()    # mean-squared error for regression
+        #self.criterion = torch.nn.MSELoss()    # mean-squared error for regression
         self.optimizer = torch.optim.Adam(self.cnn.parameters(), lr=learning_rate)
 
         # Try to load the model and optimizer 's state dictionaries
@@ -115,6 +115,20 @@ class Train(object):
             running_loss = 0.0
             val_running_loss = 0.0
             for batch in batches:
+                # Sample weighting
+                sample_weighting_method = 'ens'
+                no_of_classes = 3
+                samples_per_cls = samp_per_cls
+                b_labels = batch['label']
+                beta = 0.9
+                weights = self.get_weights_transformed_for_sample(sample_weighting_method,
+                                                                  no_of_classes,
+                                                                  samples_per_cls,
+                                                                  b_labels,
+                                                                  beta=beta)
+
+                self.criterion = torch.nn.BCEWithLogitsLoss(weights.to(self.device))
+
                 self.optimizer.zero_grad()
 
                 outputs = self.cnn(batch['amp'].to(self.device))

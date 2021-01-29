@@ -80,7 +80,7 @@ constituent_types = ['Albita',
                      'clor_cncl',
                      'se_gverde']
 
-ind_constituent = 6
+ind_constituent = 0
 
 ### Define the Hyperparameters
 
@@ -151,12 +151,14 @@ if train_arg:
     data = Data(seed)
     data_path = data_path_arg
     data.data_loader(data_path, constituent, current, random=rd)
+    print(data.yes, data.possible, data.no)
+    samples_per_cls = [data.yes, data.possible, data.no]
 
     ## Train with data
     train = Train(batch_size,  input_size, num_classes, filters_number, kernel_size,
                  state_dict_path, current, params_name, seed)
     train.train_model(batch_size, learning_rate, num_epochs, data.amp,
-                    data.label, validate=validate, patience=patience)
+                    data.label, samples_per_cls, validate=validate, patience=patience)
 
 ### Test
 if test_arg:

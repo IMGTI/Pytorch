@@ -97,8 +97,6 @@ class Data(object):
         return x[ind_rand], y[ind_rand]
 
     def get_label(self, constituent, data_path, data_file_name, label_file_name):
-        # HACER SCALING (DISTINTO SCALING Y SCALER FILE PARA CADA COLUMNA DE DATOS)
-        # HACER ONE HOT ENCODING PARA LABELS QUE NO SON TAMBIEN IE, SI ES ALBITA YES, BIOTITA ES NO
         # Open file containing labels and other data
         label_file = pd.read_csv(data_path + "/" + label_file_name)
 
@@ -178,10 +176,14 @@ class Data(object):
         files_list = os.listdir(data_path)
         labels_file = np.array(files_list)[['.csv' in x for x in files_list]][0]
         files_list.remove(labels_file)
+        self.yes = 0
+        self.possible = 0
+        self.no = 0
         for ind, file in enumerate(tqdm(files_list, total=len(files_list))):
             # Extract data and labels
             self.ext_data(data_path + '/' + file)
             self.amp = self.treat_data(current=current)
+
             # Skip data without proper label
             try:
                 self.label = self.get_label(constituent, data_path, file, labels_file)
@@ -198,6 +200,14 @@ class Data(object):
                 elif len(self.amp)!=0:
                     self.all_amp = self.amp.copy()
                     self.all_label = self.label.copy()
+
+            # Store number of samples per class
+            if (self.label == np.array([1,0,0])).all():
+                self.yes +=1
+            elif (self.label == np.array([0,1,0])).all():
+                self.possible +=1
+            elif (self.label == np.array([0,0,1])).all():
+                self.no +=1
 
         # Randomized all windows
         if random:
