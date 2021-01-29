@@ -31,6 +31,40 @@ class Train(object):
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         pass
 
+    def get_weights_transformed_for_sample(self, sample_weighting_method,
+                                           no_of_classes, samples_per_cls,
+                                           b_labels, beta=None):
+        ''' Sample weighting '''
+
+        def effective_num_of_samples(no_of_classes, beta, samples_per_cls):
+            effective_num = 1.0 - np.power(beta, samples_per_cls)
+            weights_for_samples = (1.0 - beta) / np.array(effective_num)
+            weights_for_samples = weights_for_samples / np.sum(weights_for_samples) * no_of_classes
+            return weights_for_samples
+
+        def inverse_num_of_samples(no_of_classes, samples_per_cls, power=1):
+            weights_for_samples = 1.0 / np.array(np.power(samples_per_cls,power))
+            weights_for_samples = weights_for_samples / np.sum(weights_for_samples) * no_of_classes
+            return weights_for_samples
+
+        if sample_weighting_method=='ens':
+            weights_for_samples = effective_num_of_samples(no_of_classes, beta, samples_per_cls)
+        elif sample_weighting_method=='ins':
+            weights_for_samples = inverse_num_of_samples(no_of_classes, samples_per_cls)
+        elif sample_weighting_method=='isns':
+            weights_for_samples = inverse_num_of_samples(no_of_classes, samples_per_cls, power=0.5)
+        else:
+            return None
+        b_labels = b_labels.to('cpu').numpy()
+        weights_for_samples = torch.tensor(weights_for_samples).float()
+        weights_for_samples = weights_for_samples.unsqueeze(0)
+        weights_for_samples = torch.tensor(np.array(weights_for_samples.repeat(b_labels.shape[0],1) * b_labels))
+        weights_for_samples = weights_for_samples.sum(1)
+        weights_for_samples = weights_for_samples.unsqueeze(1)
+        weights_for_samples = weights_for_samples.repeat(1, no_of_classes)
+
+        return weights_for_samples
+
     def train_model(self, batch_size, learning_rate, num_epochs, amp, label,
                     validate=True, patience=10):
         # Initialize the early stopping object
@@ -82,7 +116,7 @@ class Train(object):
             val_running_loss = 0.0
             for batch in batches:
                 self.optimizer.zero_grad()
-                
+
                 outputs = self.cnn(batch['amp'].to(self.device))
 
                 # Obtain the value for the loss function
