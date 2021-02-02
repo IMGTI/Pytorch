@@ -40,9 +40,9 @@ class CNN(nn.Module):
 
         n = 2151
         stride = 1
-        l_fc = len_fc(n, self.filters_number, self.kernel_size, 1, 3)
+        self.l_fc = len_fc(n, self.filters_number, self.kernel_size, 1, 3)
 
-        self.fc1 = nn.Linear(self.filters_number*l_fc, 32)  # (2151 - (ks-stride))/2
+        self.fc1 = nn.Linear(self.filters_number*self.l_fc, 32)  # (2151 - (ks-stride))/2
                                                            # (stride=1, 3 times, one for each conv+pool)
         self.fc2 = nn.Linear(32, self.num_classes)
 
@@ -53,7 +53,7 @@ class CNN(nn.Module):
         x = self.pool(F.relu(self.conv1(x)))
         x = self.pool(F.relu(self.conv2(x)))
         x = self.pool(F.relu(self.conv3(x)))
-        x = x.view(-1,self.filters_number*268)
+        x = x.view(-1,self.filters_number*self.l_fc)
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
 
