@@ -253,9 +253,9 @@ def data_loader(data_path, constituent, random=False):
 
     return amp, label
 
-def train_model(trial):
+
+def hyp_tune(num_samples=10, max_num_epochs=10):
     # Data directory
-    #data_dir = 'D:/Documents/GitHub/Pytorch/LSTM_Test'
     data_path = 'D:/Documents/GitHub/Datos_Espectros/Espectros_analizados/PredMeasure'
 
     # Constituent
@@ -271,122 +271,142 @@ def train_model(trial):
 
     constituent = constituent_types[ind_constituent]
 
-    # Make validation while training
-    validate = True
-
-    # Model Parameters
-    bs = trial.suggest_int('bs', 1, 100)
-    lr = trial.suggest_loguniform('lr', 1e-4, 1e-1)
-    fil = trial.suggest_int('fn', 1, 30)
-    ker = trial.suggest_int('ks', 1, 5)
-
-    # Training parameters
-    max_nepochs = trial.suggest_int('max_nepochs', 10, 10)
-
     # Load data
-
     amp, label = data_loader(data_path, constituent, random=True)
 
-    # Initialize model
-    cnn = CNN(1, 3, fil, ker, seed)
+    def train_model(trial, amp=amp, label=label):
+        '''
+        # Data directory
+        data_path = 'D:/Documents/GitHub/Datos_Espectros/Espectros_analizados/PredMeasure'
 
-    # Send model to device
-    cnn.to(device)
+        # Constituent
+        constituent_types = ['Albita',
+                             'Alunita',
+                             'Biotita',
+                             'Ka_Pyr_Sm',
+                             'Mus_Il_se',
+                             'clor_cncl',
+                             'se_gverde']
 
-    criterion = torch.nn.MSELoss()    # mean-squared error for regression
-    optimizer = torch.optim.Adam(cnn.parameters(), lr=lr)
+        ind_constituent = 0
 
-    # Train the model
+        constituent = constituent_types[ind_constituent]
+        '''
+        # Make validation while training
+        validate = True
 
-    # Define validation set and training set
-    if validate:
-        # Select 25% of data as validation
-        ind_val = int(len(label) * 0.75)
-        val_amp = amp[ind_val:]
-        val_label = label[ind_val:]
-        amp = amp[:ind_val]
-        label = label[:ind_val]
+        # Model Parameters
+        bs = trial.suggest_int('bs', 1, 100)
+        lr = trial.suggest_loguniform('lr', 1e-4, 1e-1)
+        fil = trial.suggest_int('fn', 1, 30)
+        ker = trial.suggest_int('ks', 1, 5)
 
-    # Send model to device
-    cnn.to(device)
+        # Training parameters
+        max_nepochs = trial.suggest_int('max_nepochs', 10, 10)
+        '''
+        # Load data
+        amp, label = data_loader(data_path, constituent, random=True)
+        '''
+        # Initialize model
+        cnn = CNN(1, 3, fil, ker, seed)
 
-    criterion = torch.nn.MSELoss()    # mean-squared error for regression
-    optimizer = torch.optim.Adam(cnn.parameters(), lr=lr)
+        # Send model to device
+        cnn.to(device)
 
-    # Train the model
-    batches = []
-    ind = 0
-    while True:
-        try:
-            batches.append({'amp':torch.index_select(amp, 0, torch.tensor(np.int64(np.arange(ind,ind+bs,1)))),
-                            'label':torch.index_select(label, 0, torch.tensor(np.int64(np.arange(ind,ind+bs,1)))),
-                            'val_amp':torch.index_select(val_amp, 0, torch.tensor(np.int64(np.arange(ind,ind+bs,1)))),
-                            'val_label':torch.index_select(val_label, 0, torch.tensor(np.int64(np.arange(ind,ind+bs,1))))})
+        criterion = torch.nn.MSELoss()    # mean-squared error for regression
+        optimizer = torch.optim.Adam(cnn.parameters(), lr=lr)
 
-            ind += bs
-        except:
-            break
+        # Train the model
 
-    if (batches[-1]['amp']).size(0)!=bs:
-        batches = batches[:-1]
-        print("Removing last batch because of invalid batch size")
+        # Define validation set and training set
+        if validate:
+            # Select 25% of data as validation
+            ind_val = int(len(label) * 0.75)
+            val_amp = amp[ind_val:]
+            val_label = label[ind_val:]
+            amp = amp[:ind_val]
+            label = label[:ind_val]
 
-    for epoch in tqdm(range(max_nepochs), total=max_nepochs):
-        hidden = None
-        running_loss = 0.0
-        val_running_loss = 0.0
-        for batch in batches:
-            '''
-            # Sample weighting
-            sample_weighting_method = 'ens'
-            no_of_classes = 3
-            samples_per_cls = samp_per_cls
-            b_labels = batch['label']
-            beta = 0.9
-            weights = get_weights_transformed_for_sample(sample_weighting_method,
-                                                              no_of_classes,
-                                                              samples_per_cls,
-                                                              b_labels,
-                                                              beta=beta)
+        # Send model to device
+        cnn.to(device)
 
-            criterion = torch.nn.BCEWithLogitsLoss(weights.to(device))
-            '''
-            optimizer.zero_grad()
+        criterion = torch.nn.MSELoss()    # mean-squared error for regression
+        optimizer = torch.optim.Adam(cnn.parameters(), lr=lr)
 
-            outputs = cnn(batch['amp'].to(device))
+        # Train the model
+        batches = []
+        ind = 0
+        while True:
+            try:
+                batches.append({'amp':torch.index_select(amp, 0, torch.tensor(np.int64(np.arange(ind,ind+bs,1)))),
+                                'label':torch.index_select(label, 0, torch.tensor(np.int64(np.arange(ind,ind+bs,1)))),
+                                'val_amp':torch.index_select(val_amp, 0, torch.tensor(np.int64(np.arange(ind,ind+bs,1)))),
+                                'val_label':torch.index_select(val_label, 0, torch.tensor(np.int64(np.arange(ind,ind+bs,1))))})
 
-            # Obtain the value for the loss function
-            loss = criterion(outputs.to(device), batch['label'].to(device))
+                ind += bs
+            except:
+                break
 
-            running_loss += loss.item()
+        if (batches[-1]['amp']).size(0)!=bs:
+            batches = batches[:-1]
+            print("Removing last batch because of invalid batch size")
 
-            loss.backward()
+        for epoch in tqdm(range(max_nepochs), total=max_nepochs):
+            hidden = None
+            running_loss = 0.0
+            val_running_loss = 0.0
+            for batch in batches:
+                '''
+                # Sample weighting
+                sample_weighting_method = 'ens'
+                no_of_classes = 3
+                samples_per_cls = samp_per_cls
+                b_labels = batch['label']
+                beta = 0.9
+                weights = get_weights_transformed_for_sample(sample_weighting_method,
+                                                                  no_of_classes,
+                                                                  samples_per_cls,
+                                                                  b_labels,
+                                                                  beta=beta)
 
-            optimizer.step()
+                criterion = torch.nn.BCEWithLogitsLoss(weights.to(device))
+                '''
+                optimizer.zero_grad()
 
-            with torch.no_grad():
-                # Initialize model in testing mode
-                cnn.eval()
-                val_pred = cnn(batch['val_amp'].to(device))
-                val_loss = criterion(val_pred.to(device), batch['val_label'].to(device))
+                outputs = cnn(batch['amp'].to(device))
 
-                val_running_loss += val_loss.item()
+                # Obtain the value for the loss function
+                loss = criterion(outputs.to(device), batch['label'].to(device))
 
-                # Initialize model in trainning mode again
-                cnn.train()
+                running_loss += loss.item()
 
-        loss4report = (val_running_loss/len(batches))
+                loss.backward()
 
-        # Report loss to optuna
-        trial.report(loss4report, epoch)
+                optimizer.step()
 
-        # Handle pruning based on the intermediate value.
-        if trial.should_prune():
-            raise optuna.TrialPruned()
+                with torch.no_grad():
+                    # Initialize model in testing mode
+                    cnn.eval()
+                    val_pred = cnn(batch['val_amp'].to(device))
+                    val_loss = criterion(val_pred.to(device), batch['val_label'].to(device))
 
-    return loss4report
+                    val_running_loss += val_loss.item()
 
-def hyp_tune(num_samples=10, max_num_epochs=10):
+                    # Initialize model in trainning mode again
+                    cnn.train()
+
+            loss4report = (val_running_loss/len(batches))
+
+            # Report loss to optuna
+            trial.report(loss4report, epoch)
+
+            # Handle pruning based on the intermediate value.
+            if trial.should_prune():
+                raise optuna.TrialPruned()
+
+        return loss4report
+
+
     # Set sampler
     sampler = optuna.samplers.TPESampler()
 
@@ -418,7 +438,7 @@ def hyp_tune(num_samples=10, max_num_epochs=10):
           'Maximum Number of Epochs Used = ', best_config[5])
 
     # Store best parameters in file
-    best_params_file = open('best_params_optuna.txt', 'a')
+    best_params_file = open('best_params_optuna_' + constituent + '.txt', 'a')
 
     best_params_file.write('Date = ' + dt.datetime.now().strftime("%d_%m_%Y_%H_%M_%S") + '\n')
     best_params_file.write('Validation Loss = ' + str(best_config[0]) + '\n')

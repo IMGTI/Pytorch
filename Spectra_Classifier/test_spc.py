@@ -90,8 +90,10 @@ class Test(object):
                     except:
                         pass
                     predicted_labels = classes[predicted]
+                    predicted_labels_pres = str(round(np.array(_.cpu())[0] * 100, 3))
 
                     print('Predicted: ' + predicted_labels)
+                    print('Precision: ' + predicted_labels_pres + '%')
                     try:
                         print('Ground Truth: ' + ground_truth_labels)
                     except:
