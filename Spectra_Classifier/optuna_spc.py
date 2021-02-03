@@ -18,6 +18,7 @@ import getopt
 import sys
 from tqdm import tqdm
 import spc
+import datetime as dt
 
 ### Set RNG seeds
 
@@ -275,23 +276,6 @@ def hyp_tune(num_samples=10, max_num_epochs=10):
     amp, label = data_loader(data_path, constituent, random=True)
 
     def train_model(trial, amp=amp, label=label):
-        '''
-        # Data directory
-        data_path = 'D:/Documents/GitHub/Datos_Espectros/Espectros_analizados/PredMeasure'
-
-        # Constituent
-        constituent_types = ['Albita',
-                             'Alunita',
-                             'Biotita',
-                             'Ka_Pyr_Sm',
-                             'Mus_Il_se',
-                             'clor_cncl',
-                             'se_gverde']
-
-        ind_constituent = 0
-
-        constituent = constituent_types[ind_constituent]
-        '''
         # Make validation while training
         validate = True
 
@@ -303,10 +287,7 @@ def hyp_tune(num_samples=10, max_num_epochs=10):
 
         # Training parameters
         max_nepochs = trial.suggest_int('max_nepochs', 10, 10)
-        '''
-        # Load data
-        amp, label = data_loader(data_path, constituent, random=True)
-        '''
+
         # Initialize model
         cnn = CNN(1, 3, fil, ker, seed)
 
