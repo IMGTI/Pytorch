@@ -148,7 +148,18 @@ def data_smooth(times, defs, N_avg=2):
     defs = mov_avg(defs, N_avg)
     return times, defs
 
-def treat_data(times, defs, seq_length):
+def data_loader(data_path, n_avg):
+    data = {}
+
+    for ind, file in enumerate(os.listdir(data_path)):
+        times, defs = ext_data(data_path + '/' + file)
+        times, defs = data_smooth(times, defs, N_avg=n_avg)
+
+        data[file] = (times, defs)
+
+    return data
+
+def treat_data(data, seq_length, random_win=False):
     def reshape_data(data):
         # Reshape data array from 1D to 2D
         data = data.reshape(-1, 1)
@@ -184,29 +195,24 @@ def treat_data(times, defs, seq_length):
             joblib.dump(scaler, sc_filename)
         return data_sc
 
-    # Load data into sequences
-    training_set = defs
-
-    training_data = scaling(training_set)
-
-    # Treat data
-    x, y = sliding_windows(training_data, seq_length)
-
-    dataX = np.array(x)
-    dataY = np.array(y)
-
-    return dataX, dataY
-
-def data_loader(data_path, n_avg, seq_length, random_win=False):
     def random_win(x, y):
         ind_rand = np.random.permutation(len(y))
         rev_rand = np.argsort(ind_rand)
         return x[ind_rand], y[ind_rand], rev_rand
-    for ind, file in enumerate(os.listdir(data_path)):
-        times, defs = ext_data(data_path + '/' + file)
-        times, defs = data_smooth(times, defs, N_avg=n_avg)
-        dataX, dataY = treat_data(times, defs, seq_length)
 
+    for times, defs in zip(data.values()):
+        # Load data into sequences
+        training_set = defs
+
+        training_data = scaling(training_set)
+
+        # Treat data
+        x, y = sliding_windows(training_data, seq_length)
+
+        dataX = np.array(x)
+        dataY = np.array(y)
+
+        # Append data
         if ind==0:
             alldataX = dataX.copy()
             alldataY = dataY.copy()
@@ -229,136 +235,85 @@ def data_loader(data_path, n_avg, seq_length, random_win=False):
     dataX = alldataX.detach().clone()
     dataY = alldataY.detach().clone()
 
-    return dataX, dataY, times_dataY
+    return dataX, dataYyo
 
-def train_model(trial):
+def hyp_tune(num_samples=10, max_num_epochs=10):
     # Data directory
     #data_dir = 'D:/Documents/GitHub/Pytorch/LSTM_Test'
     data_path = 'D:/Documents/GitHub/Datos_Radares/Prueba_all_data'
+    n_avg = 2
 
-    # Make validation while training
-    validate = True
-
-    # Model Parameters
-    na = trial.suggest_int('na', 2, 2)
-    do = trial.suggest_uniform('do', 0.01, 0.05)
-    hs = trial.suggest_int('hs', 8, 20)#1, 100)#10)
-    nl = trial.suggest_int('nl', 1, 10)#4)
-    sl = trial.suggest_int('sl', 10, 100)#15, 200)#100)
-    bs = trial.suggest_int('bs', 25, 50)#1, 100)#50)
-    lr = trial.suggest_loguniform('lr', 1e-3, 1e-2)#1e-4, 1e-1)
-    bd = trial.suggest_int('bd', 0, 1)
-    st = trial.suggest_int('st', 0, 0)#0, 1)
-    rd = trial.suggest_int('rd', 1, 1)#0, 1)
-    #fil = trial.suggest_int('fn', 1, 30)
-    #ker = trial.suggest_int('ks', 1, 5)
-
-    # Training parameters
-    max_nepochs = trial.suggest_int('max_nepochs', 10, 10)
-
-    # Transform num into bool for biderectionality
-    if bd==0:
-        bid = False
-    else:
-        bid = True
-
-    if st==1:
-        stateful = True
-    else:
-        stateful = False
-
-    if rd==1:
-        rw = True
-    else:
-        rw = False
     # Load data
+    data = data_loader(data_path, na=n_avg)
 
-    defsX, defsY, times_dataY = data_loader(data_path, na, sl, random_win=rw)
+    def train_model(trial, data=data, na=n_avg):
+        # Make validation while training
+        validate = True
 
-    # Initialize model
-    lstm = LSTM(bs, 1, 1, hs, nl, do, bid, seed)
-    #lstm = CNNLSTM(bs, 1, 1, hs, nl, do, bid, fil, ker, seed)
+        # Model Parameters
+        na = trial.suggest_int('na', n_avg, n_avg)
+        do = trial.suggest_uniform('do', 0.01, 0.05)
+        hs = trial.suggest_int('hs', 8, 20)#1, 100)#10)
+        nl = trial.suggest_int('nl', 1, 10)#4)
+        sl = trial.suggest_int('sl', 10, 100)#15, 200)#100)
+        bs = trial.suggest_int('bs', 25, 50)#1, 100)#50)
+        lr = trial.suggest_loguniform('lr', 1e-3, 1e-2)#1e-4, 1e-1)
+        bd = trial.suggest_int('bd', 0, 1)
+        st = trial.suggest_int('st', 0, 0)#0, 1)
+        rd = trial.suggest_int('rd', 1, 1)#0, 1)
+        #fil = trial.suggest_int('fn', 1, 30)
+        #ker = trial.suggest_int('ks', 1, 5)
 
-    # Send model to device
-    lstm.to(device)
+        # Training parameters
+        max_nepochs = trial.suggest_int('max_nepochs', 10, 10)
 
-    criterion = torch.nn.MSELoss()    # mean-squared error for regression
-    optimizer = torch.optim.Adam(lstm.parameters(), lr=lr)
+        # Transform num into bool for biderectionality
+        if bd==0:
+            bid = False
+        else:
+            bid = True
 
-    # Train the model
+        if st==1:
+            stateful = True
+        else:
+            stateful = False
 
-    # Define validation set and training set
-    if validate:
-        ind_val = int(len(defsY) * 0.75)  # Select 25% of data as validation
-        val_defsX = defsX[ind_val:]
-        val_defsY = defsY[ind_val:]
-        defsX = defsX[:ind_val]
-        defsY = defsY[:ind_val]
+        if rd==1:
+            rw = True
+        else:
+            rw = False
+        # Load data
 
-    if bs==-1:
-        for epoch in tqdm(range(max_nepochs), total=max_nepochs):
-            optimizer.zero_grad()
+        defsX, defsY = treat_data(data, sl, random_win=rw)
 
-            outputs, hidden = lstm(defsX.to(device))
+        # Initialize model
+        lstm = LSTM(bs, 1, 1, hs, nl, do, bid, seed)
+        #lstm = CNNLSTM(bs, 1, 1, hs, nl, do, bid, fil, ker, seed)
 
-            # Obtain the value for the loss function
-            loss = criterion(outputs.to(device), defsY.to(device))
+        # Send model to device
+        lstm.to(device)
 
-            loss.backward()
+        criterion = torch.nn.MSELoss()    # mean-squared error for regression
+        optimizer = torch.optim.Adam(lstm.parameters(), lr=lr)
 
-            optimizer.step()
+        # Train the model
 
-            with torch.no_grad():
-                # Initialize model in testing mode
-                lstm.eval()
-                val_pred, val_hidden = lstm(val_defsX.to(device))
-                val_loss = criterion(val_pred.to(device), val_defsY.to(device))
+        # Define validation set and training set
+        if validate:
+            ind_val = int(len(defsY) * 0.75)  # Select 25% of data as validation
+            val_defsX = defsX[ind_val:]
+            val_defsY = defsY[ind_val:]
+            defsX = defsX[:ind_val]
+            defsY = defsY[:ind_val]
 
-                loss4report = val_loss.item()
-                # Initialize model in trainning mode again
-                lstm.train()
-
-            # Report loss to optuna
-            trial.report(loss4report, epoch)
-
-            # Handle pruning based on the intermediate value.
-            if trial.should_prune():
-                raise optuna.TrialPruned()
-    else:
-        batches = []
-        ind = 0
-        while True:
-            try:
-                batches.append({'defsX':torch.index_select(defsX, 0, torch.tensor(np.int64(np.arange(ind,ind+bs,1)))),
-                                'defsY':torch.index_select(defsY, 0, torch.tensor(np.int64(np.arange(ind,ind+bs,1)))),
-                                'val_defsX':torch.index_select(val_defsX, 0, torch.tensor(np.int64(np.arange(ind,ind+bs,1)))),
-                                'val_defsY':torch.index_select(val_defsY, 0, torch.tensor(np.int64(np.arange(ind,ind+bs,1))))})
-
-                ind += bs
-            except:
-                break
-
-        if (batches[-1]['defsX']).size(0)!=bs:
-            batches = batches[:-1]
-            print("Removing last batch because of invalid batch size")
-
-
-        for epoch in tqdm(range(max_nepochs), total=max_nepochs):
-            hidden = None
-            running_loss = 0.0
-            val_running_loss = 0.0
-            for batch in batches:
+        if bs==-1:
+            for epoch in tqdm(range(max_nepochs), total=max_nepochs):
                 optimizer.zero_grad()
 
-                if stateful:
-                    outputs, hidden = lstm(batch['defsX'].to(device), hidden=hidden)
-                else:
-                    outputs, hidden = lstm(batch['defsX'].to(device))
+                outputs, hidden = lstm(defsX.to(device))
 
                 # Obtain the value for the loss function
-                loss = criterion(outputs.to(device), batch['defsY'].to(device))
-
-                running_loss += loss.item()
+                loss = criterion(outputs.to(device), defsY.to(device))
 
                 loss.backward()
 
@@ -367,26 +322,81 @@ def train_model(trial):
                 with torch.no_grad():
                     # Initialize model in testing mode
                     lstm.eval()
-                    val_pred, val_hidden = lstm(batch['val_defsX'].to(device))
-                    val_loss = criterion(val_pred.to(device), batch['val_defsY'].to(device))
+                    val_pred, val_hidden = lstm(val_defsX.to(device))
+                    val_loss = criterion(val_pred.to(device), val_defsY.to(device))
 
-                    val_running_loss += val_loss.item()
-
+                    loss4report = val_loss.item()
                     # Initialize model in trainning mode again
                     lstm.train()
 
-            loss4report = (val_running_loss/len(batches))
+                # Report loss to optuna
+                trial.report(loss4report, epoch)
 
-            # Report loss to optuna
-            trial.report(loss4report, epoch)
+                # Handle pruning based on the intermediate value.
+                if trial.should_prune():
+                    raise optuna.TrialPruned()
+        else:
+            batches = []
+            ind = 0
+            while True:
+                try:
+                    batches.append({'defsX':torch.index_select(defsX, 0, torch.tensor(np.int64(np.arange(ind,ind+bs,1)))),
+                                    'defsY':torch.index_select(defsY, 0, torch.tensor(np.int64(np.arange(ind,ind+bs,1)))),
+                                    'val_defsX':torch.index_select(val_defsX, 0, torch.tensor(np.int64(np.arange(ind,ind+bs,1)))),
+                                    'val_defsY':torch.index_select(val_defsY, 0, torch.tensor(np.int64(np.arange(ind,ind+bs,1))))})
 
-            # Handle pruning based on the intermediate value.
-            if trial.should_prune():
-                raise optuna.TrialPruned()
+                    ind += bs
+                except:
+                    break
 
-    return loss4report
+            if (batches[-1]['defsX']).size(0)!=bs:
+                batches = batches[:-1]
+                print("Removing last batch because of invalid batch size")
 
-def hyp_tune(num_samples=10, max_num_epochs=10):
+
+            for epoch in tqdm(range(max_nepochs), total=max_nepochs):
+                hidden = None
+                running_loss = 0.0
+                val_running_loss = 0.0
+                for batch in batches:
+                    optimizer.zero_grad()
+
+                    if stateful:
+                        outputs, hidden = lstm(batch['defsX'].to(device), hidden=hidden)
+                    else:
+                        outputs, hidden = lstm(batch['defsX'].to(device))
+
+                    # Obtain the value for the loss function
+                    loss = criterion(outputs.to(device), batch['defsY'].to(device))
+
+                    running_loss += loss.item()
+
+                    loss.backward()
+
+                    optimizer.step()
+
+                    with torch.no_grad():
+                        # Initialize model in testing mode
+                        lstm.eval()
+                        val_pred, val_hidden = lstm(batch['val_defsX'].to(device))
+                        val_loss = criterion(val_pred.to(device), batch['val_defsY'].to(device))
+
+                        val_running_loss += val_loss.item()
+
+                        # Initialize model in trainning mode again
+                        lstm.train()
+
+                loss4report = (val_running_loss/len(batches))
+
+                # Report loss to optuna
+                trial.report(loss4report, epoch)
+
+                # Handle pruning based on the intermediate value.
+                if trial.should_prune():
+                    raise optuna.TrialPruned()
+
+        return loss4report
+
     # Set sampler
     sampler = optuna.samplers.TPESampler()
 
