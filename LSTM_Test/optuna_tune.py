@@ -151,7 +151,7 @@ def data_smooth(times, defs, N_avg=2):
 def data_loader(data_path, n_avg):
     data = {}
 
-    for ind, file in enumerate(os.listdir(data_path)):
+    for ind, file in tqdm(enumerate(os.listdir(data_path)), total=len(os.listdir(data_path))):
         times, defs = ext_data(data_path + '/' + file)
         times, defs = data_smooth(times, defs, N_avg=n_avg)
 
@@ -200,7 +200,9 @@ def treat_data(data, seq_length, random_win=False):
         rev_rand = np.argsort(ind_rand)
         return x[ind_rand], y[ind_rand], rev_rand
 
-    for times, defs in zip(data.values()):
+    for ind, data in enumerate(data.values()):
+        # Separate times and defs data
+        times, defs = data
         # Load data into sequences
         training_set = defs
 
@@ -235,7 +237,7 @@ def treat_data(data, seq_length, random_win=False):
     dataX = alldataX.detach().clone()
     dataY = alldataY.detach().clone()
 
-    return dataX, dataYyo
+    return dataX, dataY
 
 def hyp_tune(num_samples=10, max_num_epochs=10):
     # Data directory
@@ -244,7 +246,7 @@ def hyp_tune(num_samples=10, max_num_epochs=10):
     n_avg = 2
 
     # Load data
-    data = data_loader(data_path, na=n_avg)
+    data = data_loader(data_path, n_avg=n_avg)
 
     def train_model(trial, data=data, na=n_avg):
         # Make validation while training
