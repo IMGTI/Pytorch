@@ -255,10 +255,10 @@ def data_loader(data_path, constituent, random=False):
     return amp, label
 
 
-def hyp_tune(num_samples=10, max_num_epochs=10):
+def hyp_tune(constituent, num_samples=10, max_num_epochs=10):
     # Data directory
     data_path = 'D:/Documents/GitHub/Datos_Espectros/Espectros_analizados/PredMeasure'
-
+    '''
     # Constituent
     constituent_types = ['Albita',
                          'Alunita',
@@ -271,7 +271,7 @@ def hyp_tune(num_samples=10, max_num_epochs=10):
     ind_constituent = 0
 
     constituent = constituent_types[ind_constituent]
-
+    '''
     # Load data
     amp, label = data_loader(data_path, constituent, random=True)
 
@@ -435,9 +435,19 @@ def hyp_tune(num_samples=10, max_num_epochs=10):
 
     best_params_file.close()
 
+'''
+if __name__ == "__main__":
+    hyp_tune(num_samples=num_samples, max_num_epochs=10)
+'''
+# Constituent
+constituent_types = [#'Albita',
+                     'Alunita',
+                     'Biotita',
+                     'Ka_Pyr_Sm',
+                     'Mus_Il_se',
+                     'clor_cncl',
+                     'se_gverde']
 
 if __name__ == "__main__":
-    if device==torch.device("cuda:0"):
-        hyp_tune(num_samples=num_samples, max_num_epochs=10)
-    else:
-        hyp_tune(num_samples=num_samples, max_num_epochs=10)
+    for constituent in constituent_types:
+        hyp_tune(constituent, num_samples=num_samples, max_num_epochs=10)
