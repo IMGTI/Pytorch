@@ -88,12 +88,12 @@ ind_constituent = 0
 constituent = constituent_types[ind_constituent]  # Select class model
 
 num_epochs = n_epochs
-learning_rate = [ 0.000307,0.033908,0.033908,0.033908,0.033908,0.033908,0.033908][ind_constituent]
+learning_rate = [0.000307,0.000604,0.000478,0.001471,0.000191,0.001262,0.007655][ind_constituent]
 input_size = 1
-batch_size = [5,10,10,10,10,10,10][ind_constituent]
+batch_size = [5,40,40,67,3,17,35][ind_constituent]
 num_classes = 3
-filters_number = [28,2,2,2,2,2,2][ind_constituent]
-kernel_size = [3,2,2,2,2,2,2][ind_constituent]
+filters_number = [28,29,28,28,26,19,18][ind_constituent]
+kernel_size = [3,3,5,1,2,1,4][ind_constituent]
 
 ## Data parameters
 rd = True

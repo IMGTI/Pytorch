@@ -1,0 +1,11 @@
+Date = 03_02_2021_17_44_14
+Validation Loss = 0.10113511231802676
+Batch Size = 40
+Learning rate = 0.0004780160343796462
+Kernel Size = 5
+Number of Filters = 28
+Number of Samples = 100
+Maximum Number of Epochs Used = 10
+
+----------------------------------------------------
+

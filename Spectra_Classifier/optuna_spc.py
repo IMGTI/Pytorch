@@ -440,7 +440,7 @@ if __name__ == "__main__":
     hyp_tune(num_samples=num_samples, max_num_epochs=10)
 '''
 # Constituent
-constituent_types = [#'Albita',
+constituent_types = ['Albita',
                      'Alunita',
                      'Biotita',
                      'Ka_Pyr_Sm',
