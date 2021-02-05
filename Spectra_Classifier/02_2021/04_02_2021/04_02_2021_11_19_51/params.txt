@@ -1,0 +1,15 @@
+current  = 02_2021/04_02_2021/04_02_2021_11_19_51
+train_arg  = True
+train_file_path  = ..\..\Datos_Espectros\Espectros_analizados\PredMeasure\
+num_epochs  = 100
+test_arg  = True
+test_file  = 
+learning_rate  = 0.000604
+input_size  = 1
+batch_size  = 40
+filters_number  = 29
+kernel_size  = 3
+rd  = True
+validate  = True
+patience  = 20
+constituent  = Alunita
