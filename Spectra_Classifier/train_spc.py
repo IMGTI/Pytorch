@@ -120,7 +120,7 @@ class Train(object):
                     # Sample weighting
                     sample_weighting_method = method
                     no_of_classes = 3
-                    samples_per_cls = samp_per_cls
+                    samples_per_cls = spc
                     b_labels = batch['label']
                     beta = b
                     weights = self.get_weights_transformed_for_sample(sample_weighting_method,
