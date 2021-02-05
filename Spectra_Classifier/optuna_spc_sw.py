@@ -319,6 +319,14 @@ def hyp_tune(constituent, num_samples=10, max_num_epochs=10):
         fil = trial.suggest_int('fn', 1, 30)
         ker = trial.suggest_int('ks', 1, 5)
         b = trial.suggest_uniform('b', 0.9, 0.9999)
+        sm = trial.suggest_int('sm', 0, 2)
+
+        if sm==0:
+            method = 'ens'
+        elif sm==1:
+            method = 'ins'
+        elif sm==2:
+            method = 'isns'
 
         # Training parameters
         max_nepochs = trial.suggest_int('max_nepochs', 10, 10)
@@ -374,7 +382,7 @@ def hyp_tune(constituent, num_samples=10, max_num_epochs=10):
             for batch in batches:
 
                 # Sample weighting
-                sample_weighting_method = 'ens'
+                sample_weighting_method = method
                 no_of_classes = 3
                 samples_per_cls = samp_per_cls
                 b_labels = batch['label']
@@ -443,10 +451,8 @@ def hyp_tune(constituent, num_samples=10, max_num_epochs=10):
                    best_trial_params['lr'],
                    best_trial_params['ks'],
                    best_trial_params['fn'],
-<<<<<<< HEAD
                    best_trial_params['b'],
-=======
->>>>>>> ea8b7496db2aa7a649049bc1260ba07a875423cd
+                   best_trial_params['sm'],
                    best_trial_params['max_nepochs']]
     print('Best configuration parameters:')
     print('------------------------------')
@@ -455,12 +461,9 @@ def hyp_tune(constituent, num_samples=10, max_num_epochs=10):
           'Learning rate = ', best_config[2], '\n',
           'Kernel Size = ', best_config[3], '\n',
           'Number of Filters = ', best_config[4], '\n',
-<<<<<<< HEAD
           'Beta = ', best_config[5], '\n',
-          'Maximum Number of Epochs Used = ', best_config[6])
-=======
-          'Maximum Number of Epochs Used = ', best_config[5])
->>>>>>> ea8b7496db2aa7a649049bc1260ba07a875423cd
+          'Sample Method (0:ens 1:ins 2:isns) = ', best_config[6], '\n',
+          'Maximum Number of Epochs Used = ', best_config[7])
 
     # Store best parameters in file
     best_params_file = open('best_params_optuna_' + constituent + '.txt', 'a')
@@ -471,14 +474,10 @@ def hyp_tune(constituent, num_samples=10, max_num_epochs=10):
     best_params_file.write('Learning rate = ' + str(best_config[2]) + '\n')
     best_params_file.write('Kernel Size = ' + str(best_config[3]) + '\n')
     best_params_file.write('Number of Filters = ' + str(best_config[4]) + '\n')
-<<<<<<< HEAD
     best_params_file.write('Beta = ' + str(best_config[5]) + '\n')
+    best_params_file.write('Sample Method (0:ens 1:ins 2:isns) = ' + str(best_config[6]) + '\n')
     best_params_file.write('Number of Samples = ' + str(num_samples) + '\n')
-    best_params_file.write('Maximum Number of Epochs Used = ' + str(best_config[6]) + '\n')
-=======
-    best_params_file.write('Number of Samples = ' + str(num_samples) + '\n')
-    best_params_file.write('Maximum Number of Epochs Used = ' + str(best_config[5]) + '\n')
->>>>>>> ea8b7496db2aa7a649049bc1260ba07a875423cd
+    best_params_file.write('Maximum Number of Epochs Used = ' + str(best_config[7]) + '\n')
     best_params_file.write('\n')
     best_params_file.write('----------------------------------------------------' + '\n')
     best_params_file.write('\n')
@@ -491,12 +490,12 @@ if __name__ == "__main__":
 '''
 # Constituent
 constituent_types = ['Albita',
-                     #'Alunita',
-                     #'Biotita',
-                     #'Ka_Pyr_Sm',
-                     #'Mus_Il_se',
-                     #'clor_cncl',
-                     #'se_gverde'
+                     'Alunita',
+                     'Biotita',
+                     'Ka_Pyr_Sm',
+                     'Mus_Il_se',
+                     'clor_cncl',
+                     'se_gverde'
                      ]
 
 if __name__ == "__main__":

@@ -176,11 +176,11 @@ class Data(object):
         files_list = os.listdir(data_path)
         labels_file = np.array(files_list)[['.csv' in x for x in files_list]][0]
         files_list.remove(labels_file)
-        '''
+
         self.yes = 0
         self.possible = 0
         self.no = 0
-        '''
+
         for ind, file in enumerate(tqdm(files_list, total=len(files_list))):
             # Extract data and labels
             self.ext_data(data_path + '/' + file)
@@ -202,7 +202,7 @@ class Data(object):
                 elif len(self.amp)!=0:
                     self.all_amp = self.amp.copy()
                     self.all_label = self.label.copy()
-            '''
+
             # Store number of samples per class
             if (self.label == np.array([1,0,0])).all():
                 self.yes +=1
@@ -210,7 +210,7 @@ class Data(object):
                 self.possible +=1
             elif (self.label == np.array([0,0,1])).all():
                 self.no +=1
-            '''
+            
         # Randomized all windows
         if random:
             self.all_amp, self.all_label = self.random_shuffle(self.all_amp, self.all_label)

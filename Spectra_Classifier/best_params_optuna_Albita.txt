@@ -31,3 +31,15 @@ Maximum Number of Epochs Used = 10
 
 ----------------------------------------------------
 
+Date = 05_02_2021_13_22_48
+Validation Loss = 0.14703502566661947
+Batch Size = 32
+Learning rate = 0.0019162210283114162
+Kernel Size = 3
+Number of Filters = 24
+Beta = 0.9998974556988686
+Number of Samples = 1000
+Maximum Number of Epochs Used = 10
+
+----------------------------------------------------
+

@@ -80,7 +80,7 @@ constituent_types = ['Albita',
                      'clor_cncl',
                      'se_gverde']
 
-ind_constituent = 1
+ind_constituent = 0
 
 ### Define the Hyperparameters
 
@@ -101,6 +101,9 @@ rd = True
 ## Train parameters
 validate = True
 patience = 20#10
+sw = True
+beta = 0.9998974
+sample_method = 'ens'
 
 ## Parameters in name for .jpg files
 params_name = ('_e' + str(num_epochs) +
@@ -152,15 +155,18 @@ if train_arg:
     data_path = data_path_arg
     data.data_loader(data_path, constituent, current, random=rd)
 
-    #samples_per_cls = [data.yes, data.possible, data.no]
-
     ## Train with data
     train = Train(batch_size,  input_size, num_classes, filters_number, kernel_size,
                   state_dict_path, current, params_name, seed)
-    train.train_model(batch_size, learning_rate, num_epochs, data.amp,
-                      data.label, validate=validate, patience=patience)
-    #train.train_model(batch_size, learning_rate, num_epochs, data.amp,
-    #                  data.label, samples_per_cls, validate=validate, patience=patience)
+    if sw:
+        samples_per_cls = [data.yes, data.possible, data.no]
+
+        train.train_model(batch_size, learning_rate, num_epochs, data.amp,
+                          data.label, spc=samples_per_cls, b=beta, method=sample_method,
+                          validate=validate, patience=patience)
+    else:
+        train.train_model(batch_size, learning_rate, num_epochs, data.amp,
+                          data.label, validate=validate, patience=patience)
 
 ### Test
 if test_arg:
@@ -186,6 +192,10 @@ if train_arg:
 else:
     params_file.write('train_file_path  = ' + '\n')
     params_file.write('num_epochs  = ' + '\n')
+if sw:
+    params_file.write('sample weighting  = ' + str(sw) +  '\n')
+    params_file.write('beta  = ' + str(beta) +  '\n')
+    params_file.write('sample method  = ' + sample_method +  '\n')
 params_file.write('test_arg  = ' + str(test_arg) + '\n')
 params_file.write('test_file  = ' + str(test_file) + '\n')
 params_file.write('learning_rate  = ' + str(learning_rate) + '\n')
