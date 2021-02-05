@@ -443,7 +443,10 @@ def hyp_tune(constituent, num_samples=10, max_num_epochs=10):
                    best_trial_params['lr'],
                    best_trial_params['ks'],
                    best_trial_params['fn'],
+<<<<<<< HEAD
                    best_trial_params['b'],
+=======
+>>>>>>> ea8b7496db2aa7a649049bc1260ba07a875423cd
                    best_trial_params['max_nepochs']]
     print('Best configuration parameters:')
     print('------------------------------')
@@ -452,8 +455,12 @@ def hyp_tune(constituent, num_samples=10, max_num_epochs=10):
           'Learning rate = ', best_config[2], '\n',
           'Kernel Size = ', best_config[3], '\n',
           'Number of Filters = ', best_config[4], '\n',
+<<<<<<< HEAD
           'Beta = ', best_config[5], '\n',
           'Maximum Number of Epochs Used = ', best_config[6])
+=======
+          'Maximum Number of Epochs Used = ', best_config[5])
+>>>>>>> ea8b7496db2aa7a649049bc1260ba07a875423cd
 
     # Store best parameters in file
     best_params_file = open('best_params_optuna_' + constituent + '.txt', 'a')
@@ -464,9 +471,14 @@ def hyp_tune(constituent, num_samples=10, max_num_epochs=10):
     best_params_file.write('Learning rate = ' + str(best_config[2]) + '\n')
     best_params_file.write('Kernel Size = ' + str(best_config[3]) + '\n')
     best_params_file.write('Number of Filters = ' + str(best_config[4]) + '\n')
+<<<<<<< HEAD
     best_params_file.write('Beta = ' + str(best_config[5]) + '\n')
     best_params_file.write('Number of Samples = ' + str(num_samples) + '\n')
     best_params_file.write('Maximum Number of Epochs Used = ' + str(best_config[6]) + '\n')
+=======
+    best_params_file.write('Number of Samples = ' + str(num_samples) + '\n')
+    best_params_file.write('Maximum Number of Epochs Used = ' + str(best_config[5]) + '\n')
+>>>>>>> ea8b7496db2aa7a649049bc1260ba07a875423cd
     best_params_file.write('\n')
     best_params_file.write('----------------------------------------------------' + '\n')
     best_params_file.write('\n')
