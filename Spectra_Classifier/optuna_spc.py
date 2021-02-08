@@ -204,53 +204,65 @@ def scaling(data):
     return data_sc
 
 def data_loader(data_path, constituent, random=False):
-    files_list = os.listdir(data_path)
-    labels_file = np.array(files_list)[['.csv' in x for x in files_list]][0]
-    files_list.remove(labels_file)
-    '''
-    yes = 0
-    possible = 0
-    no = 0
-    '''
-    for ind, file in enumerate(tqdm(files_list, total=len(files_list))):
-        # Extract data and labels
-        wave, amp = ext_data(data_path + '/' + file)
-        amp = treat_data(amp)
+    data_file = 'data.ts'
 
-        # Skip data without proper label
-        try:
-            label = get_label(constituent, data_path, file, labels_file)
-        except:
-            continue
-        # Add to data
-        if ind==0:
-            all_amp = amp.copy()
-            all_label = label.copy()
-        else:
-            if len(all_amp)!=0 and len(amp)!=0:
-                all_amp = np.vstack((all_amp, amp))
-                all_label = np.vstack((all_label, label))
-            elif len(amp)!=0:
+    # Load previous loaded data if possible
+    if data_file in os.listdir():
+        print('Using previous loaded data...')
+        amp, label = joblib.load(data_file)
+
+    else:
+        print('No previous data found. Loading data...')
+        files_list = os.listdir(data_path)
+        labels_file = np.array(files_list)[['.csv' in x for x in files_list]][0]
+        files_list.remove(labels_file)
+        '''
+        yes = 0
+        possible = 0
+        no = 0
+        '''
+        for ind, file in enumerate(tqdm(files_list, total=len(files_list))):
+            # Extract data and labels
+            wave, amp = ext_data(data_path + '/' + file)
+            amp = treat_data(amp)
+
+            # Skip data without proper label
+            try:
+                label = get_label(constituent, data_path, file, labels_file)
+            except:
+                continue
+            # Add to data
+            if ind==0:
                 all_amp = amp.copy()
                 all_label = label.copy()
-        '''
-        # Store number of samples per class
-        if (label == np.array([1,0,0])).all():
-            yes +=1
-        elif (label == np.array([0,1,0])).all():
-            possible +=1
-        elif (label == np.array([0,0,1])).all():
-            no +=1
-        '''
-    # Randomized all windows
-    if random:
-        all_amp, all_label = random_shuffle(all_amp, all_label)
+            else:
+                if len(all_amp)!=0 and len(amp)!=0:
+                    all_amp = np.vstack((all_amp, amp))
+                    all_label = np.vstack((all_label, label))
+                elif len(amp)!=0:
+                    all_amp = amp.copy()
+                    all_label = label.copy()
+            '''
+            # Store number of samples per class
+            if (label == np.array([1,0,0])).all():
+                yes +=1
+            elif (label == np.array([0,1,0])).all():
+                possible +=1
+            elif (label == np.array([0,0,1])).all():
+                no +=1
+            '''
+        # Randomized all windows
+        if random:
+            all_amp, all_label = random_shuffle(all_amp, all_label)
 
-    all_amp = Variable(torch.Tensor(np.array(all_amp)))
-    all_label = Variable(torch.Tensor(np.array(all_label)))
+        all_amp = Variable(torch.Tensor(np.array(all_amp)))
+        all_label = Variable(torch.Tensor(np.array(all_label)))
 
-    amp = all_amp.detach().clone()
-    label = all_label.detach().clone()
+        amp = all_amp.detach().clone()
+        label = all_label.detach().clone()
+
+        # Save data for speeding up next execution
+        joblib.dump((amp, label), data_file)
 
     return amp, label
 
