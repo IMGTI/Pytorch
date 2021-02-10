@@ -330,7 +330,7 @@ def hyp_tune(constituent, num_samples=10, max_num_epochs=10):
         lr = trial.suggest_loguniform('lr', 1e-4, 1e-1)
         fil = trial.suggest_int('fn', 1, 30)
         ker = trial.suggest_int('ks', 1, 5)
-        b = trial.suggest_uniform('b', 0.9, 0.9999)
+        b = trial.suggest_uniform('b', 0, 0.9999)#0.9, 0.9999)
         sm = trial.suggest_int('sm', 0, 2)
 
         if sm==0:
@@ -502,12 +502,12 @@ if __name__ == "__main__":
 '''
 # Constituent
 constituent_types = ['Albita',
-                     'Alunita',
-                     'Biotita',
-                     'Ka_Pyr_Sm',
-                     'Mus_Il_se',
-                     'clor_cncl',
-                     'se_gverde'
+                     #'Alunita',
+                     #'Biotita',
+                     #'Ka_Pyr_Sm',
+                     #'Mus_Il_se',
+                     #'clor_cncl',
+                     #'se_gverde'
                      ]
 
 if __name__ == "__main__":

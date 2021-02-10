@@ -56,3 +56,42 @@ Maximum Number of Epochs Used = 10
 
 ----------------------------------------------------
 
+Date = 09_02_2021_11_30_40
+Validation Loss = 0.1446639562963076
+Batch Size = 18
+Learning rate = 0.00042079888201315826
+Kernel Size = 5
+Number of Filters = 15
+Beta = 0.9912454933484997
+Sample Method (0:ens 1:ins 2:isns) = 1
+Number of Samples = 100
+Maximum Number of Epochs Used = 10
+
+----------------------------------------------------
+
+Date = 09_02_2021_12_12_04
+Validation Loss = 0.14113069012761115
+Batch Size = 44
+Learning rate = 0.001418560425355784
+Kernel Size = 1
+Number of Filters = 8
+Beta = 0.4052275613112743
+Sample Method (0:ens 1:ins 2:isns) = 1
+Number of Samples = 100
+Maximum Number of Epochs Used = 10
+
+----------------------------------------------------
+
+Date = 09_02_2021_12_48_46
+Validation Loss = 0.14075769008474148
+Batch Size = 39
+Learning rate = 0.0014319654839296443
+Kernel Size = 1
+Number of Filters = 19
+Beta = 0.5598788289009811
+Sample Method (0:ens 1:ins 2:isns) = 1
+Number of Samples = 500
+Maximum Number of Epochs Used = 10
+
+----------------------------------------------------
+

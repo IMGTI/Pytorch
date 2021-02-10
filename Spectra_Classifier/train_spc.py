@@ -83,7 +83,7 @@ class Train(object):
         self.cnn.to(self.device)
 
         if spc==None:
-            self.criterion = torch.nn.MSELoss()    # mean-squared error for regression
+            self.criterion = torch.nn.CrossEntropyLoss()  # for classification
         self.optimizer = torch.optim.Adam(self.cnn.parameters(), lr=learning_rate)
 
         # Try to load the model and optimizer 's state dictionaries

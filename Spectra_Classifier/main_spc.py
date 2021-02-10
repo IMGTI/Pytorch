@@ -88,22 +88,22 @@ ind_constituent = 0
 constituent = constituent_types[ind_constituent]  # Select class model
 
 num_epochs = n_epochs
-learning_rate = [0.000307,0.000604,0.000478,0.001471,0.000191,0.001262,0.007655][ind_constituent]
+learning_rate = [0.001431,0.000604,0.000478,0.001471,0.000191,0.001262,0.007655][ind_constituent]
 input_size = 1
-batch_size = [5,40,40,67,3,17,35][ind_constituent]
+batch_size = [39,40,40,67,3,17,35][ind_constituent]
 num_classes = 3
-filters_number = [28,29,28,28,26,19,18][ind_constituent]
-kernel_size = [3,3,5,1,2,1,4][ind_constituent]
+filters_number = [19,29,28,28,26,19,18][ind_constituent]
+kernel_size = [1,3,5,1,2,1,4][ind_constituent]
 
 ## Data parameters
 rd = True
 
 ## Train parameters
 validate = True
-patience = 20#10
-sw = True
-beta = 0.9998974
-sample_method = 'ens'
+patience = 9999#20#10
+sw = False#True
+beta = 0.5598788289009811#0.9998974
+sample_method = 'ins'#'ens'
 
 ## Parameters in name for .jpg files
 params_name = ('_e' + str(num_epochs) +
@@ -179,7 +179,7 @@ if test_arg:
     test = Test(batch_size, num_classes, input_size, filters_number, kernel_size,
                  state_dict_path, current, params_name, seed, tfile=test_file)
 
-    test.test_model(data.amp, data.label, sc=data.scaler)
+    test.test_model(data.amp, data.label)
 
 # Store parameters and runtime info in file
 params_file = open(current + '/params.txt', 'w')

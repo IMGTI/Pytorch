@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import torch
 import datetime as dt
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import r2_score as r2s
+from sklearn.metrics import f1_score as f1s
 from model_spc import CNN
 import pandas as pd
 from pandas import ExcelWriter
@@ -47,7 +47,19 @@ class Test(object):
         self.rev_rand = ind
         pass
 
-    def test_model(self, amp, label, sc=None):
+    def save_results(self, result):
+        results_file = open('results.txt', 'a')
+        results_file.write('-------------------------------------------------')
+        results_file.write('Results folder  = ' + str(self.current) + '\n')
+        if len(result)==1:
+            results_file.write('Recall  = ' + str(result) + '\n')
+        else:
+            results_file.write('Precision  = ' + str(result[0]) + '\n')
+            results_file.write('Recall  = ' + str(result[1]) + '\n')
+            results_file.write('F1 Score  = ' + str(result[2]) + '\n')
+        results_file.close()
+
+    def test_model(self, amp, label):
         # List of classes
         classes = ['YES', 'POSSIBLE', 'NO']
 
@@ -60,6 +72,8 @@ class Test(object):
 
             correct = 0
             total = 0
+            f1_score = []
+            precision = []
             with torch.no_grad():
                 for ind, input in enumerate(amp):
                     # Reshape input as shape of batch (batch_size,data_size,channels)
@@ -75,8 +89,21 @@ class Test(object):
 
                     total += 1#labels.size(0)
 
-            print('Accuracy of the network on whole dataset: %d %%' % (
+                    # Store F1 score
+                    print('#####', np.array(label)[ind], np.array(outputs.cpu())[0])
+                    f1_score.append(f1s(np.array(label)[ind], np.array(outputs.cpu())[0]))
+                    # Store precision
+                    precision.append(np.array(_.cpu())[0])
+
+            f1_score = np.array(f1_score)
+            precision = np.array(precision)
+
+            print('Accuracy of the network on whole dataset (Recall): %d %%' % (
                 100 * correct / total))
+
+            self.save_results([np.median(precision),
+                               100 * correct / total,
+                               np.median(f1_score)])
 
         ### Data Test (Classification)
         except:
@@ -90,10 +117,10 @@ class Test(object):
                     except:
                         pass
                     predicted_labels = classes[predicted]
-                    predicted_labels_pres = str(round(np.array(_.cpu())[0] * 100, 3))
+                    predicted_labels_prec = str(round(np.array(_.cpu())[0] * 100, 3))
 
                     print('Predicted: ' + predicted_labels)
-                    print('Precision: ' + predicted_labels_pres + '%')
+                    print('Precision: ' + predicted_labels_prec + '%')
                     try:
                         print('Ground Truth: ' + ground_truth_labels)
                     except:
