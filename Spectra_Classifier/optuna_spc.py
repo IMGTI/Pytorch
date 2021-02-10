@@ -420,7 +420,7 @@ def hyp_tune(constituent, num_samples=10, max_num_epochs=10):
     best_params_file.write('Learning rate = ' + str(best_config[2]) + '\n')
     best_params_file.write('Kernel Size = ' + str(best_config[3]) + '\n')
     best_params_file.write('Number of Filters = ' + str(best_config[4]) + '\n')
-    best_params_file.write('Optimizer = ' + str(best_config[5]) + '\n')
+    best_params_file.write('Optimizer (0:ADAM 1:SGD) = ' + str(best_config[5]) + '\n')
     best_params_file.write('Momentum (Only for SGD) = ' + str(best_config[6]) + '\n')
     best_params_file.write('Number of Samples = ' + str(num_samples) + '\n')
     best_params_file.write('Maximum Number of Epochs Used = ' + str(best_config[7]) + '\n')

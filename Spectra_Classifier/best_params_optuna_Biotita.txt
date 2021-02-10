@@ -22,3 +22,16 @@ Maximum Number of Epochs Used = 10
 
 ----------------------------------------------------
 
+Date = 10_02_2021_15_36_52
+Validation Loss = 0.3929101498452602
+Batch Size = 17
+Learning rate = 0.0011371347731934948
+Kernel Size = 1
+Number of Filters = 12
+Optimizer = 0
+Momentum (Only for SGD) = 0.6287112684053415
+Number of Samples = 500
+Maximum Number of Epochs Used = 10
+
+----------------------------------------------------
+
