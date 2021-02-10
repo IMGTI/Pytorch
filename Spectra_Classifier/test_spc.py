@@ -54,9 +54,9 @@ class Test(object):
         if len(result)==1:
             results_file.write('Recall  = ' + str(result) + '\n')
         else:
-            results_file.write('Precision  = ' + str(result[0]) + '\n')
-            results_file.write('Recall  = ' + str(result[1]) + '\n')
-            results_file.write('F1 Score  = ' + str(result[2]) + '\n')
+            results_file.write('Precision (Median) = ' + str(result[0]) + '\n')
+            results_file.write('Recall = ' + str(result[1]) + '\n')
+            results_file.write('F1 Score (Micro Average) = ' + str(result[2]) + '\n')
         results_file.close()
 
     def test_model(self, amp, label):
@@ -72,7 +72,8 @@ class Test(object):
 
             correct = 0
             total = 0
-            f1_score = []
+            f1_labels = []
+            f1_predicted = []
             precision = []
             with torch.no_grad():
                 for ind, input in enumerate(amp):
@@ -89,21 +90,19 @@ class Test(object):
 
                     total += 1#labels.size(0)
 
-                    # Store F1 score
-                    print('#####', np.array(label)[ind], np.array(outputs.cpu())[0])
-                    f1_score.append(f1s(np.array(label)[ind], np.array(outputs.cpu())[0]))
-                    # Store precision
+                    # Store for median precision
                     precision.append(np.array(_.cpu())[0])
+                    # Store for F1 score
+                    f1_labels.append(labels)
+                    f1_predicted.append(predicted)
 
-            f1_score = np.array(f1_score)
-            precision = np.array(precision)
 
             print('Accuracy of the network on whole dataset (Recall): %d %%' % (
                 100 * correct / total))
 
-            self.save_results([np.median(precision),
+            self.save_results([np.median(np.array(precision)),
                                100 * correct / total,
-                               np.median(f1_score)])
+                               f1s(f1_labels, f1_predicted, average='micro')])
 
         ### Data Test (Classification)
         except:

@@ -46,6 +46,8 @@ class CNN(nn.Module):
                                                            # (stride=1, 3 times, one for each conv+pool)
         self.fc2 = nn.Linear(32, self.num_classes)
 
+        self.soft = nn.Softmax(dim=1)
+
     def forward(self, x, hidden=None):
         x = x.view(-1, 1, x.size()[1])  # Change input shape for in_channels=1
                                         # x.size()[1]==window_size
@@ -55,6 +57,6 @@ class CNN(nn.Module):
         x = self.pool(F.relu(self.conv3(x)))
         x = x.view(-1,self.filters_number*self.l_fc)
         x = F.relu(self.fc1(x))
-        x = self.fc2(x)
+        x = self.soft(self.fc2(x))
 
         return x

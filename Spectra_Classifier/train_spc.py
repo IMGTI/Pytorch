@@ -67,6 +67,11 @@ class Train(object):
 
     def train_model(self, batch_size, learning_rate, num_epochs, amp, label,
                     spc=None, b=0.9, method='ens', validate=True, patience=10):
+        # Make sure label (target) tensor are torch.int64 or torch.long
+        # and it contains class indices (0 or 1 or 2) instead of one-hot encoded vectors
+        # Transform one-hot encoded vectors
+        _, label = torch.max(label, 1)
+
         # Initialize the early stopping object
         early_stopping = EarlyStopping(patience=patience, verbose=True)
 
@@ -84,8 +89,9 @@ class Train(object):
 
         if spc==None:
             self.criterion = torch.nn.CrossEntropyLoss()  # for classification
-        self.optimizer = torch.optim.Adam(self.cnn.parameters(), lr=learning_rate)
-
+        #self.optimizer = torch.optim.Adam(self.cnn.parameters(), lr=learning_rate)
+        momentum = 0.9
+        self.optimizer = torch.optim.SGD(self.cnn.parameters(), lr=learning_rate, momentum=momentum)
         # Try to load the model and optimizer 's state dictionaries
         self.load_model()
 
