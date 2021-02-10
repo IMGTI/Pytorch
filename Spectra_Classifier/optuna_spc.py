@@ -288,8 +288,8 @@ def hyp_tune(constituent, num_samples=10, max_num_epochs=10):
         lr = trial.suggest_loguniform('lr', 1e-4, 1e-1)
         fil = trial.suggest_int('fn', 1, 30)
         ker = trial.suggest_int('ks', 1, 5)
-        opt = trial.suggest_int('ks', 0, 1)
-        m = trial.suggest_uniform('lr', 0, 1)
+        opt = trial.suggest_int('opt', 0, 1)
+        m = trial.suggest_uniform('m', 0, 1)
 
         # Training parameters
         max_nepochs = trial.suggest_int('max_nepochs', 10, 10)
@@ -300,12 +300,12 @@ def hyp_tune(constituent, num_samples=10, max_num_epochs=10):
         # Send model to device
         cnn.to(device)
 
-        self.criterion = torch.nn.CrossEntropyLoss()  # for classification
+        criterion = torch.nn.CrossEntropyLoss()  # for classification
 
         if opt==0:
-            self.optimizer = torch.optim.Adam(self.cnn.parameters(), lr=lr)
+            optimizer = torch.optim.Adam(cnn.parameters(), lr=lr)
         else:
-            self.optimizer = torch.optim.SGD(self.cnn.parameters(), lr=lr, momentum=m)
+            optimizer = torch.optim.SGD(cnn.parameters(), lr=lr, momentum=m)
 
         # Train the model
 
