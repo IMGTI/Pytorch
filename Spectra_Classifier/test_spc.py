@@ -49,13 +49,13 @@ class Test(object):
 
     def save_results(self, result):
         results_file = open('results.txt', 'a')
-        results_file.write('-------------------------------------------------')
+        results_file.write('-------------------------------------------------\n')
         results_file.write('Results folder  = ' + str(self.current) + '\n')
         if len(result)==1:
-            results_file.write('Recall  = ' + str(result) + '\n')
+            results_file.write('Recall  = ' + str(result) + ' [%] \n')
         else:
-            results_file.write('Precision (Median) = ' + str(result[0]) + '\n')
-            results_file.write('Recall = ' + str(result[1]) + '\n')
+            results_file.write('Precision (Median) = ' + str(result[0]) + ' [%] \n')
+            results_file.write('Recall = ' + str(result[1]) + ' [%] \n')
             results_file.write('F1 Score (Micro Average) = ' + str(result[2]) + '\n')
         results_file.close()
 
@@ -91,16 +91,19 @@ class Test(object):
                     total += 1#labels.size(0)
 
                     # Store for median precision
-                    precision.append(np.array(_.cpu())[0])
+                    soft = torch.nn.Softmax(dim=1)
+                    prec_outputs = soft(outputs)  # Obtain probabilities
+                    prec_, prec_predicted = torch.max(prec_outputs.data, 1)
+                    precision.append(np.array(prec_.cpu())[0])
+
                     # Store for F1 score
                     f1_labels.append(labels)
                     f1_predicted.append(predicted)
 
-
             print('Accuracy of the network on whole dataset (Recall): %d %%' % (
                 100 * correct / total))
 
-            self.save_results([np.median(np.array(precision)),
+            self.save_results([100 * np.median(np.array(precision)),
                                100 * correct / total,
                                f1s(f1_labels, f1_predicted, average='micro')])
 

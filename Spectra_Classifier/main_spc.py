@@ -100,10 +100,9 @@ rd = True
 
 ## Train parameters
 validate = True
-patience = 9999#20#10
-sw = False#True
-beta = 0.5598788289009811#0.9998974
-sample_method = 'ins'#'ens'
+patience = 20#10
+optimizer = 1  # 0:Adam 1:SGD
+momentum = 0.9
 
 ## Parameters in name for .jpg files
 params_name = ('_e' + str(num_epochs) +
@@ -158,15 +157,9 @@ if train_arg:
     ## Train with data
     train = Train(batch_size,  input_size, num_classes, filters_number, kernel_size,
                   state_dict_path, current, params_name, seed)
-    if sw:
-        samples_per_cls = [data.yes, data.possible, data.no]
 
-        train.train_model(batch_size, learning_rate, num_epochs, data.amp,
-                          data.label, spc=samples_per_cls, b=beta, method=sample_method,
-                          validate=validate, patience=patience)
-    else:
-        train.train_model(batch_size, learning_rate, num_epochs, data.amp,
-                          data.label, validate=validate, patience=patience)
+    train.train_model(batch_size, learning_rate, num_epochs, data.amp,
+                      data.label, optimizer=optimizer, validate=validate, patience=patience)
 
 ### Test
 if test_arg:
@@ -192,13 +185,14 @@ if train_arg:
 else:
     params_file.write('train_file_path  = ' + '\n')
     params_file.write('num_epochs  = ' + '\n')
-if sw:
-    params_file.write('sample weighting  = ' + str(sw) +  '\n')
-    params_file.write('beta  = ' + str(beta) +  '\n')
-    params_file.write('sample method  = ' + sample_method +  '\n')
 params_file.write('test_arg  = ' + str(test_arg) + '\n')
 params_file.write('test_file  = ' + str(test_file) + '\n')
 params_file.write('learning_rate  = ' + str(learning_rate) + '\n')
+if optimizer==0:
+    params_file.write('optimizer  = ' + 'ADAM' + '\n')
+else:
+    params_file.write('optimizer  = ' + 'SGD' + '\n')
+    params_file.write('momentum  = ' + str(momentum) + '\n')
 params_file.write('input_size  = ' + str(input_size) + '\n')
 params_file.write('batch_size  = ' + str(batch_size) + '\n')
 params_file.write('filters_number  = ' + str(filters_number) + '\n')

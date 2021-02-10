@@ -209,18 +209,18 @@ def data_loader(data_path, constituent, random=False):
     # Load previous loaded data if possible
     if data_file in os.listdir():
         print('Using previous loaded data...')
-        amp, label = joblib.load(data_file)
+        amp, label, [yes, possible, no] = joblib.load(data_file)
 
     else:
         print('No previous data found. Loading data...')
         files_list = os.listdir(data_path)
         labels_file = np.array(files_list)[['.csv' in x for x in files_list]][0]
         files_list.remove(labels_file)
-        '''
+
         yes = 0
         possible = 0
         no = 0
-        '''
+
         for ind, file in enumerate(tqdm(files_list, total=len(files_list))):
             # Extract data and labels
             wave, amp = ext_data(data_path + '/' + file)
@@ -242,7 +242,7 @@ def data_loader(data_path, constituent, random=False):
                 elif len(amp)!=0:
                     all_amp = amp.copy()
                     all_label = label.copy()
-            '''
+
             # Store number of samples per class
             if (label == np.array([1,0,0])).all():
                 yes +=1
@@ -250,7 +250,7 @@ def data_loader(data_path, constituent, random=False):
                 possible +=1
             elif (label == np.array([0,0,1])).all():
                 no +=1
-            '''
+
         # Randomized all windows
         if random:
             all_amp, all_label = random_shuffle(all_amp, all_label)
@@ -270,24 +270,16 @@ def data_loader(data_path, constituent, random=False):
 def hyp_tune(constituent, num_samples=10, max_num_epochs=10):
     # Data directory
     data_path = 'D:/Documents/GitHub/Datos_Espectros/Espectros_analizados/PredMeasure'
-    '''
-    # Constituent
-    constituent_types = ['Albita',
-                         'Alunita',
-                         'Biotita',
-                         'Ka_Pyr_Sm',
-                         'Mus_Il_se',
-                         'clor_cncl',
-                         'se_gverde']
 
-    ind_constituent = 0
-
-    constituent = constituent_types[ind_constituent]
-    '''
     # Load data
     amp, label = data_loader(data_path, constituent, random=True)
 
     def train_model(trial, amp=amp, label=label):
+        # Make sure label (target) tensor are torch.int64 or torch.long
+        # and it contains class indices (0 or 1 or 2) instead of one-hot encoded vectors
+        # Transform one-hot encoded vectors
+        _, label = torch.max(label, 1)
+
         # Make validation while training
         validate = True
 
@@ -296,6 +288,8 @@ def hyp_tune(constituent, num_samples=10, max_num_epochs=10):
         lr = trial.suggest_loguniform('lr', 1e-4, 1e-1)
         fil = trial.suggest_int('fn', 1, 30)
         ker = trial.suggest_int('ks', 1, 5)
+        opt = trial.suggest_int('ks', 0, 1)
+        m = trial.suggest_uniform('lr', 0, 1)
 
         # Training parameters
         max_nepochs = trial.suggest_int('max_nepochs', 10, 10)
@@ -306,8 +300,12 @@ def hyp_tune(constituent, num_samples=10, max_num_epochs=10):
         # Send model to device
         cnn.to(device)
 
-        criterion = torch.nn.MSELoss()    # mean-squared error for regression
-        optimizer = torch.optim.Adam(cnn.parameters(), lr=lr)
+        self.criterion = torch.nn.CrossEntropyLoss()  # for classification
+
+        if opt==0:
+            self.optimizer = torch.optim.Adam(self.cnn.parameters(), lr=lr)
+        else:
+            self.optimizer = torch.optim.SGD(self.cnn.parameters(), lr=lr, momentum=m)
 
         # Train the model
 
@@ -319,12 +317,6 @@ def hyp_tune(constituent, num_samples=10, max_num_epochs=10):
             val_label = label[ind_val:]
             amp = amp[:ind_val]
             label = label[:ind_val]
-
-        # Send model to device
-        cnn.to(device)
-
-        criterion = torch.nn.MSELoss()    # mean-squared error for regression
-        optimizer = torch.optim.Adam(cnn.parameters(), lr=lr)
 
         # Train the model
         batches = []
@@ -349,21 +341,6 @@ def hyp_tune(constituent, num_samples=10, max_num_epochs=10):
             running_loss = 0.0
             val_running_loss = 0.0
             for batch in batches:
-                '''
-                # Sample weighting
-                sample_weighting_method = 'ens'
-                no_of_classes = 3
-                samples_per_cls = samp_per_cls
-                b_labels = batch['label']
-                beta = 0.9
-                weights = get_weights_transformed_for_sample(sample_weighting_method,
-                                                                  no_of_classes,
-                                                                  samples_per_cls,
-                                                                  b_labels,
-                                                                  beta=beta)
-
-                criterion = torch.nn.BCEWithLogitsLoss(weights.to(device))
-                '''
                 optimizer.zero_grad()
 
                 outputs = cnn(batch['amp'].to(device))
@@ -420,6 +397,8 @@ def hyp_tune(constituent, num_samples=10, max_num_epochs=10):
                    best_trial_params['lr'],
                    best_trial_params['ks'],
                    best_trial_params['fn'],
+                   best_trial_params['opt'],
+                   best_trial_params['m'],
                    best_trial_params['max_nepochs']]
     print('Best configuration parameters:')
     print('------------------------------')
@@ -428,7 +407,9 @@ def hyp_tune(constituent, num_samples=10, max_num_epochs=10):
           'Learning rate = ', best_config[2], '\n',
           'Kernel Size = ', best_config[3], '\n',
           'Number of Filters = ', best_config[4], '\n',
-          'Maximum Number of Epochs Used = ', best_config[5])
+          'Optimizer = ', best_config[5], '\n',
+          'Momentum (only for SGD) = ', best_config[6], '\n',
+          'Maximum Number of Epochs Used = ', best_config[7])
 
     # Store best parameters in file
     best_params_file = open('best_params_optuna_' + constituent + '.txt', 'a')
@@ -439,8 +420,10 @@ def hyp_tune(constituent, num_samples=10, max_num_epochs=10):
     best_params_file.write('Learning rate = ' + str(best_config[2]) + '\n')
     best_params_file.write('Kernel Size = ' + str(best_config[3]) + '\n')
     best_params_file.write('Number of Filters = ' + str(best_config[4]) + '\n')
+    best_params_file.write('Optimizer = ' + str(best_config[5]) + '\n')
+    best_params_file.write('Momentum (Only for SGD) = ' + str(best_config[6]) + '\n')
     best_params_file.write('Number of Samples = ' + str(num_samples) + '\n')
-    best_params_file.write('Maximum Number of Epochs Used = ' + str(best_config[5]) + '\n')
+    best_params_file.write('Maximum Number of Epochs Used = ' + str(best_config[7]) + '\n')
     best_params_file.write('\n')
     best_params_file.write('----------------------------------------------------' + '\n')
     best_params_file.write('\n')

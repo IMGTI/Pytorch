@@ -31,42 +31,8 @@ class Train(object):
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         pass
 
-    def get_weights_transformed_for_sample(self, sample_weighting_method,
-                                           no_of_classes, samples_per_cls,
-                                           b_labels, beta=None):
-        ''' Sample weighting '''
-
-        def effective_num_of_samples(no_of_classes, beta, samples_per_cls):
-            effective_num = 1.0 - np.power(beta, samples_per_cls)
-            weights_for_samples = (1.0 - beta) / np.array(effective_num)
-            weights_for_samples = weights_for_samples / np.sum(weights_for_samples) * no_of_classes
-            return weights_for_samples
-
-        def inverse_num_of_samples(no_of_classes, samples_per_cls, power=1):
-            weights_for_samples = 1.0 / np.array(np.power(samples_per_cls,power))
-            weights_for_samples = weights_for_samples / np.sum(weights_for_samples) * no_of_classes
-            return weights_for_samples
-
-        if sample_weighting_method=='ens':
-            weights_for_samples = effective_num_of_samples(no_of_classes, beta, samples_per_cls)
-        elif sample_weighting_method=='ins':
-            weights_for_samples = inverse_num_of_samples(no_of_classes, samples_per_cls)
-        elif sample_weighting_method=='isns':
-            weights_for_samples = inverse_num_of_samples(no_of_classes, samples_per_cls, power=0.5)
-        else:
-            return None
-        b_labels = b_labels.to('cpu').numpy()
-        weights_for_samples = torch.tensor(weights_for_samples).float()
-        weights_for_samples = weights_for_samples.unsqueeze(0)
-        weights_for_samples = torch.tensor(np.array(weights_for_samples.repeat(b_labels.shape[0],1) * b_labels))
-        weights_for_samples = weights_for_samples.sum(1)
-        weights_for_samples = weights_for_samples.unsqueeze(1)
-        weights_for_samples = weights_for_samples.repeat(1, no_of_classes)
-
-        return weights_for_samples
-
     def train_model(self, batch_size, learning_rate, num_epochs, amp, label,
-                    spc=None, b=0.9, method='ens', validate=True, patience=10):
+                    optimizer=1, momentum=0.9, validate=True, patience=10):
         # Make sure label (target) tensor are torch.int64 or torch.long
         # and it contains class indices (0 or 1 or 2) instead of one-hot encoded vectors
         # Transform one-hot encoded vectors
@@ -87,11 +53,13 @@ class Train(object):
         # Send model to device
         self.cnn.to(self.device)
 
-        if spc==None:
-            self.criterion = torch.nn.CrossEntropyLoss()  # for classification
-        #self.optimizer = torch.optim.Adam(self.cnn.parameters(), lr=learning_rate)
-        momentum = 0.9
-        self.optimizer = torch.optim.SGD(self.cnn.parameters(), lr=learning_rate, momentum=momentum)
+        self.criterion = torch.nn.CrossEntropyLoss()  # for classification
+
+        if optimizer==0:
+            self.optimizer = torch.optim.Adam(self.cnn.parameters(), lr=learning_rate)
+        else:
+            self.optimizer = torch.optim.SGD(self.cnn.parameters(), lr=learning_rate, momentum=momentum)
+
         # Try to load the model and optimizer 's state dictionaries
         self.load_model()
 
@@ -122,21 +90,6 @@ class Train(object):
             running_loss = 0.0
             val_running_loss = 0.0
             for batch in batches:
-                if spc!=None:
-                    # Sample weighting
-                    sample_weighting_method = method
-                    no_of_classes = 3
-                    samples_per_cls = spc
-                    b_labels = batch['label']
-                    beta = b
-                    weights = self.get_weights_transformed_for_sample(sample_weighting_method,
-                                                                      no_of_classes,
-                                                                      samples_per_cls,
-                                                                      b_labels,
-                                                                      beta=beta)
-
-                    self.criterion = torch.nn.BCEWithLogitsLoss(weights.to(self.device))
-
                 self.optimizer.zero_grad()
 
                 outputs = self.cnn(batch['amp'].to(self.device))
