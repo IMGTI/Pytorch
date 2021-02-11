@@ -31,3 +31,45 @@ Results folder  = 02_2021/11_02_2021/11_02_2021_09_45_34
 Precision (Median) = 79.33245301246643 [%] 
 Recall = 77.69621170926229 [%] 
 F1 Score (Micro Average) = 0.7769621170926228
+-------------------------------------------------
+Results folder = 02_2021/11_02_2021/11_02_2021_10_47_07
+Constituent = Albita
+Precision (Median) = 94.13882493972778 [%] 
+Recall = 86.20174007612833 [%] 
+F1 Score (Micro Average) = 0.8620174007612833
+-------------------------------------------------
+Results folder = 02_2021/11_02_2021/11_02_2021_10_56_35
+Constituent = Alunita
+Precision (Median) = 94.71149444580078 [%] 
+Recall = 86.89958310676091 [%] 
+F1 Score (Micro Average) = 0.8689958310676092
+-------------------------------------------------
+Results folder = 02_2021/11_02_2021/11_02_2021_11_03_37
+Constituent = Biotita
+Precision (Median) = 94.0982460975647 [%] 
+Recall = 86.06126518035164 [%] 
+F1 Score (Micro Average) = 0.8606126518035164
+-------------------------------------------------
+Results folder = 02_2021/11_02_2021/11_02_2021_11_05_30
+Constituent = Ka_Pyr_Sm
+Precision (Median) = 95.13126015663147 [%] 
+Recall = 86.70926228022476 [%] 
+F1 Score (Micro Average) = 0.8670926228022476
+-------------------------------------------------
+Results folder = 02_2021/11_02_2021/11_02_2021_11_07_27
+Constituent = Mus_Il_se
+Precision (Median) = 96.62017822265625 [%] 
+Recall = 87.40710531085735 [%] 
+F1 Score (Micro Average) = 0.8740710531085735
+-------------------------------------------------
+Results folder = 02_2021/11_02_2021/11_02_2021_11_09_54
+Constituent = clor_cncl
+Precision (Median) = 97.20685482025146 [%] 
+Recall = 87.45241979336596 [%] 
+F1 Score (Micro Average) = 0.8745241979336597
+-------------------------------------------------
+Results folder = 02_2021/11_02_2021/11_02_2021_11_13_03
+Constituent = se_gverde
+Precision (Median) = 93.413245677948 [%] 
+Recall = 86.58238172920065 [%] 
+F1 Score (Micro Average) = 0.8658238172920065

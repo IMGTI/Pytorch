@@ -204,12 +204,13 @@ def scaling(data):
     return data_sc
 
 def data_loader(data_path, constituent, random=False):
-    data_file = 'data.ts'
+    data_train_file = 'data_train.ts'
+    data_test_file = 'data_test.ts'
 
     # Load previous loaded data if possible
     if data_file in os.listdir():
         print('Using previous loaded data...')
-        amp, label, [yes, possible, no] = joblib.load(data_file)
+        amp, label, [yes, possible, no] = joblib.load(data_train_file)
 
     else:
         print('No previous data found. Loading data...')
@@ -217,11 +218,18 @@ def data_loader(data_path, constituent, random=False):
         labels_file = np.array(files_list)[['.csv' in x for x in files_list]][0]
         files_list.remove(labels_file)
 
+        # Divide data into train and test datasets
+        ind_train = int(0.75*len(files_list))
+        train_files_list = files_list[:ind_train]  # Train data
+        test_files_list = files_list[ind_train:] # Test data
+
         yes = 0
         possible = 0
         no = 0
 
-        for ind, file in enumerate(tqdm(files_list, total=len(files_list))):
+        # Train data
+        print('Train data...')
+        for ind, file in enumerate(tqdm(train_files_list, total=len(train_files_list))):
             # Extract data and labels
             wave, amp = ext_data(data_path + '/' + file)
             amp = treat_data(amp)
@@ -262,7 +270,7 @@ def data_loader(data_path, constituent, random=False):
         label = all_label.detach().clone()
 
         # Save data for speeding up next execution
-        joblib.dump((amp, label), data_file)
+        joblib.dump((amp, label, [yes, possible, no]), data_train_file)
 
     return amp, label
 

@@ -113,6 +113,9 @@ params_name = ('_e' + str(num_epochs) +
                '_i' + str(input_size) +
                '_o' + str(num_classes) +
                '_rd' + str(rd) +
+               '_opt' + str(optimizer) +
+               '_m' + str(momentum) +
+               '_ic' + str(ind_constituent) +
                '_pat' + str(patience))
 
 ### Create directory for each run and different hyperparameters
@@ -168,11 +171,13 @@ if test_arg:
         data = Data(seed)
         data.test_data_loader(test_file, constituent, current)
         data.label = 'N/A'
+        data.amp_t = 'N/A'
+        data.label_t = 'N/A'
 
     test = Test(batch_size, num_classes, input_size, filters_number, kernel_size,
-                 state_dict_path, current, params_name, seed, tfile=test_file)
+                state_dict_path, current, constituent, seed, tfile=test_file)
 
-    test.test_model(data.amp, data.label)
+    test.test_model(data.amp, data.label, data.amp_t, data.label_t)
 
 # Store parameters and runtime info in file
 params_file = open(current + '/params.txt', 'w')

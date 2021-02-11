@@ -173,12 +173,14 @@ class Data(object):
         pass
 
     def data_loader(self, data_path, constituent, current, random=False):
-        data_file = 'data.ts'
+        data_train_file = 'data_train.ts'
+        data_test_file = 'data_test.ts'
 
         # Load previous loaded data if possible
-        if data_file in os.listdir():
+        if data_train_file in os.listdir():
             print('Using previous loaded data...')
-            self.amp, self.label, [self.yes, self.possible, self.no] = joblib.load(data_file)
+            self.amp, self.label, [self.yes, self.possible, self.no] = joblib.load(data_train_file)
+            self.amp_t, self.label_t = joblib.load(data_test_file)
 
         else:
             print('No previous data found. Loading data...')
@@ -186,11 +188,18 @@ class Data(object):
             labels_file = np.array(files_list)[['.csv' in x for x in files_list]][0]
             files_list.remove(labels_file)
 
+            # Divide data into train and test datasets
+            ind_train = int(0.75*len(files_list))
+            train_files_list = files_list[:ind_train]  # Train data
+            test_files_list = files_list[ind_train:] # Test data
+
             self.yes = 0
             self.possible = 0
             self.no = 0
 
-            for ind, file in enumerate(tqdm(files_list, total=len(files_list))):
+            # Train data
+            print('Train data...')
+            for ind, file in enumerate(tqdm(train_files_list, total=len(train_files_list))):
                 # Extract data and labels
                 self.ext_data(data_path + '/' + file)
                 self.amp = self.treat_data(current=current)
@@ -231,6 +240,40 @@ class Data(object):
             self.label = self.all_label.detach().clone()
 
             # Save data for speeding up next execution
-            joblib.dump((self.amp, self.label, [self.yes, self.possible, self.no]), data_file)
+            joblib.dump((self.amp, self.label, [self.yes, self.possible, self.no]), data_train_file)
+
+            print('Test data...')
+            # Test data
+            for ind, file in enumerate(tqdm(test_files_list, total=len(test_files_list))):
+                # Extract data and labels
+                self.ext_data(data_path + '/' + file)
+                self.amp_t = self.treat_data(current=current)
+
+                # Skip data without proper label
+                try:
+                    self.label_t = self.get_label(constituent, data_path, file, labels_file)
+                except:
+                    continue
+                # Add to data
+                if ind==0:
+                    self.all_amp_t = self.amp_t.copy()
+                    self.all_label_t = self.label_t.copy()
+                else:
+                    if len(self.all_amp_t)!=0 and len(self.amp_t)!=0:
+                        self.all_amp_t = np.vstack((self.all_amp_t, self.amp_t))
+                        self.all_label_t = np.vstack((self.all_label_t, self.label_t))
+                    elif len(self.amp_t)!=0:
+                        self.all_amp_t = self.amp_t.copy()
+                        self.all_label_t = self.label_t.copy()
+
+
+            self.all_amp_t = Variable(torch.Tensor(np.array(self.all_amp_t)))
+            self.all_label_t = Variable(torch.Tensor(np.array(self.all_label_t)))
+
+            self.amp_t = self.all_amp_t.detach().clone()
+            self.label_t = self.all_label_t.detach().clone()
+
+            # Save data for speeding up next execution
+            joblib.dump((self.amp_t, self.label_t), data_test_file)
 
         pass
