@@ -150,3 +150,14 @@ Test data results:
 Precision (Median) = 93.28700304031372 [%] 
 Recall = 83.43302519485228 [%] 
 F1 Score (Micro Average) = 0.8343302519485227
+-------------------------------------------------
+Results folder = 02_2021/11_02_2021/11_02_2021_15_23_06
+Constituent = Albita
+Whole data results: 
+Precision (Median) = 98.26075434684753 [%] 
+Recall = 85.81958794030572 [%] 
+F1 Score (Micro Average) = 0.8581958794030572
+Test data results: 
+Precision (Median) = 99.11323189735413 [%] 
+Recall = 81.22167844843212 [%] 
+F1 Score (Micro Average) = 0.8122167844843212
