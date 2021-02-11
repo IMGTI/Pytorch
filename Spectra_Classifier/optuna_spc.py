@@ -430,10 +430,6 @@ def hyp_tune(constituent, num_samples=10, max_num_epochs=10):
 
     best_params_file.close()
 
-'''
-if __name__ == "__main__":
-    hyp_tune(num_samples=num_samples, max_num_epochs=10)
-'''
 # Constituent
 constituent_types = ['Albita',
                      'Alunita',

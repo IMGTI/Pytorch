@@ -88,12 +88,12 @@ ind_constituent = 0
 constituent = constituent_types[ind_constituent]  # Select class model
 
 num_epochs = n_epochs
-learning_rate = [0.001431,0.000604,0.000478,0.001471,0.000191,0.001262,0.007655][ind_constituent]
+learning_rate = [0.000953,0.000235,0.001137,0.001150,0.000756,0.000701,0.000604][ind_constituent]
 input_size = 1
-batch_size = [39,40,40,67,3,17,35][ind_constituent]
+batch_size = [15,15,17,18,22,17,12][ind_constituent]
 num_classes = 3
-filters_number = [19,29,28,28,26,19,18][ind_constituent]
-kernel_size = [1,3,5,1,2,1,4][ind_constituent]
+filters_number = [7,28,12,12,12,12,12][ind_constituent]
+kernel_size = [1,1,1,1,2,1,1][ind_constituent]
 
 ## Data parameters
 rd = True
@@ -101,8 +101,8 @@ rd = True
 ## Train parameters
 validate = True
 patience = 20#10
-optimizer = 1  # 0:Adam 1:SGD
-momentum = 0.9
+optimizer = [0,0,0,0,0,0,0][ind_constituent]  # 0:Adam 1:SGD
+momentum = [0.582184,0.080542,0.628711,0.947535,0.531340,0.065619,0.560945][ind_constituent]
 
 ## Parameters in name for .jpg files
 params_name = ('_e' + str(num_epochs) +
@@ -182,9 +182,11 @@ params_file.write('train_arg  = ' + str(train_arg) + '\n')
 if train_arg:
     params_file.write('train_file_path  = ' + str(data_path) + '\n')
     params_file.write('num_epochs  = ' + str(num_epochs) + '\n')
+    params_file.write('last epoch reached  = ' + str(train.last_epoch) + '\n')
 else:
     params_file.write('train_file_path  = ' + '\n')
     params_file.write('num_epochs  = ' + '\n')
+    params_file.write('last epoch reached  = ' + '\n')
 params_file.write('test_arg  = ' + str(test_arg) + '\n')
 params_file.write('test_file  = ' + str(test_file) + '\n')
 params_file.write('learning_rate  = ' + str(learning_rate) + '\n')
