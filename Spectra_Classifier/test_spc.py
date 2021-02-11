@@ -164,15 +164,20 @@ class Test(object):
                 for input in amp:
                     outputs = self.cnn(amp.to(self.device))
                     _, predicted = torch.max(outputs.data, 1)
+                    # Softmax layer
+                    soft = torch.nn.Softmax(dim=1)
+                    prec_outputs = soft(outputs)  # Obtain probabilities
+                    prec_, prec_predicted = torch.max(prec_outputs.data, 1)
+                    prec_ = round(np.array(prec_.cpu())[0] * 100, 3)
+
                     try:
                         ground_truth_labels = classes[label]
                     except:
                         pass
                     predicted_labels = classes[predicted]
-                    predicted_labels_prec = str(round(np.array(_.cpu())[0] * 100, 3))
 
                     print('Predicted: ' + predicted_labels)
-                    print('Precision: ' + predicted_labels_prec + '%')
+                    print('Precision: ' + str(prec_) + '%')
                     try:
                         print('Ground Truth: ' + ground_truth_labels)
                     except:
