@@ -80,7 +80,7 @@ constituent_types = ['Albita',
                      'clor_cncl',
                      'se_gverde']
 
-ind_constituent = 0
+ind_constituent = 6
 
 ### Define the Hyperparameters
 

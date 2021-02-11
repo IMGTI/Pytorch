@@ -84,3 +84,69 @@ Test data results:
 Precision (Median) = 96.14526629447937 [%] 
 Recall = 83.3605220228385 [%] 
 F1 Score (Micro Average) = 0.833605220228385
+-------------------------------------------------
+Results folder = 02_2021/11_02_2021/11_02_2021_13_07_36
+Constituent = Alunita
+Whole data results: 
+Precision (Median) = 93.75824332237244 [%] 
+Recall = 85.96459428433327 [%] 
+F1 Score (Micro Average) = 0.8596459428433327
+Test data results: 
+Precision (Median) = 94.56852078437805 [%] 
+Recall = 84.30306325901758 [%] 
+F1 Score (Micro Average) = 0.8430306325901759
+-------------------------------------------------
+Results folder = 02_2021/11_02_2021/11_02_2021_13_44_15
+Constituent = Biotita
+Whole data results: 
+Precision (Median) = 94.20006275177002 [%] 
+Recall = 84.57495015406924 [%] 
+F1 Score (Micro Average) = 0.8457495015406925
+Test data results: 
+Precision (Median) = 95.63027024269104 [%] 
+Recall = 82.7804966467283 [%] 
+F1 Score (Micro Average) = 0.8278049664672829
+-------------------------------------------------
+Results folder = 02_2021/11_02_2021/11_02_2021_13_55_51
+Constituent = Ka_Pyr_Sm
+Whole data results: 
+Precision (Median) = 94.2628562450409 [%] 
+Recall = 83.2094737478098 [%] 
+F1 Score (Micro Average) = 0.832094737478098
+Test data results: 
+Precision (Median) = 95.53183317184448 [%] 
+Recall = 81.91045858256298 [%] 
+F1 Score (Micro Average) = 0.8191045858256297
+-------------------------------------------------
+Results folder = 02_2021/11_02_2021/11_02_2021_15_00_57
+Constituent = Mus_Il_se
+Whole data results: 
+Precision (Median) = 94.63288187980652 [%] 
+Recall = 84.74412422210138 [%] 
+F1 Score (Micro Average) = 0.8474412422210138
+Test data results: 
+Precision (Median) = 95.94240188598633 [%] 
+Recall = 83.94054739894871 [%] 
+F1 Score (Micro Average) = 0.8394054739894871
+-------------------------------------------------
+Results folder = 02_2021/11_02_2021/11_02_2021_15_04_38
+Constituent = clor_cncl
+Whole data results: 
+Precision (Median) = 94.1735327243805 [%] 
+Recall = 85.13684973717601 [%] 
+F1 Score (Micro Average) = 0.85136849737176
+Test data results: 
+Precision (Median) = 95.27626037597656 [%] 
+Recall = 84.5568243610658 [%] 
+F1 Score (Micro Average) = 0.845568243610658
+-------------------------------------------------
+Results folder = 02_2021/11_02_2021/11_02_2021_15_06_54
+Constituent = se_gverde
+Whole data results: 
+Precision (Median) = 93.45468878746033 [%] 
+Recall = 84.71995649809679 [%] 
+F1 Score (Micro Average) = 0.8471995649809679
+Test data results: 
+Precision (Median) = 93.28700304031372 [%] 
+Recall = 83.43302519485228 [%] 
+F1 Score (Micro Average) = 0.8343302519485227

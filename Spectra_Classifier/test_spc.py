@@ -148,7 +148,7 @@ class Test(object):
                     f1_labels.append(labels)
                     f1_predicted.append(predicted)
 
-            print('Accuracy of the network on whole dataset (Recall): %d %%' % (
+            print('Accuracy of the network on test dataset (Recall): %d %%' % (
                 100 * correct / total))
 
             test_result = [100 * np.median(np.array(precision)),

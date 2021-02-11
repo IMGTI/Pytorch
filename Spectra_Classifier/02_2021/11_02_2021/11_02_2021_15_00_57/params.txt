@@ -1,0 +1,17 @@
+current  = 02_2021/11_02_2021/11_02_2021_15_00_57
+train_arg  = True
+train_file_path  = ..\..\Datos_Espectros\Espectros_analizados\PredMeasure\
+num_epochs  = 1000
+last epoch reached  = 70
+test_arg  = True
+test_file  = 
+learning_rate  = 0.000756
+optimizer  = ADAM
+input_size  = 1
+batch_size  = 22
+filters_number  = 12
+kernel_size  = 2
+rd  = True
+validate  = True
+patience  = 20
+constituent  = Mus_Il_se
