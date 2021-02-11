@@ -52,7 +52,7 @@ class Test(object):
         results_file.write('-------------------------------------------------\n')
         results_file.write('Results folder = ' + str(self.current) + '\n')
         results_file.write('Constituent = ' + str(self.constituent) + '\n')
-        results_file.write('Whole results: ' + '\n')
+        results_file.write('Whole data results: ' + '\n')
         if len(whole_result)==1:
             results_file.write('Recall = ' + str(whole_result) + ' [%] \n')
         else:

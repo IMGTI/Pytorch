@@ -134,7 +134,7 @@ class Train(object):
 
             # Save last reached epoch
             self.last_epoch = epoch + 1
-            
+
         pass
 
     def save_model(self, epoch, loss):
