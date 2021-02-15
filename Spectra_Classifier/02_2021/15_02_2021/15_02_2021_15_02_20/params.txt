@@ -1,0 +1,17 @@
+current  = 02_2021/15_02_2021/15_02_2021_15_02_20
+train_arg  = True
+train_file_path  = ..\..\Datos_Espectros\Espectros_analizados\PredMeasure\
+num_epochs  = 100
+last epoch reached  = 100
+test_arg  = True
+test_file  = 
+learning_rate  = 0.000809
+optimizer  = ADAM
+input_size  = 1
+batch_size  = 84
+filters_number  = 27
+kernel_size  = 2
+rd  = True
+validate  = True
+patience  = 999
+constituent  = Albita

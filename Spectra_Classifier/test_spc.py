@@ -52,7 +52,7 @@ class Test(object):
         results_file.write('-------------------------------------------------\n')
         results_file.write('Results folder = ' + str(self.current) + '\n')
         results_file.write('Constituent = ' + str(self.constituent) + '\n')
-        results_file.write('Whole data results: ' + '\n')
+        results_file.write('Train data results: ' + '\n')
         if len(whole_result)==1:
             results_file.write('Recall = ' + str(whole_result) + ' [%] \n')
         else:
@@ -77,7 +77,7 @@ class Test(object):
 
         ### Training test
         try:
-            # Performance in whole dataset
+            # Performance in train dataset
 
             correct = 0
             total = 0
@@ -109,7 +109,7 @@ class Test(object):
                     f1_labels.append(labels)
                     f1_predicted.append(predicted)
 
-            print('Accuracy of the network on whole dataset (Recall): %d %%' % (
+            print('Accuracy of the network on train dataset (Recall): %d %%' % (
                 100 * correct / total))
 
             whole_result = [100 * np.median(np.array(precision)),

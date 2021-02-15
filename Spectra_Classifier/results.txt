@@ -268,3 +268,146 @@ Test data results:
 Precision (Median) = 88.43810558319092 [%] 
 Recall = 80.53289831430125 [%] 
 F1 Score (Micro Average) = 0.8053289831430125
+-------------------------------------------------
+Results folder = 02_2021/15_02_2021/15_02_2021_14_35_56
+Constituent = Albita
+Whole data results: 
+Precision (Median) = 96.45687937736511 [%] 
+Recall = 75.39725696332547 [%] 
+F1 Score (Micro Average) = 0.7539725696332548
+Test data results: 
+Precision (Median) = 96.31892442703247 [%] 
+Recall = 70.7268442994381 [%] 
+F1 Score (Micro Average) = 0.7072684429943809
+-------------------------------------------------
+Results folder = 02_2021/15_02_2021/15_02_2021_14_38_38
+Constituent = Albita
+Whole data results: 
+Precision (Median) = 99.98992681503296 [%] 
+Recall = 89.7710108150565 [%] 
+F1 Score (Micro Average) = 0.8977101081505651
+Test data results: 
+Precision (Median) = 99.97318387031555 [%] 
+Recall = 85.95251042233097 [%] 
+F1 Score (Micro Average) = 0.8595251042233097
+-------------------------------------------------
+Results folder = 02_2021/15_02_2021/15_02_2021_14_40_52
+Constituent = Albita
+Whole data results: 
+Precision (Median) = 99.99380111694336 [%] 
+Recall = 90.57458763820917 [%] 
+F1 Score (Micro Average) = 0.9057458763820916
+Test data results: 
+Precision (Median) = 99.98970031738281 [%] 
+Recall = 86.20627152437919 [%] 
+F1 Score (Micro Average) = 0.862062715243792
+-------------------------------------------------
+Results folder = 02_2021/15_02_2021/15_02_2021_14_43_35
+Constituent = Albita
+Whole data results: 
+Precision (Median) = 100.0 [%] 
+Recall = 90.3389523291644 [%] 
+F1 Score (Micro Average) = 0.903389523291644
+Test data results: 
+Precision (Median) = 100.0 [%] 
+Recall = 85.69874932028276 [%] 
+F1 Score (Micro Average) = 0.8569874932028276
+-------------------------------------------------
+Results folder = 02_2021/15_02_2021/15_02_2021_14_58_06
+Constituent = Albita
+Train data results: 
+Precision (Median) = 99.98636245727539 [%] 
+Recall = 90.48395867319195 [%] 
+F1 Score (Micro Average) = 0.9048395867319196
+Test data results: 
+Precision (Median) = 99.98101592063904 [%] 
+Recall = 86.67754214246874 [%] 
+F1 Score (Micro Average) = 0.8667754214246873
+-------------------------------------------------
+Results folder = 02_2021/15_02_2021/15_02_2021_15_00_56
+Constituent = Albita
+Train data results: 
+Precision (Median) = 96.04253768920898 [%] 
+Recall = 86.3331520754033 [%] 
+F1 Score (Micro Average) = 0.863331520754033
+Test data results: 
+Precision (Median) = 95.38507461547852 [%] 
+Recall = 82.74424506072141 [%] 
+F1 Score (Micro Average) = 0.8274424506072141
+-------------------------------------------------
+Results folder = 02_2021/15_02_2021/15_02_2021_15_02_20
+Constituent = Albita
+Train data results: 
+Precision (Median) = 99.9855637550354 [%] 
+Recall = 90.26040722614948 [%] 
+F1 Score (Micro Average) = 0.9026040722614947
+Test data results: 
+Precision (Median) = 99.97313618659973 [%] 
+Recall = 85.7168751132862 [%] 
+F1 Score (Micro Average) = 0.857168751132862
+-------------------------------------------------
+Results folder = 02_2021/15_02_2021/15_02_2021_15_05_07
+Constituent = Alunita
+Train data results: 
+Precision (Median) = 99.43271279335022 [%] 
+Recall = 84.32118905202103 [%] 
+F1 Score (Micro Average) = 0.8432118905202103
+Test data results: 
+Precision (Median) = 99.41086769104004 [%] 
+Recall = 82.70799347471451 [%] 
+F1 Score (Micro Average) = 0.8270799347471451
+-------------------------------------------------
+Results folder = 02_2021/15_02_2021/15_02_2021_15_08_37
+Constituent = Biotita
+Train data results: 
+Precision (Median) = 99.3532657623291 [%] 
+Recall = 84.17618270799348 [%] 
+F1 Score (Micro Average) = 0.8417618270799347
+Test data results: 
+Precision (Median) = 99.6416687965393 [%] 
+Recall = 84.68370491208991 [%] 
+F1 Score (Micro Average) = 0.8468370491208992
+-------------------------------------------------
+Results folder = 02_2021/15_02_2021/15_02_2021_15_11_48
+Constituent = Ka_Pyr_Sm
+Train data results: 
+Precision (Median) = 99.72774386405945 [%] 
+Recall = 83.5236541598695 [%] 
+F1 Score (Micro Average) = 0.835236541598695
+Test data results: 
+Precision (Median) = 99.76804256439209 [%] 
+Recall = 84.42994381004169 [%] 
+F1 Score (Micro Average) = 0.8442994381004169
+-------------------------------------------------
+Results folder = 02_2021/15_02_2021/15_02_2021_15_15_05
+Constituent = Mus_Il_se
+Train data results: 
+Precision (Median) = 99.99486207962036 [%] 
+Recall = 81.89233278955955 [%] 
+F1 Score (Micro Average) = 0.8189233278955954
+Test data results: 
+Precision (Median) = 99.97602105140686 [%] 
+Recall = 79.49972811310495 [%] 
+F1 Score (Micro Average) = 0.7949972811310495
+-------------------------------------------------
+Results folder = 02_2021/15_02_2021/15_02_2021_15_17_03
+Constituent = clor_cncl
+Train data results: 
+Precision (Median) = 97.92505502700806 [%] 
+Recall = 83.72303788290738 [%] 
+F1 Score (Micro Average) = 0.8372303788290738
+Test data results: 
+Precision (Median) = 98.27221632003784 [%] 
+Recall = 83.90429581294181 [%] 
+F1 Score (Micro Average) = 0.8390429581294182
+-------------------------------------------------
+Results folder = 02_2021/15_02_2021/15_02_2021_15_19_10
+Constituent = se_gverde
+Train data results: 
+Precision (Median) = 95.44607996940613 [%] 
+Recall = 81.94671016856988 [%] 
+F1 Score (Micro Average) = 0.8194671016856987
+Test data results: 
+Precision (Median) = 95.89503407478333 [%] 
+Recall = 83.77741526191771 [%] 
+F1 Score (Micro Average) = 0.8377741526191771

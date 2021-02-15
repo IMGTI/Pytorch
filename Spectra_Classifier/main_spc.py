@@ -80,7 +80,7 @@ constituent_types = ['Albita',
                      'clor_cncl',
                      'se_gverde']
 
-ind_constituent = 0
+ind_constituent = 6
 
 ### Define the Hyperparameters
 
@@ -88,21 +88,21 @@ ind_constituent = 0
 constituent = constituent_types[ind_constituent]  # Select class model
 
 num_epochs = n_epochs
-learning_rate = [0.000953,0.000235,0.001137,0.001150,0.000756,0.000701,0.000604][ind_constituent]
+learning_rate = [0.000809,0.005986,0.006674,0.005949,0.002586,0.037727,0.049856][ind_constituent]
 input_size = 1
-batch_size = [15,15,17,18,22,17,12][ind_constituent]
+batch_size = [84,44,40,37,87,71,70][ind_constituent]
 num_classes = 3
-filters_number = [7,28,12,12,12,12,12][ind_constituent]
-kernel_size = [1,1,1,1,2,1,1][ind_constituent]
+filters_number = [27,8,8,24,17,29,8][ind_constituent]
+kernel_size = [2,1,1,1,2,4,1][ind_constituent]
 
 ## Data parameters
 rd = True
 
 ## Train parameters
 validate = True
-patience = 20#10
+patience = 999#20#10
 optimizer = [0,0,0,0,0,0,0][ind_constituent]  # 0:Adam 1:SGD
-momentum = [0.582184,0.080542,0.628711,0.947535,0.531340,0.065619,0.560945][ind_constituent]
+momentum = [0.498591,0.544737,0.889379,0.031608,0.827003,0.895585,0.868582][ind_constituent]
 
 ## Parameters in name for .jpg files
 params_name = ('_e' + str(num_epochs) +
