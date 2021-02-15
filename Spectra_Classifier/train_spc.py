@@ -81,7 +81,7 @@ class Train(object):
             except:
                 break
 
-        if (batches[-1]['amp']).size(0)!=batch_size:
+        if ((batches[-1]['amp']).size(0)!=batch_size) or ((batches[-1]['val_amp']).size(0)!=batch_size):
             batches = batches[:-1]
             print("Removing last batch because of invalid batch size")
 

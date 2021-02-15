@@ -208,7 +208,7 @@ def data_loader(data_path, constituent, random=False):
     data_test_file = 'data_test.ts'
 
     # Load previous loaded data if possible
-    if data_file in os.listdir():
+    if data_train_file in os.listdir():
         print('Using previous loaded data...')
         amp, label, [yes, possible, no] = joblib.load(data_train_file)
 
@@ -292,7 +292,7 @@ def hyp_tune(constituent, num_samples=10, max_num_epochs=10):
         validate = True
 
         # Model Parameters
-        bs = trial.suggest_int('bs', 1, 100)
+        bs = trial.suggest_int('bs', 2, 100)  # If bs==1 batchnorm raises error
         lr = trial.suggest_loguniform('lr', 1e-4, 1e-1)
         fil = trial.suggest_int('fn', 1, 30)
         ker = trial.suggest_int('ks', 1, 5)
@@ -340,7 +340,7 @@ def hyp_tune(constituent, num_samples=10, max_num_epochs=10):
             except:
                 break
 
-        if (batches[-1]['amp']).size(0)!=bs:
+        if ((batches[-1]['amp']).size(0)!=bs) or ((batches[-1]['val_amp']).size(0)!=bs):
             batches = batches[:-1]
             print("Removing last batch because of invalid batch size")
 
