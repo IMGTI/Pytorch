@@ -46,15 +46,21 @@ class CNN(nn.Module):
                                                                  # (stride=1, 3 times, one for each conv+pool)
         self.fc2 = nn.Linear(32, self.num_classes)
 
+        # Batch Normalization
+        self.bn_cnn1 = nn.BatchNorm1d(self.filters_number)
+        self.bn_cnn2 = nn.BatchNorm1d(self.filters_number)
+        self.bn_cnn3 = nn.BatchNorm1d(self.filters_number)
+        self.bn_lin = nn.BatchNorm1d(32)
+
     def forward(self, x, hidden=None):
         x = x.view(-1, 1, x.size()[1])  # Change input shape for in_channels=1
                                         # x.size()[1]==window_size
 
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = self.pool(F.relu(self.conv3(x)))
+        x = self.pool(F.relu(self.bn_cnn1(self.conv1(x))))
+        x = self.pool(F.relu(self.bn_cnn2(self.conv2(x))))
+        x = self.pool(F.relu(self.bn_cnn3(self.conv3(x))))
         x = x.view(-1,self.filters_number*self.l_fc)
-        x = F.relu(self.fc1(x))
+        x = F.relu(self.bn_lin(self.fc1(x)))
         x = self.fc2(x)
 
         return x
